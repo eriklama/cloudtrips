@@ -3,6 +3,15 @@ const API_SAVE = '/saveTrips';
 
 let trips = [];
 
+// ---------- INIT ----------
+document.addEventListener('DOMContentLoaded', () => {
+  if (document.getElementById('trip-list')) loadTrips();
+  if (document.getElementById('trip-title')) loadTripPage();
+  if (document.getElementById('timeline')) loadTimeline();
+  if (document.getElementById('cost-table')) loadCosts();
+});
+
+// ---------- HTTP ----------
 async function fetchJson(url, options = {}) {
   const res = await fetch(url, options);
 
@@ -43,8 +52,8 @@ function formatDateTime(value) {
 }
 
 function sortByStart(a, b) {
-  const da = new Date(a.start);
-  const db = new Date(b.start);
+  const da = new Date(a.start || '');
+  const db = new Date(b.start || '');
   return da - db;
 }
 
@@ -56,10 +65,19 @@ function openTrip(id) {
   location.href = `/trip.html?trip=${encodeURIComponent(id)}`;
 }
 
-// ---------- LOAD TRIPS ----------
+// ---------- MAIN PAGE ----------
 async function loadTrips() {
-  trips = await fetchJson(API_GET);
-  renderTrips();
+  try {
+    trips = await fetchJson(API_GET);
+    if (!Array.isArray(trips)) trips = [];
+    renderTrips();
+  } catch (e) {
+    console.error('Failed to load trips:', e);
+    const list = document.getElementById('trip-list');
+    if (list) {
+      list.innerHTML = `<div class="empty-state">Failed to load trips.</div>`;
+    }
+  }
 }
 
 function renderTrips() {
@@ -68,19 +86,31 @@ function renderTrips() {
 
   list.innerHTML = '';
 
-  if (!trips.length) {
+  if (!Array.isArray(trips) || trips.length === 0) {
     list.innerHTML = `<div class="empty-state">No trips yet.</div>`;
     return;
   }
 
-  trips.forEach(t => {
-    const d = document.createElement('div');
-    d.className = 'card';
-    d.innerHTML = `
-      <strong>${escapeHtml(t.name)}</strong><br><br>
-      <button class="btn" onclick="openTrip('${t.id}')">Open</button>
-    `;
-    list.appendChild(d);
+  trips.forEach((t) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    const title = document.createElement('strong');
+    title.textContent = t.name || 'Untitled trip';
+
+    const actions = document.createElement('div');
+    actions.style.marginTop = '12px';
+
+    const openBtn = document.createElement('button');
+    openBtn.className = 'btn';
+    openBtn.type = 'button';
+    openBtn.textContent = 'Open';
+    openBtn.addEventListener('click', () => openTrip(t.id));
+
+    actions.appendChild(openBtn);
+    card.appendChild(title);
+    card.appendChild(actions);
+    list.appendChild(card);
   });
 }
 
@@ -117,7 +147,7 @@ async function loadTripPage() {
   trips = await fetchJson(API_GET);
 
   const id = getTripId();
-  const tr = trips.find(t => String(t.id) === String(id));
+  const tr = trips.find((t) => String(t.id) === String(id));
 
   if (!tr) {
     const title = document.getElementById('trip-title');
@@ -154,7 +184,7 @@ function renderAct(tr) {
 
   const activities = [...tr.activities].sort(sortByStart);
 
-  activities.forEach(a => {
+  activities.forEach((a) => {
     const d = document.createElement('div');
     d.className = 'card';
     d.innerHTML = `
@@ -170,7 +200,7 @@ function renderAct(tr) {
 
 async function addActivity() {
   const id = getTripId();
-  const tr = trips.find(t => String(t.id) === String(id));
+  const tr = trips.find((t) => String(t.id) === String(id));
   if (!tr) return;
 
   const a = {
@@ -193,7 +223,7 @@ async function addActivity() {
 // ---------- TIMELINE ----------
 async function loadTimeline() {
   trips = await fetchJson(API_GET);
-  const tr = trips.find(t => String(t.id) === String(getTripId()));
+  const tr = trips.find((t) => String(t.id) === String(getTripId()));
   if (!tr) return;
 
   const c = document.getElementById('timeline');
@@ -208,7 +238,7 @@ async function loadTimeline() {
     return;
   }
 
-  activities.forEach(a => {
+  activities.forEach((a) => {
     const d = document.createElement('div');
     d.className = 'timeline-item';
     d.innerHTML = `
@@ -227,7 +257,7 @@ async function loadTimeline() {
 // ---------- COSTS ----------
 async function loadCosts() {
   trips = await fetchJson(API_GET);
-  const tr = trips.find(t => String(t.id) === String(getTripId()));
+  const tr = trips.find((t) => String(t.id) === String(getTripId()));
   if (!tr) return;
 
   const table = document.getElementById('cost-table');
@@ -242,7 +272,7 @@ async function loadCosts() {
     table.innerHTML = `<tr><td colspan="4">No activities yet.</td></tr>`;
   }
 
-  activities.forEach(a => {
+  activities.forEach((a) => {
     total += Number(a.cost || 0);
     const row = document.createElement('tr');
     row.innerHTML = `
