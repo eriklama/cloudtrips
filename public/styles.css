@@ -1,0 +1,92 @@
+:root {
+  --bg: #0e1b14;
+  --card: rgba(255,255,255,0.05);
+  --border: rgba(255,255,255,0.1);
+  --text: #e8f5e9;
+  --accent: #66ff99;
+
+  --plane:#4fc3f7;
+  --car:#ffb74d;
+  --hike:#81c784;
+  --city:#ba68c8;
+  --accom:#90caf9;
+  --other:#e0e0e0;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  padding: 20px;
+}
+
+.page {
+  max-width: 900px;
+  margin: auto;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  padding: 14px;
+  margin: 10px 0;
+  border-radius: 10px;
+}
+
+.tag {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #000;
+  font-weight: bold;
+}
+
+.tag.plane {background: var(--plane);}
+.tag.car {background: var(--car);}
+.tag.hike {background: var(--hike);}
+.tag.city {background: var(--city);}
+.tag.accomodation {background: var(--accom);}
+.tag.other {background: var(--other);}
+
+button {
+  background: var(--accent);
+  color: #000;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 8px;
+  margin: 6px 0;
+  background: #10251c;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.timeline-item {
+  display: flex;
+  margin: 12px 0;
+}
+
+.circle {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-right: 12px;
+  margin-top: 4px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+td {
+  padding: 10px;
+  border-bottom: 1px solid var(--border);
+}
