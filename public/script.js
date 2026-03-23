@@ -2,6 +2,7 @@ const API_GET = '/getTrips';
 const API_SAVE = '/saveTrips';
 
 let trips = [];
+let editingActivityId = null;
 
 // ---------- INIT ----------
 document.addEventListener('DOMContentLoaded', () => {
@@ -63,6 +64,62 @@ function getTripId() {
 
 function openTrip(id) {
   location.href = `/trip.html?trip=${encodeURIComponent(id)}`;
+}
+
+function getCurrentTrip() {
+  const id = getTripId();
+  return trips.find((t) => String(t.id) === String(id));
+}
+
+function resetActivityForm() {
+  const typeEl = document.getElementById('type');
+  const locationEl = document.getElementById('location');
+  const startEl = document.getElementById('start');
+  const endEl = document.getElementById('end');
+  const costEl = document.getElementById('cost');
+  const notesEl = document.getElementById('notes');
+
+  if (typeEl) typeEl.value = 'plane';
+  if (locationEl) locationEl.value = '';
+  if (startEl) startEl.value = '';
+  if (endEl) endEl.value = '';
+  if (costEl) costEl.value = '';
+  if (notesEl) notesEl.value = '';
+
+  editingActivityId = null;
+  updateActivityFormButtons();
+}
+
+function updateActivityFormButtons() {
+  let addBtn = document.getElementById('save-activity-btn');
+  const container = document.getElementById('activity-form-actions');
+
+  if (!addBtn) {
+    addBtn = document.querySelector('button[onclick="addActivity()"]');
+    if (addBtn) addBtn.id = 'save-activity-btn';
+  }
+
+  if (addBtn) {
+    addBtn.textContent = editingActivityId ? 'Save Changes' : 'Add Activity';
+  }
+
+  if (!container) return;
+
+  let cancelBtn = document.getElementById('cancel-edit-btn');
+
+  if (editingActivityId) {
+    if (!cancelBtn) {
+      cancelBtn = document.createElement('button');
+      cancelBtn.type = 'button';
+      cancelBtn.id = 'cancel-edit-btn';
+      cancelBtn.className = 'btn btn-secondary';
+      cancelBtn.textContent = 'Cancel Edit';
+      cancelBtn.addEventListener('click', resetActivityForm);
+      container.appendChild(cancelBtn);
+    }
+  } else if (cancelBtn) {
+    cancelBtn.remove();
+  }
 }
 
 // ---------- MAIN PAGE ----------
@@ -168,7 +225,28 @@ async function loadTripPage() {
     costsLink.href = `/costs.html?trip=${encodeURIComponent(id)}`;
   }
 
+  ensureActivityFormActions();
+  updateActivityFormButtons();
   renderAct(tr);
+}
+
+function ensureActivityFormActions() {
+  let saveBtn = document.getElementById('save-activity-btn');
+  if (!saveBtn) {
+    saveBtn = document.querySelector('button[onclick="addActivity()"]');
+    if (saveBtn) saveBtn.id = 'save-activity-btn';
+  }
+
+  if (!saveBtn) return;
+
+  let container = document.getElementById('activity-form-actions');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'activity-form-actions';
+    container.className = 'trip-nav';
+    saveBtn.parentNode.insertBefore(container, saveBtn);
+    container.appendChild(saveBtn);
+  }
 }
 
 function renderAct(tr) {
@@ -187,6 +265,26 @@ function renderAct(tr) {
   activities.forEach((a) => {
     const d = document.createElement('div');
     d.className = 'card';
+
+    const actions = document.createElement('div');
+    actions.className = 'trip-nav';
+    actions.style.margin = '12px 0 0';
+
+    const editBtn = document.createElement('button');
+    editBtn.type = 'button';
+    editBtn.className = 'btn';
+    editBtn.textContent = 'Edit';
+    editBtn.addEventListener('click', () => editActivity(a.id));
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.className = 'btn btn-secondary';
+    deleteBtn.textContent = 'Delete';
+    deleteBtn.addEventListener('click', () => deleteActivity(a.id));
+
+    actions.appendChild(editBtn);
+    actions.appendChild(deleteBtn);
+
     d.innerHTML = `
       <span class="tag ${escapeHtml(a.type)}">${escapeHtml(a.type)}</span><br>
       <div class="location-line">${escapeHtml(a.location || '')}</div>
@@ -194,17 +292,18 @@ function renderAct(tr) {
       Cost: ${Number(a.cost || 0).toFixed(2)} €<br>
       ${escapeHtml(a.notes || '')}
     `;
+
+    d.appendChild(actions);
     list.appendChild(d);
   });
 }
 
 async function addActivity() {
-  const id = getTripId();
-  const tr = trips.find((t) => String(t.id) === String(id));
+  const tr = getCurrentTrip();
   if (!tr) return;
 
-  const a = {
-    id: 'a' + Date.now(),
+  const activity = {
+    id: editingActivityId || ('a' + Date.now()),
     type: document.getElementById('type').value,
     location: document.getElementById('location').value.trim(),
     start: document.getElementById('start').value,
@@ -214,7 +313,49 @@ async function addActivity() {
   };
 
   if (!tr.activities) tr.activities = [];
-  tr.activities.push(a);
+
+  if (editingActivityId) {
+    const index = tr.activities.findIndex((a) => String(a.id) === String(editingActivityId));
+    if (index !== -1) {
+      tr.activities[index] = activity;
+    }
+  } else {
+    tr.activities.push(activity);
+  }
+
+  await saveTrips();
+  resetActivityForm();
+  await loadTripPage();
+}
+
+function editActivity(activityId) {
+  const tr = getCurrentTrip();
+  if (!tr || !Array.isArray(tr.activities)) return;
+
+  const activity = tr.activities.find((a) => String(a.id) === String(activityId));
+  if (!activity) return;
+
+  document.getElementById('type').value = activity.type || 'plane';
+  document.getElementById('location').value = activity.location || '';
+  document.getElementById('start').value = activity.start || '';
+  document.getElementById('end').value = activity.end || '';
+  document.getElementById('cost').value = activity.cost ?? '';
+  document.getElementById('notes').value = activity.notes || '';
+
+  editingActivityId = activity.id;
+  updateActivityFormButtons();
+  window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+}
+
+async function deleteActivity(activityId) {
+  const tr = getCurrentTrip();
+  if (!tr || !Array.isArray(tr.activities)) return;
+
+  tr.activities = tr.activities.filter((a) => String(a.id) !== String(activityId));
+
+  if (String(editingActivityId) === String(activityId)) {
+    resetActivityForm();
+  }
 
   await saveTrips();
   await loadTripPage();
@@ -296,3 +437,5 @@ window.loadTripPage = loadTripPage;
 window.addActivity = addActivity;
 window.loadTimeline = loadTimeline;
 window.loadCosts = loadCosts;
+window.editActivity = editActivity;
+window.deleteActivity = deleteActivity;
