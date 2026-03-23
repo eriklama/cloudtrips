@@ -122,6 +122,25 @@ function updateActivityFormButtons() {
   }
 }
 
+function ensureActivityFormActions() {
+  let saveBtn = document.getElementById('save-activity-btn');
+  if (!saveBtn) {
+    saveBtn = document.querySelector('button[onclick="addActivity()"]');
+    if (saveBtn) saveBtn.id = 'save-activity-btn';
+  }
+
+  if (!saveBtn) return;
+
+  let container = document.getElementById('activity-form-actions');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'activity-form-actions';
+    container.className = 'trip-nav';
+    saveBtn.parentNode.insertBefore(container, saveBtn);
+    container.appendChild(saveBtn);
+  }
+}
+
 // ---------- MAIN PAGE ----------
 async function loadTrips() {
   try {
@@ -156,6 +175,7 @@ function renderTrips() {
     title.textContent = t.name || 'Untitled trip';
 
     const actions = document.createElement('div');
+    actions.className = 'trip-nav';
     actions.style.marginTop = '12px';
 
     const openBtn = document.createElement('button');
@@ -164,7 +184,15 @@ function renderTrips() {
     openBtn.textContent = 'Open';
     openBtn.addEventListener('click', () => openTrip(t.id));
 
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'btn btn-secondary';
+    deleteBtn.type = 'button';
+    deleteBtn.textContent = 'Delete';
+    deleteBtn.addEventListener('click', () => deleteTrip(t.id));
+
     actions.appendChild(openBtn);
+    actions.appendChild(deleteBtn);
+
     card.appendChild(title);
     card.appendChild(actions);
     list.appendChild(card);
@@ -187,6 +215,19 @@ async function addTrip() {
   await saveTrips();
   input.value = '';
   await loadTrips();
+}
+
+async function deleteTrip(tripId) {
+  const trip = trips.find((t) => String(t.id) === String(tripId));
+  if (!trip) return;
+
+  const confirmed = confirm(`Delete trip "${trip.name}"?`);
+  if (!confirmed) return;
+
+  trips = trips.filter((t) => String(t.id) !== String(tripId));
+
+  await saveTrips();
+  renderTrips();
 }
 
 async function saveTrips() {
@@ -228,25 +269,6 @@ async function loadTripPage() {
   ensureActivityFormActions();
   updateActivityFormButtons();
   renderAct(tr);
-}
-
-function ensureActivityFormActions() {
-  let saveBtn = document.getElementById('save-activity-btn');
-  if (!saveBtn) {
-    saveBtn = document.querySelector('button[onclick="addActivity()"]');
-    if (saveBtn) saveBtn.id = 'save-activity-btn';
-  }
-
-  if (!saveBtn) return;
-
-  let container = document.getElementById('activity-form-actions');
-  if (!container) {
-    container = document.createElement('div');
-    container.id = 'activity-form-actions';
-    container.className = 'trip-nav';
-    saveBtn.parentNode.insertBefore(container, saveBtn);
-    container.appendChild(saveBtn);
-  }
 }
 
 function renderAct(tr) {
@@ -432,10 +454,11 @@ async function loadCosts() {
 // ---------- GLOBALS ----------
 window.loadTrips = loadTrips;
 window.addTrip = addTrip;
+window.deleteTrip = deleteTrip;
 window.openTrip = openTrip;
 window.loadTripPage = loadTripPage;
 window.addActivity = addActivity;
-window.loadTimeline = loadTimeline;
-window.loadCosts = loadCosts;
 window.editActivity = editActivity;
 window.deleteActivity = deleteActivity;
+window.loadTimeline = loadTimeline;
+window.loadCosts = loadCosts;
