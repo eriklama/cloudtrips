@@ -1,7 +1,5 @@
-export const onRequestGet = async ({ env }) => {
-  return new Response(JSON.stringify({
-    hasKV: !!env.TRIPS
-  }), {
+export const onRequestGet = () => {
+  return new Response(JSON.stringify({ ok: true }), {
     headers: { 'content-type': 'application/json' }
   });
 };
