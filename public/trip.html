@@ -1,38 +1,50 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Trip Itinerary</title>
-  <link rel="stylesheet" href="/styles.css">
+  <title>Trip Details</title>
+  <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
   <div class="page">
-    <a href="/index.html">← Back</a>
+    <div class="topbar">
+      <a class="btn btn-secondary" href="/index.html">← Back to Trips</a>
+    </div>
 
-    <h1 id="trip-title"></h1>
+    <h1 id="trip-title">Trip</h1>
 
+    <div class="trip-nav">
+      <a id="timeline-link" class="btn" href="#">Timeline</a>
+      <a id="costs-link" class="btn" href="#">Costs</a>
+    </div>
+
+    <h2>Activities</h2>
     <div id="activity-list"></div>
 
     <h2>Add Activity</h2>
+    <div class="form-grid">
+      <select id="type">
+        <option value="plane">Plane</option>
+        <option value="car">Car</option>
+        <option value="hike">Hike</option>
+        <option value="city">City</option>
+        <option value="accommodation">Accommodation</option>
+        <option value="other">Other</option>
+      </select>
 
-    <select id="type">
-      <option>plane</option>
-      <option>car</option>
-      <option>hike</option>
-      <option>city</option>
-      <option>accomodation</option>
-      <option>other</option>
-    </select>
+      <input id="start" type="date">
+      <input id="end" type="date">
+      <input id="cost" type="number" step="0.01" placeholder="Cost">
+      <input id="notes" type="text" placeholder="Notes">
+    </div>
 
-    <input id="start" type="datetime-local">
-    <input id="end" type="datetime-local">
-    <input id="cost" type="number" placeholder="Cost">
-    <textarea id="notes" placeholder="Notes"></textarea>
-
-    <button type="button" onclick="addActivity()">Add Activity</button>
+    <button class="btn" onclick="addActivity()">Add Activity</button>
   </div>
 
-  <script src="/script.js" defer></script>
+  <script src="/script.js"></script>
+  <script>
+    loadTripPage();
+  </script>
 </body>
 </html>
