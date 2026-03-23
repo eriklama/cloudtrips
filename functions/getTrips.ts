@@ -3,21 +3,60 @@ interface Env {
 }
 
 export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
-  const data = await env.TRIPS.get('trips');
+  try {
+    const raw = await env.TRIPS.get('trips');
 
-  let trips: unknown = [];
-  if (data) {
+    if (!raw) {
+      return new Response('[]', {
+        headers: {
+          'content-type': 'application/json; charset=UTF-8',
+          'cache-control': 'no-store'
+        }
+      });
+    }
+
+    let parsed: any;
+
     try {
-      trips = JSON.parse(data);
+      parsed = JSON.parse(raw);
     } catch {
+      // corrupted KV data → fallback
+      return new Response('[]', {
+        headers: {
+          'content-type': 'application/json; charset=UTF-8',
+          'cache-control': 'no-store'
+        }
+      });
+    }
+
+    // ✅ Support BOTH formats:
+    // 1. old: [...]
+    // 2. new: { updated, data: [...] }
+
+    let trips;
+
+    if (Array.isArray(parsed)) {
+      trips = parsed; // old format
+    } else if (parsed && Array.isArray(parsed.data)) {
+      trips = parsed.data; // new format
+    } else {
       trips = [];
     }
-  }
 
-  return new Response(JSON.stringify(trips), {
-    headers: {
-      'content-type': 'application/json; charset=UTF-8',
-      'cache-control': 'no-store'
-    }
-  });
+    return new Response(JSON.stringify(trips), {
+      headers: {
+        'content-type': 'application/json; charset=UTF-8',
+        'cache-control': 'no-store'
+      }
+    });
+
+  } catch {
+    return new Response('[]', {
+      status: 500,
+      headers: {
+        'content-type': 'application/json; charset=UTF-8',
+        'cache-control': 'no-store'
+      }
+    });
+  }
 };
