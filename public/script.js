@@ -18,6 +18,44 @@ async function fetchJson(url, options = {}) {
   return res.json();
 }
 
+// ---------- HELPERS ----------
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
+function formatDateTime(value) {
+  if (!value) return '';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return escapeHtml(value);
+
+  return d.toLocaleString([], {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+function sortByStart(a, b) {
+  const da = new Date(a.start);
+  const db = new Date(b.start);
+  return da - db;
+}
+
+function getTripId() {
+  return new URLSearchParams(location.search).get('trip');
+}
+
+function openTrip(id) {
+  location.href = `/trip.html?trip=${encodeURIComponent(id)}`;
+}
+
 // ---------- LOAD TRIPS ----------
 async function loadTrips() {
   trips = await fetchJson(API_GET);
@@ -30,11 +68,16 @@ function renderTrips() {
 
   list.innerHTML = '';
 
+  if (!trips.length) {
+    list.innerHTML = `<div class="empty-state">No trips yet.</div>`;
+    return;
+  }
+
   trips.forEach(t => {
     const d = document.createElement('div');
     d.className = 'card';
     d.innerHTML = `
-      <strong>${escapeHtml(t.name)}</strong><br>
+      <strong>${escapeHtml(t.name)}</strong><br><br>
       <button class="btn" onclick="openTrip('${t.id}')">Open</button>
     `;
     list.appendChild(d);
@@ -57,14 +100,6 @@ async function addTrip() {
   await saveTrips();
   input.value = '';
   await loadTrips();
-}
-
-function openTrip(id) {
-  location.href = `/trip.html?trip=${encodeURIComponent(id)}`;
-}
-
-function getTripId() {
-  return new URLSearchParams(location.search).get('trip');
 }
 
 async function saveTrips() {
@@ -117,13 +152,16 @@ function renderAct(tr) {
     return;
   }
 
-  tr.activities.forEach(a => {
+  const activities = [...tr.activities].sort(sortByStart);
+
+  activities.forEach(a => {
     const d = document.createElement('div');
     d.className = 'card';
     d.innerHTML = `
       <span class="tag ${escapeHtml(a.type)}">${escapeHtml(a.type)}</span><br>
-      ${escapeHtml(a.start || '')} → ${escapeHtml(a.end || '')}<br>
-      Cost: ${Number(a.cost || 0)} €<br>
+      <div class="location-line">${escapeHtml(a.location || '')}</div>
+      ${formatDateTime(a.start)} → ${formatDateTime(a.end)}<br>
+      Cost: ${Number(a.cost || 0).toFixed(2)} €<br>
       ${escapeHtml(a.notes || '')}
     `;
     list.appendChild(d);
@@ -138,6 +176,7 @@ async function addActivity() {
   const a = {
     id: 'a' + Date.now(),
     type: document.getElementById('type').value,
+    location: document.getElementById('location').value.trim(),
     start: document.getElementById('start').value,
     end: document.getElementById('end').value,
     cost: Number(document.getElementById('cost').value || 0),
@@ -162,9 +201,7 @@ async function loadTimeline() {
 
   c.innerHTML = '';
 
-  const activities = [...(tr.activities || [])].sort(
-    (a, b) => new Date(a.start) - new Date(b.start)
-  );
+  const activities = [...(tr.activities || [])].sort(sortByStart);
 
   if (activities.length === 0) {
     c.innerHTML = `<div class="empty-state">No activities yet.</div>`;
@@ -178,7 +215,8 @@ async function loadTimeline() {
       <div class="circle"></div>
       <div class="timeline-content">
         <span class="tag ${escapeHtml(a.type)}">${escapeHtml(a.type)}</span><br>
-        ${escapeHtml(a.start || '')} → ${escapeHtml(a.end || '')}<br>
+        <div class="location-line">${escapeHtml(a.location || '')}</div>
+        ${formatDateTime(a.start)} → ${formatDateTime(a.end)}<br>
         ${escapeHtml(a.notes || '')}
       </div>
     `;
@@ -198,11 +236,10 @@ async function loadCosts() {
   table.innerHTML = '';
 
   let total = 0;
-
-  const activities = tr.activities || [];
+  const activities = [...(tr.activities || [])].sort(sortByStart);
 
   if (activities.length === 0) {
-    table.innerHTML = `<tr><td colspan="2">No activities yet.</td></tr>`;
+    table.innerHTML = `<tr><td colspan="4">No activities yet.</td></tr>`;
   }
 
   activities.forEach(a => {
@@ -210,23 +247,15 @@ async function loadCosts() {
     const row = document.createElement('tr');
     row.innerHTML = `
       <td><span class="tag ${escapeHtml(a.type)}">${escapeHtml(a.type)}</span></td>
-      <td>${Number(a.cost || 0)} €</td>
+      <td>${escapeHtml(a.location || '')}</td>
+      <td>${formatDateTime(a.start)}</td>
+      <td>${Number(a.cost || 0).toFixed(2)} €</td>
     `;
     table.appendChild(row);
   });
 
   const totalEl = document.getElementById('total');
   if (totalEl) totalEl.innerText = total.toFixed(2);
-}
-
-// ---------- HELPERS ----------
-function escapeHtml(value) {
-  return String(value ?? '')
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#039;');
 }
 
 // ---------- GLOBALS ----------
