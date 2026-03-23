@@ -386,8 +386,22 @@ async function deleteActivity(activityId) {
 // ---------- TIMELINE ----------
 async function loadTimeline() {
   trips = await fetchJson(API_GET);
-  const tr = trips.find((t) => String(t.id) === String(getTripId()));
+  const tripId = getTripId();
+  const tr = trips.find((t) => String(t.id) === String(tripId));
   if (!tr) return;
+
+  const title = document.getElementById('timeline-title');
+  if (title) title.innerText = `${tr.name} Timeline`;
+
+  const tripLink = document.getElementById('timeline-trip-link');
+  if (tripLink) {
+    tripLink.href = `/trip.html?trip=${encodeURIComponent(tripId)}`;
+  }
+
+  const costsLink = document.getElementById('timeline-costs-link');
+  if (costsLink) {
+    costsLink.href = `/costs.html?trip=${encodeURIComponent(tripId)}`;
+  }
 
   const c = document.getElementById('timeline');
   if (!c) return;
@@ -420,8 +434,22 @@ async function loadTimeline() {
 // ---------- COSTS ----------
 async function loadCosts() {
   trips = await fetchJson(API_GET);
-  const tr = trips.find((t) => String(t.id) === String(getTripId()));
+  const tripId = getTripId();
+  const tr = trips.find((t) => String(t.id) === String(tripId));
   if (!tr) return;
+
+  const title = document.getElementById('costs-title');
+  if (title) title.innerText = `${tr.name} Costs`;
+
+  const tripLink = document.getElementById('costs-trip-link');
+  if (tripLink) {
+    tripLink.href = `/trip.html?trip=${encodeURIComponent(tripId)}`;
+  }
+
+  const timelineLink = document.getElementById('costs-timeline-link');
+  if (timelineLink) {
+    timelineLink.href = `/timeline.html?trip=${encodeURIComponent(tripId)}`;
+  }
 
   const table = document.getElementById('cost-table');
   if (!table) return;
