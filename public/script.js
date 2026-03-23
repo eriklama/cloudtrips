@@ -1,5 +1,5 @@
-const API_GET = '/functions/getTrips';
-const API_SAVE = '/functions/saveTrips';
+const API_GET = '/getTrips';
+const API_SAVE = '/saveTrips';
 
 let trips = [];
 
