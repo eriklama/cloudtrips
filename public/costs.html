@@ -1,21 +1,41 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Costs</title>
-  <link rel="stylesheet" href="/styles.css">
+  <title>Trip Costs</title>
+  <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
   <div class="page">
-    <a href="/index.html">← Back</a>
+    <div class="topbar">
+      <a class="btn btn-secondary" href="/index.html"><span>←</span> Back to Trips</a>
+    </div>
 
     <h1>Costs</h1>
 
-    <table id="cost-table"></table>
-    <h2>Total: <span id="total">0</span> €</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Location</th>
+          <th>Start</th>
+          <th>Cost</th>
+        </tr>
+      </thead>
+      <tbody id="cost-table"></tbody>
+      <tfoot>
+        <tr class="total-row">
+          <td colspan="3">Total</td>
+          <td><span id="total">0.00</span> €</td>
+        </tr>
+      </tfoot>
+    </table>
   </div>
 
-  <script src="/script.js" defer></script>
+  <script src="/script.js"></script>
+  <script>
+    loadCosts();
+  </script>
 </body>
 </html>
