@@ -54,6 +54,12 @@ h2 {
   background: #4b5563;
 }
 
+/* --- Activity form actions (Edit / Cancel area) --- */
+#activity-form-actions {
+  margin-top: 8px;
+  margin-bottom: 12px;
+}
+
 .btn span {
   margin-right: 6px;
 }
