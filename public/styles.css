@@ -197,7 +197,7 @@ select:focus {
 .timeline-day {
   position: relative;
   border-radius: 10px;
-  padding: 8px 10px 8px 18px; /* space for accent + dots */
+  padding: 8px 10px 8px 14px; /* extra left for accent */
   margin-bottom: 10px;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -207,11 +207,11 @@ select:focus {
 .timeline-day::before {
   content: "";
   position: absolute;
-  left: 6px;
-  top: 6px;
-  bottom: 6px;
+  left: 0;
+  top: 0;
+  bottom: 0;
   width: 4px;
-  border-radius: 4px;
+  border-radius: 10px 0 0 10px;
   background: var(--primary);
 }
 
@@ -221,7 +221,7 @@ select:focus {
 }
 
 .timeline-day.alt::before {
-  background: #059669;
+  background: #059669; /* slightly darker accent */
 }
 
 .timeline-day-header {
@@ -244,15 +244,12 @@ select:focus {
   padding-bottom: 0;
 }
 
-/* Align dot with accent bar */
 .circle {
   width: 8px;
   height: 8px;
   margin-top: 5px;
-  margin-left: -10px; /* pulls dot toward accent line */
   border-radius: 50%;
   background: var(--primary);
-  flex-shrink: 0;
 }
 
 .timeline-content {
@@ -296,6 +293,45 @@ tfoot td {
   gap: 6px;
 }
 
+/* ---------- HOVER EFFECTS ---------- */
+
+/* Activity cards */
+.activity-card {
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.activity-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.15);
+}
+
+/* Trip cards (index page) */
+.card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(16, 185, 129, 0.12);
+}
+
+/* Timeline items */
+.timeline-content {
+  transition: background 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
+}
+
+.timeline-item:hover .timeline-content {
+  background: #ecfdf5; /* soft highlight */
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(16, 185, 129, 0.12);
+}
+
+/* Slight emphasis on timeline dot */
+.timeline-item:hover .circle {
+  transform: scale(1.2);
+}
+
+/* Smooth dot animation */
+.circle {
+  transition: transform 0.12s ease;
+}
+
 /* ---------- MOBILE ---------- */
 
 @media (max-width: 640px) {
@@ -314,3 +350,4 @@ tfoot td {
     grid-template-columns: 1fr;
   }
 }
+
