@@ -53,6 +53,41 @@ function formatDateTime(value) {
   });
 }
 
+function formatTime(value) {
+  if (!value) return '';
+
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '';
+
+  return d.toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+function formatDayLabel(value) {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return escapeHtml(value);
+
+  return d.toLocaleDateString([], {
+    weekday: 'short',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+}
+
+function getDayKey(value) {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return 'unknown';
+
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
 function sortByStart(a, b) {
   const da = new Date(a.start || '');
   const db = new Date(b.start || '');
@@ -409,6 +444,61 @@ async function deleteActivity(activityId) {
 }
 
 // ---------- TIMELINE ----------
+function renderTimelineGrouped(activities) {
+  const container = document.getElementById('timeline');
+  if (!container) return;
+
+  container.innerHTML = '';
+
+  if (!activities || activities.length === 0) {
+    container.innerHTML = `<div class="empty-state">No activities yet.</div>`;
+    return;
+  }
+
+  const sorted = [...activities].sort(sortByStart);
+  const groups = {};
+
+  sorted.forEach((a) => {
+    const key = getDayKey(a.start);
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(a);
+  });
+
+  const dayKeys = Object.keys(groups).sort();
+
+  dayKeys.forEach((day, index) => {
+    const dayBlock = document.createElement('div');
+    dayBlock.className = `timeline-day${index % 2 === 1 ? ' alt' : ''}`;
+
+    const label = day === 'unknown' ? 'No date' : formatDayLabel(day);
+
+    dayBlock.innerHTML = `<div class="timeline-day-header">${escapeHtml(label)}</div>`;
+
+    groups[day].forEach((a) => {
+      const item = document.createElement('div');
+      item.className = 'timeline-item';
+
+      const timeLine = a.end
+        ? `${formatTime(a.start)} → ${formatTime(a.end)}`
+        : `${formatTime(a.start)}`;
+
+      item.innerHTML = `
+        <div class="circle"></div>
+        <div class="timeline-content">
+          <div class="tag ${escapeHtml(a.type || 'other')}">${escapeHtml(a.type || 'other')}</div>
+          <div class="location-line">${escapeHtml(a.location || '')}</div>
+          <div class="muted">${escapeHtml(timeLine || formatDateTime(a.start))}</div>
+          ${a.notes ? `<div class="muted">${escapeHtml(a.notes)}</div>` : ''}
+        </div>
+      `;
+
+      dayBlock.appendChild(item);
+    });
+
+    container.appendChild(dayBlock);
+  });
+}
+
 async function loadTimeline() {
   try {
     trips = await fetchJson(API_GET);
@@ -430,36 +520,7 @@ async function loadTimeline() {
       costsLink.href = `/costs.html?trip=${encodeURIComponent(tripId)}`;
     }
 
-    const c = document.getElementById('timeline');
-    if (!c) return;
-
-    c.innerHTML = '';
-
-    const activities = [...(tr.activities || [])].sort(sortByStart);
-
-    if (activities.length === 0) {
-      c.innerHTML = `<div class="empty-state">No activities yet.</div>`;
-      return;
-    }
-
-    activities.forEach((a) => {
-      const d = document.createElement('div');
-      d.className = 'timeline-item';
-
-      d.innerHTML = `
-        <div class="circle"></div>
-        <div class="timeline-content">
-          <div class="tag ${escapeHtml(a.type || 'other')}">${escapeHtml(a.type || 'other')}</div>
-          <div class="location-line">${escapeHtml(a.location || '')}</div>
-          <div class="muted">
-            ${formatDateTime(a.start)}${a.end ? ` → ${formatDateTime(a.end)}` : ''}
-          </div>
-          ${a.notes ? `<div class="muted">${escapeHtml(a.notes)}</div>` : ''}
-        </div>
-      `;
-
-      c.appendChild(d);
-    });
+    renderTimelineGrouped(tr.activities || []);
   } catch (e) {
     console.error('Failed to load timeline:', e);
 
