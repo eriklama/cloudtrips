@@ -1,51 +1,68 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Trip Details</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <div class="page">
+  <div class="page compact-stack">
     <div class="topbar">
-      <a class="btn btn-secondary" href="/index.html"><span>←</span> Back to Trips</a>
+      <a class="btn btn-secondary" href="/">← Back to Trips</a>
+      <div class="section-actions">
+        <a class="btn" id="timeline-link" href="#">Timeline</a>
+        <a class="btn" id="costs-link" href="#">Costs</a>
+      </div>
     </div>
 
-    <h1 id="trip-title">Trip</h1>
-
-    <div class="trip-nav">
-      <a id="timeline-link" class="btn" href="#">Timeline</a>
-      <a id="costs-link" class="btn" href="#">Costs</a>
+    <div class="section-header">
+      <h1 id="trip-title">Trip</h1>
+      <div class="section-actions">
+        <button
+          type="button"
+          onclick="document.getElementById('type').focus()"
+        >
+          + Activity
+        </button>
+      </div>
     </div>
 
-    <h2>Activities</h2>
+    <div class="section-header">
+      <h2>Activities</h2>
+    </div>
+
     <div id="activity-list"></div>
 
-    <h2>Add Activity</h2>
-    <div class="form-grid">
-      <select id="type">
-        <option value="plane">Plane</option>
-        <option value="car">Car</option>
-        <option value="hike">Hike</option>
-        <option value="city">City</option>
-        <option value="accommodation">Accommodation</option>
-        <option value="other">Other</option>
-      </select>
+    <div class="card">
+      <div class="section-header">
+        <h2>Add Activity</h2>
+        <div class="section-actions" id="activity-form-actions"></div>
+      </div>
 
-      <input id="location" type="text" placeholder="Location">
-      <input id="start" type="datetime-local">
-      <input id="end" type="datetime-local">
-      <input id="cost" type="number" step="0.01" placeholder="Cost">
-      <input id="notes" type="text" placeholder="Notes">
+      <div class="form-grid">
+        <select id="type">
+          <option value="plane">Plane</option>
+          <option value="car">Car</option>
+          <option value="hike">Hike</option>
+          <option value="city">City</option>
+          <option value="accommodation">Accommodation</option>
+          <option value="other">Other</option>
+        </select>
+
+        <input id="location" type="text" placeholder="Location" />
+        <input id="start" type="datetime-local" />
+        <input id="end" type="datetime-local" />
+        <input id="cost" type="number" step="0.01" min="0" placeholder="Cost (€)" />
+        <input id="notes" type="text" placeholder="Notes" />
+      </div>
+
+      <button id="save-activity-btn" type="button" onclick="addActivity()">
+        Add Activity
+      </button>
     </div>
-
-    <button class="btn" onclick="addActivity()">Add Activity</button>
   </div>
 
-  <script src="/script.js"></script>
-  <script>
-    loadTripPage();
-  </script>
+  <script src="/script.js" defer></script>
 </body>
 </html>
