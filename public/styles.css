@@ -2,12 +2,28 @@
   box-sizing: border-box;
 }
 
+:root {
+  --bg: #f0fdf4;
+  --surface: #ffffff;
+  --surface-soft: #f7fffa;
+  --text: #1f2937;
+  --muted: #6b7280;
+  --primary: #10b981;
+  --primary-hover: #059669;
+  --primary-soft: #d1fae5;
+  --border: #a7f3d0;
+  --shadow: 0 1px 4px rgba(16, 185, 129, 0.08);
+}
+
+html {
+  font-size: 14px;
+}
+
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #f0fdf4;
-  color: #1f2937;
-  font-size: 14px;
+  background: var(--bg);
+  color: var(--text);
   line-height: 1.3;
 }
 
@@ -17,24 +33,39 @@ body {
   padding: 10px 12px 18px;
 }
 
+.compact-stack > * + * {
+  margin-top: 8px;
+}
+
 h1,
 h2,
 h3 {
   margin: 0;
-  color: #065f46;
   line-height: 1.15;
+  color: #065f46;
 }
 
 h1 {
   font-size: 1.35rem;
+  font-weight: 700;
 }
 
 h2 {
   font-size: 1rem;
+  font-weight: 700;
+}
+
+h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
 }
 
 p {
   margin: 4px 0;
+}
+
+a {
+  color: inherit;
 }
 
 .topbar,
@@ -46,43 +77,53 @@ p {
 }
 
 .topbar {
-  margin-bottom: 8px;
+  margin-bottom: 2px;
 }
 
 .section-header {
-  margin: 10px 0 8px;
+  margin: 0;
 }
 
 .section-actions {
   display: flex;
+  align-items: center;
   gap: 6px;
   flex-wrap: wrap;
 }
 
 .btn,
 button {
+  appearance: none;
+  border: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
+  min-height: 32px;
   padding: 7px 10px;
   border-radius: 8px;
-  background: #10b981;
+  background: var(--primary);
   color: #fff;
   text-decoration: none;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  transition: all 0.15s ease;
+  font: inherit;
   font-size: 13px;
+  font-weight: 600;
   line-height: 1.1;
   white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .btn:hover,
 button:hover {
-  background: #059669;
+  background: var(--primary-hover);
   transform: translateY(-1px);
+}
+
+.btn:active,
+button:active {
+  transform: translateY(0);
 }
 
 .btn-secondary {
@@ -93,54 +134,58 @@ button:hover {
   background: #4b5563;
 }
 
-.trip-nav {
-  display: flex;
-  gap: 6px;
-  margin: 6px 0 10px;
-  flex-wrap: wrap;
+input,
+select,
+textarea,
+button {
+  font: inherit;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  min-height: 34px;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #9ca3af;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.14);
 }
 
 .form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
   gap: 6px;
-  margin-bottom: 8px;
-}
-
-input,
-select,
-button {
-  font: inherit;
-}
-
-input,
-select {
-  width: 100%;
-  padding: 7px 9px;
-  border: 1px solid #a7f3d0;
-  border-radius: 8px;
-  background: #fff;
-}
-
-input:focus,
-select:focus {
-  outline: none;
-  border-color: #10b981;
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.15);
-}
-
-#activity-form-actions {
-  margin-top: 4px;
-  margin-bottom: 8px;
 }
 
 .card {
-  background: #fff;
-  border: 1px solid #d1fae5;
+  background: var(--surface);
+  border: 1px solid var(--primary-soft);
   border-radius: 10px;
   padding: 8px 10px;
-  margin-bottom: 6px;
-  box-shadow: 0 1px 3px rgba(16, 185, 129, 0.08);
+  box-shadow: var(--shadow);
+}
+
+.empty-state {
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  color: var(--muted);
 }
 
 .card-actions {
@@ -150,12 +195,35 @@ select:focus {
   margin-top: 6px;
 }
 
-.empty-state {
-  background: #fff;
-  border: 1px dashed #a7f3d0;
-  border-radius: 10px;
-  padding: 10px;
-  color: #666;
+.trip-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.trip-card-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.trip-card-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #065f46;
+  margin-bottom: 2px;
+}
+
+.trip-card-meta {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.trip-card-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
 .tag {
@@ -204,6 +272,11 @@ select:focus {
   margin-bottom: 2px;
 }
 
+.muted {
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .timeline-item {
   position: relative;
   display: flex;
@@ -218,7 +291,7 @@ select:focus {
   top: 12px;
   bottom: -2px;
   width: 2px;
-  background: #a7f3d0;
+  background: var(--border);
 }
 
 .timeline-item:last-child::before {
@@ -230,32 +303,47 @@ select:focus {
   height: 8px;
   margin-top: 5px;
   border-radius: 50%;
-  background: #10b981;
+  background: var(--primary);
   flex-shrink: 0;
 }
 
 .timeline-content {
-  background: #fff;
-  border: 1px solid #d1fae5;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--primary-soft);
   border-radius: 10px;
   padding: 8px 9px;
-  width: 100%;
+  box-shadow: var(--shadow);
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  background: #fff;
+  background: var(--surface);
   border-radius: 10px;
   overflow: hidden;
+}
+
+thead {
+  background: var(--surface-soft);
 }
 
 th,
 td {
   padding: 8px 9px;
-  border-bottom: 1px solid #d1fae5;
+  border-bottom: 1px solid var(--primary-soft);
   text-align: left;
   vertical-align: top;
+}
+
+th {
+  font-size: 12px;
+  color: #065f46;
+}
+
+tbody tr:last-child td,
+tfoot tr:last-child td {
+  border-bottom: none;
 }
 
 tfoot td,
@@ -263,8 +351,15 @@ tfoot td,
   font-weight: 700;
 }
 
-.compact-stack > * + * {
-  margin-top: 8px;
+#trip-list,
+#activity-list,
+#timeline {
+  display: grid;
+  gap: 6px;
+}
+
+#activity-form-actions {
+  min-height: 32px;
 }
 
 @media (max-width: 640px) {
@@ -273,13 +368,14 @@ tfoot td,
   }
 
   .topbar,
-  .section-header {
+  .section-header,
+  .trip-card {
     flex-direction: column;
     align-items: stretch;
   }
 
   .section-actions,
-  .trip-nav {
+  .trip-card-actions {
     width: 100%;
   }
 
@@ -290,5 +386,20 @@ tfoot td,
 
   .form-grid {
     grid-template-columns: 1fr;
+  }
+
+  table,
+  thead,
+  tbody,
+  tfoot,
+  tr,
+  th,
+  td {
+    font-size: 13px;
+  }
+
+  th,
+  td {
+    padding: 8px;
   }
 }
