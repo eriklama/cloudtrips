@@ -1,27 +1,28 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Trip Timeline</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <div class="page">
+  <div class="page compact-stack">
     <div class="topbar">
-      <a class="btn btn-secondary" href="/index.html"><span>←</span> Back to Trips</a>
+      <a class="btn btn-secondary" href="/">← Back to Trips</a>
+      <div class="section-actions">
+        <a class="btn btn-secondary" id="timeline-trip-link" href="#">Trip</a>
+        <a class="btn" id="timeline-costs-link" href="#">Costs</a>
+      </div>
     </div>
 
-    <h1 id="timeline-title">Trip Timeline</h1>
-
-    <div class="trip-nav">
-      <a id="timeline-trip-link" class="btn" href="#">Trip</a>
-      <a id="timeline-costs-link" class="btn" href="#">Costs</a>
+    <div class="section-header">
+      <h1 id="timeline-title">Trip Timeline</h1>
     </div>
 
     <div id="timeline"></div>
   </div>
 
-  <script src="/script.js"></script>
+  <script src="/script.js" defer></script>
 </body>
 </html>
