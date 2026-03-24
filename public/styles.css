@@ -197,7 +197,7 @@ select:focus {
 .timeline-day {
   position: relative;
   border-radius: 10px;
-  padding: 8px 10px 8px 14px; /* extra left for accent */
+  padding: 8px 10px 8px 18px; /* space for accent + dots */
   margin-bottom: 10px;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -207,11 +207,11 @@ select:focus {
 .timeline-day::before {
   content: "";
   position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
+  left: 6px;
+  top: 6px;
+  bottom: 6px;
   width: 4px;
-  border-radius: 10px 0 0 10px;
+  border-radius: 4px;
   background: var(--primary);
 }
 
@@ -221,7 +221,7 @@ select:focus {
 }
 
 .timeline-day.alt::before {
-  background: #059669; /* slightly darker accent */
+  background: #059669;
 }
 
 .timeline-day-header {
@@ -244,12 +244,15 @@ select:focus {
   padding-bottom: 0;
 }
 
+/* Align dot with accent bar */
 .circle {
   width: 8px;
   height: 8px;
   margin-top: 5px;
+  margin-left: -10px; /* pulls dot toward accent line */
   border-radius: 50%;
   background: var(--primary);
+  flex-shrink: 0;
 }
 
 .timeline-content {
