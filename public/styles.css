@@ -188,6 +188,25 @@ textarea:focus {
   color: var(--muted);
 }
 
+.activity-card {
+  position: relative;
+  padding-top: 8px;
+}
+
+.activity-actions-top {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  display: flex;
+  gap: 6px;
+}
+
+.activity-actions-top .btn,
+.activity-actions-top button {
+  padding: 5px 8px;
+  font-size: 12px;
+}
+
 .card-actions {
   display: flex;
   gap: 6px;
