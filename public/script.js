@@ -35,17 +35,18 @@ function escapeHtml(value) {
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#039;');
+    .replaceAll("'", '&#39;');
 }
 
 function formatDateTime(value) {
   if (!value) return '';
+
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return escapeHtml(value);
 
   return d.toLocaleString([], {
     year: 'numeric',
-    month: 'short',
+    month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit'
@@ -124,6 +125,7 @@ function updateActivityFormButtons() {
 
 function ensureActivityFormActions() {
   let saveBtn = document.getElementById('save-activity-btn');
+
   if (!saveBtn) {
     saveBtn = document.querySelector('button[onclick="addActivity()"]');
     if (saveBtn) saveBtn.id = 'save-activity-btn';
@@ -132,10 +134,11 @@ function ensureActivityFormActions() {
   if (!saveBtn) return;
 
   let container = document.getElementById('activity-form-actions');
+
   if (!container) {
     container = document.createElement('div');
     container.id = 'activity-form-actions';
-    container.className = 'trip-nav';
+    container.className = 'section-actions';
     saveBtn.parentNode.insertBefore(container, saveBtn);
     container.appendChild(saveBtn);
   }
@@ -149,6 +152,7 @@ async function loadTrips() {
     renderTrips();
   } catch (e) {
     console.error('Failed to load trips:', e);
+
     const list = document.getElementById('trip-list');
     if (list) {
       list.innerHTML = `<div class="empty-state">Failed to load trips.</div>`;
@@ -171,30 +175,28 @@ function renderTrips() {
     const card = document.createElement('div');
     card.className = 'card';
 
-    const title = document.createElement('strong');
-    title.textContent = t.name || 'Untitled trip';
+    const activityCount = Array.isArray(t.activities) ? t.activities.length : 0;
 
-    const actions = document.createElement('div');
-    actions.className = 'trip-nav';
-    actions.style.marginTop = '12px';
+    card.innerHTML = `
+      <div class="trip-card">
+        <div class="trip-card-main">
+          <div class="trip-card-title">${escapeHtml(t.name || 'Untitled trip')}</div>
+          <div class="trip-card-meta">${activityCount} activit${activityCount === 1 ? 'y' : 'ies'}</div>
+        </div>
+        <div class="trip-card-actions">
+          <button type="button" class="btn">Open</button>
+          <button type="button" class="btn btn-secondary">Delete</button>
+        </div>
+      </div>
+    `;
 
-    const openBtn = document.createElement('button');
-    openBtn.className = 'btn';
-    openBtn.type = 'button';
-    openBtn.textContent = 'Open';
+    const buttons = card.querySelectorAll('button');
+    const openBtn = buttons[0];
+    const deleteBtn = buttons[1];
+
     openBtn.addEventListener('click', () => openTrip(t.id));
-
-    const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'btn btn-secondary';
-    deleteBtn.type = 'button';
-    deleteBtn.textContent = 'Delete';
     deleteBtn.addEventListener('click', () => deleteTrip(t.id));
 
-    actions.appendChild(openBtn);
-    actions.appendChild(deleteBtn);
-
-    card.appendChild(title);
-    card.appendChild(actions);
     list.appendChild(card);
   });
 }
@@ -225,7 +227,6 @@ async function deleteTrip(tripId) {
   if (!confirmed) return;
 
   trips = trips.filter((t) => String(t.id) !== String(tripId));
-
   await saveTrips();
   renderTrips();
 }
@@ -242,36 +243,45 @@ async function saveTrips() {
 
 // ---------- TRIP PAGE ----------
 async function loadTripPage() {
-  trips = await fetchJson(API_GET);
+  try {
+    trips = await fetchJson(API_GET);
 
-  const id = getTripId();
-  const tr = trips.find((t) => String(t.id) === String(id));
+    const id = getTripId();
+    const tr = trips.find((t) => String(t.id) === String(id));
 
-  if (!tr) {
+    if (!tr) {
+      const title = document.getElementById('trip-title');
+      if (title) title.innerText = 'Trip not found';
+      return;
+    }
+
     const title = document.getElementById('trip-title');
-    if (title) title.innerText = 'Trip not found';
-    return;
+    if (title) title.innerText = tr.name;
+
+    const timelineLink = document.getElementById('timeline-link');
+    if (timelineLink) {
+      timelineLink.href = `/timeline.html?trip=${encodeURIComponent(id)}`;
+    }
+
+    const costsLink = document.getElementById('costs-link');
+    if (costsLink) {
+      costsLink.href = `/costs.html?trip=${encodeURIComponent(id)}`;
+    }
+
+    ensureActivityFormActions();
+    updateActivityFormButtons();
+    renderActivities(tr);
+  } catch (e) {
+    console.error('Failed to load trip page:', e);
+
+    const list = document.getElementById('activity-list');
+    if (list) {
+      list.innerHTML = `<div class="empty-state">Failed to load trip.</div>`;
+    }
   }
-
-  const title = document.getElementById('trip-title');
-  if (title) title.innerText = tr.name;
-
-  const timelineLink = document.getElementById('timeline-link');
-  if (timelineLink) {
-    timelineLink.href = `/timeline.html?trip=${encodeURIComponent(id)}`;
-  }
-
-  const costsLink = document.getElementById('costs-link');
-  if (costsLink) {
-    costsLink.href = `/costs.html?trip=${encodeURIComponent(id)}`;
-  }
-
-  ensureActivityFormActions();
-  updateActivityFormButtons();
-  renderAct(tr);
 }
 
-function renderAct(tr) {
+function renderActivities(tr) {
   const list = document.getElementById('activity-list');
   if (!list) return;
 
@@ -286,36 +296,38 @@ function renderAct(tr) {
 
   activities.forEach((a) => {
     const d = document.createElement('div');
-    d.className = 'card';
+    d.className = 'card activity-card';
 
-    const actions = document.createElement('div');
-    actions.className = 'trip-nav';
-    actions.style.margin = '12px 0 0';
-
-    const editBtn = document.createElement('button');
-    editBtn.type = 'button';
-    editBtn.className = 'btn';
-    editBtn.textContent = 'Edit';
-    editBtn.addEventListener('click', () => editActivity(a.id));
-
-    const deleteBtn = document.createElement('button');
-    deleteBtn.type = 'button';
-    deleteBtn.className = 'btn btn-secondary';
-    deleteBtn.textContent = 'Delete';
-    deleteBtn.addEventListener('click', () => deleteActivity(a.id));
-
-    actions.appendChild(editBtn);
-    actions.appendChild(deleteBtn);
+    const notesHtml = a.notes
+      ? `<div class="muted">${escapeHtml(a.notes)}</div>`
+      : '';
 
     d.innerHTML = `
-      <span class="tag ${escapeHtml(a.type)}">${escapeHtml(a.type)}</span><br>
+      <div class="activity-actions-top">
+        <button type="button" class="btn">Edit</button>
+        <button type="button" class="btn btn-secondary">Delete</button>
+      </div>
+
+      <div class="tag ${escapeHtml(a.type || 'other')}">${escapeHtml(a.type || 'other')}</div>
+
       <div class="location-line">${escapeHtml(a.location || '')}</div>
-      ${formatDateTime(a.start)} → ${formatDateTime(a.end)}<br>
-      Cost: ${Number(a.cost || 0).toFixed(2)} €<br>
-      ${escapeHtml(a.notes || '')}
+
+      <div class="muted">
+        ${formatDateTime(a.start)}${a.end ? ` → ${formatDateTime(a.end)}` : ''}
+      </div>
+
+      <div class="muted">Cost: ${Number(a.cost || 0).toFixed(2)} €</div>
+
+      ${notesHtml}
     `;
 
-    d.appendChild(actions);
+    const buttons = d.querySelectorAll('button');
+    const editBtn = buttons[0];
+    const deleteBtn = buttons[1];
+
+    editBtn.addEventListener('click', () => editActivity(a.id));
+    deleteBtn.addEventListener('click', () => deleteActivity(a.id));
+
     list.appendChild(d);
   });
 }
@@ -324,14 +336,21 @@ async function addActivity() {
   const tr = getCurrentTrip();
   if (!tr) return;
 
+  const typeEl = document.getElementById('type');
+  const locationEl = document.getElementById('location');
+  const startEl = document.getElementById('start');
+  const endEl = document.getElementById('end');
+  const costEl = document.getElementById('cost');
+  const notesEl = document.getElementById('notes');
+
   const activity = {
     id: editingActivityId || ('a' + Date.now()),
-    type: document.getElementById('type').value,
-    location: document.getElementById('location').value.trim(),
-    start: document.getElementById('start').value,
-    end: document.getElementById('end').value,
-    cost: Number(document.getElementById('cost').value || 0),
-    notes: document.getElementById('notes').value.trim()
+    type: typeEl ? typeEl.value : 'plane',
+    location: locationEl ? locationEl.value.trim() : '',
+    start: startEl ? startEl.value : '',
+    end: endEl ? endEl.value : '',
+    cost: Number(costEl ? costEl.value || 0 : 0),
+    notes: notesEl ? notesEl.value.trim() : ''
   };
 
   if (!tr.activities) tr.activities = [];
@@ -366,7 +385,13 @@ function editActivity(activityId) {
 
   editingActivityId = activity.id;
   updateActivityFormButtons();
-  window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+
+  const formCard = document.getElementById('save-activity-btn')?.closest('.card');
+  if (formCard) {
+    formCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } else {
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  }
 }
 
 async function deleteActivity(activityId) {
@@ -385,98 +410,124 @@ async function deleteActivity(activityId) {
 
 // ---------- TIMELINE ----------
 async function loadTimeline() {
-  trips = await fetchJson(API_GET);
-  const tripId = getTripId();
-  const tr = trips.find((t) => String(t.id) === String(tripId));
-  if (!tr) return;
+  try {
+    trips = await fetchJson(API_GET);
 
-  const title = document.getElementById('timeline-title');
-  if (title) title.innerText = `${tr.name} Timeline`;
+    const tripId = getTripId();
+    const tr = trips.find((t) => String(t.id) === String(tripId));
+    if (!tr) return;
 
-  const tripLink = document.getElementById('timeline-trip-link');
-  if (tripLink) {
-    tripLink.href = `/trip.html?trip=${encodeURIComponent(tripId)}`;
+    const title = document.getElementById('timeline-title');
+    if (title) title.innerText = `${tr.name} Timeline`;
+
+    const tripLink = document.getElementById('timeline-trip-link');
+    if (tripLink) {
+      tripLink.href = `/trip.html?trip=${encodeURIComponent(tripId)}`;
+    }
+
+    const costsLink = document.getElementById('timeline-costs-link');
+    if (costsLink) {
+      costsLink.href = `/costs.html?trip=${encodeURIComponent(tripId)}`;
+    }
+
+    const c = document.getElementById('timeline');
+    if (!c) return;
+
+    c.innerHTML = '';
+
+    const activities = [...(tr.activities || [])].sort(sortByStart);
+
+    if (activities.length === 0) {
+      c.innerHTML = `<div class="empty-state">No activities yet.</div>`;
+      return;
+    }
+
+    activities.forEach((a) => {
+      const d = document.createElement('div');
+      d.className = 'timeline-item';
+
+      d.innerHTML = `
+        <div class="circle"></div>
+        <div class="timeline-content">
+          <div class="tag ${escapeHtml(a.type || 'other')}">${escapeHtml(a.type || 'other')}</div>
+          <div class="location-line">${escapeHtml(a.location || '')}</div>
+          <div class="muted">
+            ${formatDateTime(a.start)}${a.end ? ` → ${formatDateTime(a.end)}` : ''}
+          </div>
+          ${a.notes ? `<div class="muted">${escapeHtml(a.notes)}</div>` : ''}
+        </div>
+      `;
+
+      c.appendChild(d);
+    });
+  } catch (e) {
+    console.error('Failed to load timeline:', e);
+
+    const c = document.getElementById('timeline');
+    if (c) {
+      c.innerHTML = `<div class="empty-state">Failed to load timeline.</div>`;
+    }
   }
-
-  const costsLink = document.getElementById('timeline-costs-link');
-  if (costsLink) {
-    costsLink.href = `/costs.html?trip=${encodeURIComponent(tripId)}`;
-  }
-
-  const c = document.getElementById('timeline');
-  if (!c) return;
-
-  c.innerHTML = '';
-
-  const activities = [...(tr.activities || [])].sort(sortByStart);
-
-  if (activities.length === 0) {
-    c.innerHTML = `<div class="empty-state">No activities yet.</div>`;
-    return;
-  }
-
-  activities.forEach((a) => {
-    const d = document.createElement('div');
-    d.className = 'timeline-item';
-    d.innerHTML = `
-      <div class="circle"></div>
-      <div class="timeline-content">
-        <span class="tag ${escapeHtml(a.type)}">${escapeHtml(a.type)}</span><br>
-        <div class="location-line">${escapeHtml(a.location || '')}</div>
-        ${formatDateTime(a.start)} → ${formatDateTime(a.end)}<br>
-        ${escapeHtml(a.notes || '')}
-      </div>
-    `;
-    c.appendChild(d);
-  });
 }
 
 // ---------- COSTS ----------
 async function loadCosts() {
-  trips = await fetchJson(API_GET);
-  const tripId = getTripId();
-  const tr = trips.find((t) => String(t.id) === String(tripId));
-  if (!tr) return;
+  try {
+    trips = await fetchJson(API_GET);
 
-  const title = document.getElementById('costs-title');
-  if (title) title.innerText = `${tr.name} Costs`;
+    const tripId = getTripId();
+    const tr = trips.find((t) => String(t.id) === String(tripId));
+    if (!tr) return;
 
-  const tripLink = document.getElementById('costs-trip-link');
-  if (tripLink) {
-    tripLink.href = `/trip.html?trip=${encodeURIComponent(tripId)}`;
+    const title = document.getElementById('costs-title');
+    if (title) title.innerText = `${tr.name} Costs`;
+
+    const tripLink = document.getElementById('costs-trip-link');
+    if (tripLink) {
+      tripLink.href = `/trip.html?trip=${encodeURIComponent(tripId)}`;
+    }
+
+    const timelineLink = document.getElementById('costs-timeline-link');
+    if (timelineLink) {
+      timelineLink.href = `/timeline.html?trip=${encodeURIComponent(tripId)}`;
+    }
+
+    const table = document.getElementById('cost-table');
+    if (!table) return;
+
+    table.innerHTML = '';
+
+    let total = 0;
+    const activities = [...(tr.activities || [])].sort(sortByStart);
+
+    if (activities.length === 0) {
+      table.innerHTML = `<tr><td colspan="4">No activities yet.</td></tr>`;
+    }
+
+    activities.forEach((a) => {
+      total += Number(a.cost || 0);
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${escapeHtml(a.type || '')}</td>
+        <td>${escapeHtml(a.location || '')}</td>
+        <td>${formatDateTime(a.start)}</td>
+        <td>${Number(a.cost || 0).toFixed(2)} €</td>
+      `;
+
+      table.appendChild(row);
+    });
+
+    const totalEl = document.getElementById('total');
+    if (totalEl) totalEl.innerText = total.toFixed(2);
+  } catch (e) {
+    console.error('Failed to load costs:', e);
+
+    const table = document.getElementById('cost-table');
+    if (table) {
+      table.innerHTML = `<tr><td colspan="4">Failed to load costs.</td></tr>`;
+    }
   }
-
-  const timelineLink = document.getElementById('costs-timeline-link');
-  if (timelineLink) {
-    timelineLink.href = `/timeline.html?trip=${encodeURIComponent(tripId)}`;
-  }
-
-  const table = document.getElementById('cost-table');
-  if (!table) return;
-
-  table.innerHTML = '';
-
-  let total = 0;
-  const activities = [...(tr.activities || [])].sort(sortByStart);
-
-  if (activities.length === 0) {
-    table.innerHTML = `<tr><td colspan="4">No activities yet.</td></tr>`;
-  }
-
-  activities.forEach((a) => {
-    total += Number(a.cost || 0);
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td><span class="tag ${escapeHtml(a.type)}">${escapeHtml(a.type)}</span></td>
-      <td>${escapeHtml(a.location || '')}</td>
-      <td>${formatDateTime(a.start)}</td>
-      <td>${Number(a.cost || 0).toFixed(2)} €</td>
-    `;
-    table.appendChild(row);
-  });
-
-  const totalEl = document.getElementById('total');
-  if (totalEl) totalEl.innerText = total.toFixed(2);
 }
 
 // ---------- GLOBALS ----------
