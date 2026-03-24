@@ -1,43 +1,46 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Trip Costs</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <div class="page">
+  <div class="page compact-stack">
     <div class="topbar">
-      <a class="btn btn-secondary" href="/index.html"><span>←</span> Back to Trips</a>
+      <a class="btn btn-secondary" href="/">← Back to Trips</a>
+      <div class="section-actions">
+        <a class="btn btn-secondary" id="costs-trip-link" href="#">Trip</a>
+        <a class="btn" id="costs-timeline-link" href="#">Timeline</a>
+      </div>
     </div>
 
-    <h1 id="costs-title">Trip Costs</h1>
-
-    <div class="trip-nav">
-      <a id="costs-trip-link" class="btn" href="#">Trip</a>
-      <a id="costs-timeline-link" class="btn" href="#">Timeline</a>
+    <div class="section-header">
+      <h1 id="costs-title">Trip Costs</h1>
     </div>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Location</th>
-          <th>Start</th>
-          <th>Cost</th>
-        </tr>
-      </thead>
-      <tbody id="cost-table"></tbody>
-      <tfoot>
-        <tr class="total-row">
-          <td colspan="3">Total</td>
-          <td><span id="total">0.00</span> €</td>
-        </tr>
-      </tfoot>
-    </table>
+    <div class="card">
+      <table>
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Location</th>
+            <th>Start</th>
+            <th>Cost</th>
+          </tr>
+        </thead>
+        <tbody id="cost-table"></tbody>
+        <tfoot>
+          <tr class="total-row">
+            <td colspan="3">Total</td>
+            <td><span id="total">0.00</span> €</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
   </div>
 
-  <script src="/script.js"></script>
+  <script src="/script.js" defer></script>
 </body>
 </html>
