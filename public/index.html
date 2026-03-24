@@ -1,25 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Trips</title>
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <div class="page">
-    <h1>My Trips</h1>
+  <div class="page compact-stack">
+    <div class="section-header">
+      <h1>My Trips</h1>
+      <div class="section-actions">
+        <button type="button" onclick="document.getElementById('newTripName').focus()">
+          + New Trip
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-header">
+        <h2>Add Trip</h2>
+      </div>
+      <div class="form-grid">
+        <input id="newTripName" placeholder="Trip Name" />
+        <button type="button" onclick="addTrip()">Add Trip</button>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <h2>Planned Trips</h2>
+    </div>
 
     <div id="trip-list"></div>
-
-    <h2>Add Trip</h2>
-    <input id="newTripName" placeholder="Trip Name">
-    <button type="button" class="btn" onclick="addTrip()">Add Trip</button>
   </div>
 
   <script src="/script.js" defer></script>
-  <script>
-    loadTrips();
-  </script>
 </body>
 </html>
