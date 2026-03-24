@@ -7,31 +7,50 @@ body {
   font-family: Arial, sans-serif;
   background: #f0fdf4;
   color: #1f2937;
+  font-size: 15px;
+  line-height: 1.35;
 }
 
 .page {
   max-width: 900px;
   margin: 0 auto;
-  padding: 24px 16px 48px;
+  padding: 14px 14px 24px;
 }
 
 h1,
-h2 {
+h2,
+h3 {
   margin-top: 0;
+  margin-bottom: 10px;
   color: #065f46;
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: 1.5rem;
+}
+
+h2 {
+  font-size: 1.1rem;
+}
+
+p {
+  margin: 6px 0;
 }
 
 .topbar {
-  margin-bottom: 16px;
+  margin-bottom: 10px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
 }
 
-.btn {
+.btn,
+button {
   display: inline-block;
-  padding: 10px 16px;
-  border-radius: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
   background: #10b981;
   color: #fff;
   text-decoration: none;
@@ -39,9 +58,11 @@ h2 {
   border: none;
   cursor: pointer;
   transition: all 0.15s ease;
+  font-size: 14px;
 }
 
-.btn:hover {
+.btn:hover,
+button:hover {
   background: #059669;
   transform: translateY(-1px);
 }
@@ -54,28 +75,27 @@ h2 {
   background: #4b5563;
 }
 
-/* --- Activity form actions (Edit / Cancel area) --- */
-#activity-form-actions {
-  margin-top: 8px;
-  margin-bottom: 12px;
+.btn span {
+  margin-right: 4px;
 }
 
-.btn span {
-  margin-right: 6px;
+#activity-form-actions {
+  margin-top: 6px;
+  margin-bottom: 8px;
 }
 
 .trip-nav {
   display: flex;
-  gap: 12px;
-  margin: 12px 0 24px;
+  gap: 8px;
+  margin: 8px 0 14px;
   flex-wrap: wrap;
 }
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
 }
 
 input,
@@ -87,7 +107,7 @@ button {
 input,
 select {
   width: 100%;
-  padding: 10px 12px;
+  padding: 8px 10px;
   border: 1px solid #a7f3d0;
   border-radius: 8px;
   background: #fff;
@@ -100,49 +120,31 @@ select:focus {
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
 }
 
-button {
-  display: inline-block;
-  padding: 10px 16px;
-  border-radius: 10px;
-  background: #10b981;
-  color: #fff;
-  text-decoration: none;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-button:hover {
-  background: #059669;
-  transform: translateY(-1px);
-}
-
 .card {
   background: #fff;
   border: 1px solid #d1fae5;
-  border-radius: 12px;
-  padding: 14px;
-  margin-bottom: 12px;
-  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.08);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  box-shadow: 0 1px 4px rgba(16, 185, 129, 0.08);
 }
 
 .empty-state {
   background: #fff;
   border: 1px dashed #a7f3d0;
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 10px;
+  padding: 12px;
   color: #666;
 }
 
 .tag {
   display: inline-block;
-  padding: 4px 8px;
+  padding: 3px 7px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   text-transform: capitalize;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .tag.plane {
@@ -178,22 +180,22 @@ button:hover {
 .location-line {
   font-weight: 600;
   color: #065f46;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .timeline-item {
   position: relative;
   display: flex;
-  gap: 14px;
-  padding: 0 0 20px 10px;
+  gap: 10px;
+  padding: 0 0 12px 6px;
 }
 
 .timeline-item::before {
   content: "";
   position: absolute;
-  left: 16px;
-  top: 18px;
-  bottom: -4px;
+  left: 11px;
+  top: 14px;
+  bottom: -2px;
   width: 2px;
   background: #a7f3d0;
 }
@@ -203,9 +205,9 @@ button:hover {
 }
 
 .circle {
-  width: 14px;
-  height: 14px;
-  margin-top: 4px;
+  width: 10px;
+  height: 10px;
+  margin-top: 5px;
   border-radius: 50%;
   background: #10b981;
   flex-shrink: 0;
@@ -214,8 +216,8 @@ button:hover {
 .timeline-content {
   background: #fff;
   border: 1px solid #d1fae5;
-  border-radius: 12px;
-  padding: 12px;
+  border-radius: 10px;
+  padding: 9px 10px;
   width: 100%;
 }
 
@@ -223,15 +225,16 @@ table {
   width: 100%;
   border-collapse: collapse;
   background: #fff;
-  border-radius: 12px;
+  border-radius: 10px;
   overflow: hidden;
 }
 
 th,
 td {
-  padding: 12px;
+  padding: 9px 10px;
   border-bottom: 1px solid #d1fae5;
   text-align: left;
+  vertical-align: top;
 }
 
 tfoot td,
@@ -240,23 +243,38 @@ tfoot td,
 }
 
 @media (max-width: 640px) {
+  body {
+    font-size: 14px;
+  }
+
   .page {
-    padding: 16px 12px 36px;
+    padding: 12px 10px 20px;
   }
 
   .topbar {
     flex-direction: column;
     align-items: stretch;
-    gap: 10px;
+    gap: 8px;
   }
 
   .trip-nav {
     flex-direction: column;
+    gap: 6px;
+    margin-bottom: 10px;
   }
 
   .btn,
   button {
     width: 100%;
     text-align: center;
+  }
+
+  .form-grid {
+    gap: 6px;
+  }
+
+  th,
+  td {
+    padding: 8px;
   }
 }
