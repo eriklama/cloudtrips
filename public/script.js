@@ -479,8 +479,8 @@ function renderTimelineGrouped(activities) {
       item.className = 'timeline-item';
 
       const timeLine = a.end
-        ? `${formatTime(a.start)} → ${formatTime(a.end)}`
-        : `${formatTime(a.start)}`;
+        ? `${formatDateTime(a.start)} → ${formatDateTime(a.end)}`
+        : `${formatDateTime(a.start)}`;
 
       item.innerHTML = `
         <div class="circle"></div>
