@@ -8,21 +8,53 @@
 </head>
 <body>
   <div class="page compact-stack">
+
+    <!-- TOP BAR -->
     <div class="topbar">
       <a class="btn btn-secondary" href="/">← Back to Trips</a>
+
       <div class="section-actions">
-        <a class="btn btn-secondary" id="timeline-trip-link" href="#">Trip</a>
-        <a class="btn" id="timeline-costs-link" href="#">Costs</a>
+        <a class="btn btn-secondary" id="timeline-trip-link">Trip</a>
+        <a class="btn" id="timeline-costs-link">Costs</a>
       </div>
     </div>
 
+    <!-- TITLE -->
     <div class="section-header">
       <h1 id="timeline-title">Trip Timeline</h1>
     </div>
 
+    <!-- CONTENT -->
     <div id="timeline"></div>
+
   </div>
 
   <script src="/script.js" defer></script>
+
+  <!-- 🔗 NAVIGATION FIX -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const tripId = params.get('trip');
+
+      if (!tripId) {
+        alert('Missing trip ID');
+        return;
+      }
+
+      // Set navigation links
+      const tripLink = document.getElementById('timeline-trip-link');
+      const costsLink = document.getElementById('timeline-costs-link');
+
+      if (tripLink) {
+        tripLink.href = `/trip.html?trip=${tripId}`;
+      }
+
+      if (costsLink) {
+        costsLink.href = `/costs.html?trip=${tripId}`;
+      }
+    });
+  </script>
+
 </body>
 </html>
