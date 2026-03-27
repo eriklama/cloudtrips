@@ -211,19 +211,29 @@ async function fetchTrip(tripId) {
   let pin = getTripPin(tripId);
   if (!pin) return null;
 
-  try {
-    return await fetchJson(`${API_GET_TRIP}?trip=${tripId}`, {
-      headers: { 'x-pin': pin }
+  const fetchWithPin = async (pinValue) => {
+    const trip = await fetchJson(`${API_GET_TRIP}?trip=${tripId}`, {
+      headers: { 'x-pin': pinValue }
     });
+
+    // ✅ normalize
+    trip.activities = (trip.activities || []).map(a => ({
+      ...a,
+      cost: Number(a.cost || 0),
+      km: Number(a.km || 0)
+    }));
+
+    return trip;
+  };
+
+  try {
+    return await fetchWithPin(pin);
   } catch (err) {
     if (err.status === 401) {
       clearStoredTripPin(tripId);
-      pin = promptTripPin(tripId);
-      if (!pin) return null;
-
-      return fetchJson(`${API_GET_TRIP}?trip=${tripId}`, {
-        headers: { 'x-pin': pin }
-      });
+      const newPin = promptTripPin(tripId);
+      if (!newPin) return null;
+      return fetchWithPin(newPin);
     }
     throw err;
   }
@@ -266,8 +276,13 @@ function renderActivities() {
 
       <div class="tag ${a.type}">${a.type}</div>
       <div class="location-line">${escapeHtml(a.location)}</div>
+
       <div class="muted">
         ${formatDateTime(a.start)} → ${formatDateTime(a.end)}
+      </div>
+
+      <div class="muted">
+        ${(a.cost || 0)} € • ${(a.km || 0)} km
       </div>
     `;
 
@@ -283,6 +298,7 @@ async function addActivity() {
     start: document.getElementById('start').value,
     end: document.getElementById('end').value,
     cost: Number(document.getElementById('cost').value || 0),
+    km: Number(document.getElementById('km').value || 0),
     notes: document.getElementById('notes').value
   };
 
@@ -308,6 +324,7 @@ function editActivity(id) {
   document.getElementById('start').value = a.start;
   document.getElementById('end').value = a.end;
   document.getElementById('cost').value = a.cost;
+  document.getElementById('km').value = a.km || 0;
   document.getElementById('notes').value = a.notes;
 
   editingActivityId = id;
@@ -371,6 +388,9 @@ function renderTimelineGrouped(activities) {
             <div class="muted">
               ${formatDateTime(a.start)} → ${formatDateTime(a.end)}
             </div>
+            <div class="muted">
+              ${(a.km || 0)} km
+            </div>
           </div>
         </div>
       `;
@@ -390,23 +410,34 @@ async function loadCosts() {
   const table = document.getElementById('cost-table');
   table.innerHTML = '';
 
-  let total = 0;
+  let totalCost = 0;
+  let totalKm = 0;
 
   currentTrip.activities.forEach(a => {
-    total += a.cost || 0;
+    const cost = Number(a.cost || 0);
+    const km = Number(a.km || 0);
+
+    totalCost += cost;
+    totalKm += km;
 
     table.innerHTML += `
       <tr>
         <td>${a.type}</td>
         <td>${escapeHtml(a.location)}</td>
         <td>${formatDateTime(a.start)}</td>
-        <td>${a.cost.toFixed(2)} €</td>
+        <td>${cost.toFixed(2)} €</td>
+        <td>${km.toFixed(1)} km</td>
       </tr>
     `;
   });
 
-  document.getElementById('total').innerText = total.toFixed(2);
+  document.getElementById('total').innerText = totalCost.toFixed(2);
+
+  const kmEl = document.getElementById('total-km');
+  if (kmEl) kmEl.innerText = totalKm.toFixed(1);
 }
+
+/* ---------- NAV ---------- */
 
 function openTimeline() {
   const id = getTripId();
