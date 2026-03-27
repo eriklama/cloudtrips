@@ -54,6 +54,11 @@ async function fetchJson(url, options = {}) {
   if (!res.ok) {
     const err = new Error(`HTTP ${res.status}`);
     err.status = res.status;
+    try {
+      err.body = await res.text();
+    } catch {
+      err.body = '';
+    }
     throw err;
   }
 
@@ -110,6 +115,40 @@ function openTrip(id) {
   location.href = `/trip.html?trip=${id}`;
 }
 
+function normalizeTrip(trip) {
+  return {
+    ...trip,
+    activities: (trip.activities || []).map((a) => ({
+      ...a,
+      cost: Number(a.cost || 0),
+      km: Number(a.km || 0),
+      notes: a.notes || ''
+    }))
+  };
+}
+
+function resetActivityForm() {
+  const formDefaults = {
+    type: 'plane',
+    location: '',
+    start: '',
+    end: '',
+    cost: '',
+    km: '',
+    notes: ''
+  };
+
+  Object.entries(formDefaults).forEach(([id, value]) => {
+    const el = document.getElementById(id);
+    if (el) el.value = value;
+  });
+
+  editingActivityId = null;
+
+  const saveBtn = document.getElementById('save-activity-btn');
+  if (saveBtn) saveBtn.innerText = 'Add Activity';
+}
+
 /* ---------- TRIPS ---------- */
 
 async function loadTrips() {
@@ -119,6 +158,8 @@ async function loadTrips() {
 
 function renderTrips() {
   const list = document.getElementById('trip-list');
+  if (!list) return;
+
   list.innerHTML = '';
 
   if (!trips.length) {
@@ -126,7 +167,7 @@ function renderTrips() {
     return;
   }
 
-  trips.forEach(t => {
+  trips.forEach((t) => {
     const hasPin = !!getStoredTripPin(t.id);
 
     const div = document.createElement('div');
@@ -154,7 +195,7 @@ async function addTrip() {
   const pin = document.getElementById('newTripPin').value.trim();
 
   if (!name || !pin) {
-    alert("Name + PIN required");
+    alert('Name + PIN required');
     return;
   }
 
@@ -175,13 +216,13 @@ async function addTrip() {
   document.getElementById('newTripName').value = '';
   document.getElementById('newTripPin').value = '';
 
-  loadTrips();
+  await loadTrips();
 }
 
 /* ---------- DELETE TRIP ---------- */
 
 async function deleteTrip(tripId) {
-  if (!confirm("Delete this trip?")) return;
+  if (!confirm('Delete this trip?')) return;
 
   let pin = getTripPin(tripId);
   if (!pin) return;
@@ -193,14 +234,14 @@ async function deleteTrip(tripId) {
     });
 
     clearStoredTripPin(tripId);
-    loadTrips();
-
+    await loadTrips();
   } catch (err) {
     if (err.status === 401) {
       clearStoredTripPin(tripId);
-      alert("Wrong PIN");
+      alert('Wrong PIN');
     } else {
-      alert("Delete failed");
+      console.error('Delete failed', err);
+      alert('Delete failed');
     }
   }
 }
@@ -216,14 +257,7 @@ async function fetchTrip(tripId) {
       headers: { 'x-pin': pinValue }
     });
 
-    // ✅ normalize
-    trip.activities = (trip.activities || []).map(a => ({
-      ...a,
-      cost: Number(a.cost || 0),
-      km: Number(a.km || 0)
-    }));
-
-    return trip;
+    return normalizeTrip(trip);
   };
 
   try {
@@ -231,9 +265,9 @@ async function fetchTrip(tripId) {
   } catch (err) {
     if (err.status === 401) {
       clearStoredTripPin(tripId);
-      const newPin = promptTripPin(tripId);
-      if (!newPin) return null;
-      return fetchWithPin(newPin);
+      pin = promptTripPin(tripId);
+      if (!pin) return null;
+      return fetchWithPin(pin);
     }
     throw err;
   }
@@ -249,7 +283,6 @@ async function loadTripPage() {
   if (!currentTrip) return;
 
   document.getElementById('trip-title').innerText = currentTrip.name;
-
   renderActivities();
 }
 
@@ -257,6 +290,8 @@ async function loadTripPage() {
 
 function renderActivities() {
   const list = document.getElementById('activity-list');
+  if (!list || !currentTrip) return;
+
   list.innerHTML = '';
 
   if (!currentTrip.activities.length) {
@@ -264,7 +299,7 @@ function renderActivities() {
     return;
   }
 
-  currentTrip.activities.sort(sortByStart).forEach(a => {
+  currentTrip.activities.sort(sortByStart).forEach((a) => {
     const div = document.createElement('div');
     div.className = 'card activity-card';
 
@@ -276,13 +311,11 @@ function renderActivities() {
 
       <div class="tag ${a.type}">${a.type}</div>
       <div class="location-line">${escapeHtml(a.location)}</div>
-
       <div class="muted">
         ${formatDateTime(a.start)} → ${formatDateTime(a.end)}
       </div>
-
       <div class="muted">
-        ${(a.cost || 0)} € • ${(a.km || 0)} km
+        ${Number(a.cost || 0).toFixed(2)} € • ${Number(a.km || 0).toFixed(1)} km
       </div>
     `;
 
@@ -291,6 +324,11 @@ function renderActivities() {
 }
 
 async function addActivity() {
+  if (!currentTrip) {
+    alert('Trip not loaded');
+    return;
+  }
+
   const a = {
     id: editingActivityId || Date.now().toString(),
     type: document.getElementById('type').value,
@@ -303,21 +341,24 @@ async function addActivity() {
   };
 
   if (editingActivityId) {
-    const i = currentTrip.activities.findIndex(x => x.id === editingActivityId);
-    currentTrip.activities[i] = a;
+    const i = currentTrip.activities.findIndex((x) => x.id === editingActivityId);
+    if (i >= 0) currentTrip.activities[i] = a;
   } else {
     currentTrip.activities.push(a);
   }
 
-  editingActivityId = null;
+  const saved = await saveTrip();
+  if (!saved) return;
 
-  await saveTrip();
-currentTrip = await fetchTrip(currentTrip.id);
-renderActivities();
+  currentTrip = await fetchTrip(currentTrip.id);
+  renderActivities();
+  resetActivityForm();
 }
 
 function editActivity(id) {
-  const a = currentTrip.activities.find(x => x.id === id);
+  if (!currentTrip) return;
+
+  const a = currentTrip.activities.find((x) => x.id === id);
   if (!a) return;
 
   document.getElementById('type').value = a.type;
@@ -329,23 +370,36 @@ function editActivity(id) {
   document.getElementById('notes').value = a.notes;
 
   editingActivityId = id;
+
+  const saveBtn = document.getElementById('save-activity-btn');
+  if (saveBtn) saveBtn.innerText = 'Save Activity';
 }
 
 async function deleteActivity(id) {
-  currentTrip.activities = currentTrip.activities.filter(a => a.id !== id);
-  await saveTrip();
-  loadTripPage();
+  if (!currentTrip) return;
+
+  currentTrip.activities = currentTrip.activities.filter((a) => a.id !== id);
+
+  const saved = await saveTrip();
+  if (!saved) return;
+
+  currentTrip = await fetchTrip(currentTrip.id);
+  renderActivities();
+  resetActivityForm();
 }
 
 /* ---------- SAVE ---------- */
 
 async function saveTrip() {
-  let pin = getTripPin(currentTrip.id);
+  if (!currentTrip) return false;
 
+  let pin = getTripPin(currentTrip.id);
   if (!pin) {
-    alert("PIN required to save");
-    return;
+    alert('PIN required to save');
+    return false;
   }
+
+  const payload = normalizeTrip(currentTrip);
 
   try {
     await fetchJson(`${API_SAVE_TRIP}?trip=${currentTrip.id}`, {
@@ -354,16 +408,19 @@ async function saveTrip() {
         'Content-Type': 'application/json',
         'x-pin': pin
       },
-      body: JSON.stringify(currentTrip)
+      body: JSON.stringify(payload)
     });
 
+    return true;
   } catch (err) {
     if (err.status === 401) {
       clearStoredTripPin(currentTrip.id);
-      alert("Wrong PIN");
+      alert('Wrong PIN');
     } else {
-      alert("Save failed");
+      console.error('Save failed', err);
+      alert('Save failed');
     }
+    return false;
   }
 }
 
@@ -379,23 +436,25 @@ async function loadTimeline() {
 
 function renderTimelineGrouped(activities) {
   const container = document.getElementById('timeline');
+  if (!container) return;
+
   container.innerHTML = '';
 
   const groups = {};
 
-  activities.forEach(a => {
+  activities.forEach((a) => {
     const key = getDayKey(a.start);
     if (!groups[key]) groups[key] = [];
     groups[key].push(a);
   });
 
-  Object.keys(groups).forEach((day, i) => {
+  Object.keys(groups).sort().forEach((day, i) => {
     const div = document.createElement('div');
     div.className = `timeline-day ${i % 2 ? 'alt' : ''}`;
 
     div.innerHTML = `<div class="timeline-day-header">${formatDayLabel(day)}</div>`;
 
-    groups[day].forEach(a => {
+    groups[day].sort(sortByStart).forEach((a) => {
       div.innerHTML += `
         <div class="timeline-item">
           <div class="circle"></div>
@@ -405,7 +464,7 @@ function renderTimelineGrouped(activities) {
               ${formatDateTime(a.start)} → ${formatDateTime(a.end)}
             </div>
             <div class="muted">
-              ${(a.km || 0)} km
+              ${Number(a.cost || 0).toFixed(2)} € • ${Number(a.km || 0).toFixed(1)} km
             </div>
           </div>
         </div>
@@ -424,12 +483,14 @@ async function loadCosts() {
   if (!currentTrip) return;
 
   const table = document.getElementById('cost-table');
+  if (!table) return;
+
   table.innerHTML = '';
 
   let totalCost = 0;
   let totalKm = 0;
 
-  currentTrip.activities.forEach(a => {
+  currentTrip.activities.forEach((a) => {
     const cost = Number(a.cost || 0);
     const km = Number(a.km || 0);
 
@@ -438,7 +499,7 @@ async function loadCosts() {
 
     table.innerHTML += `
       <tr>
-        <td>${a.type}</td>
+        <td>${escapeHtml(a.type)}</td>
         <td>${escapeHtml(a.location)}</td>
         <td>${formatDateTime(a.start)}</td>
         <td>${cost.toFixed(2)} €</td>
