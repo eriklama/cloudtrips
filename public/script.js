@@ -312,7 +312,8 @@ async function addActivity() {
   editingActivityId = null;
 
   await saveTrip();
-  loadTripPage();
+currentTrip = await fetchTrip(currentTrip.id);
+renderActivities();
 }
 
 function editActivity(id) {
