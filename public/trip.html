@@ -8,16 +8,21 @@
 </head>
 <body>
   <div class="page compact-stack">
+
+    <!-- TOP BAR -->
     <div class="topbar">
       <a class="btn btn-secondary" href="/">← Back to Trips</a>
+
       <div class="section-actions">
-        <a class="btn" id="timeline-link" href="#">Timeline</a>
-        <a class="btn" id="costs-link" href="#">Costs</a>
+        <a class="btn" id="timeline-link">Timeline</a>
+        <a class="btn" id="costs-link">Costs</a>
       </div>
     </div>
 
+    <!-- TITLE -->
     <div class="section-header">
       <h1 id="trip-title">Trip</h1>
+
       <div class="section-actions">
         <button
           type="button"
@@ -28,12 +33,14 @@
       </div>
     </div>
 
+    <!-- ACTIVITIES -->
     <div class="section-header">
       <h2>Activities</h2>
     </div>
 
     <div id="activity-list"></div>
 
+    <!-- ADD / EDIT ACTIVITY -->
     <div class="card">
       <div class="section-header">
         <h2>Add Activity</h2>
@@ -41,6 +48,7 @@
       </div>
 
       <div class="form-grid">
+
         <select id="type">
           <option value="plane">Plane</option>
           <option value="car">Car</option>
@@ -51,9 +59,27 @@
         </select>
 
         <input id="location" type="text" placeholder="Location" />
+
         <input id="start" type="datetime-local" />
         <input id="end" type="datetime-local" />
-        <input id="cost" type="number" step="0.01" min="0" placeholder="Cost (€)" />
+
+        <input 
+          id="cost" 
+          type="number" 
+          step="0.01" 
+          min="0" 
+          placeholder="Cost (€)" 
+        />
+
+        <!-- ✅ NEW FIELD -->
+        <input 
+          id="km" 
+          type="number" 
+          step="0.1" 
+          min="0" 
+          placeholder="Distance (km)" 
+        />
+
         <input id="notes" type="text" placeholder="Notes" />
       </div>
 
@@ -64,5 +90,26 @@
   </div>
 
   <script src="/script.js" defer></script>
+
+  <!-- 🔗 LINK INITIALIZATION -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const tripId = params.get('trip');
+
+      if (!tripId) return;
+
+      const timelineLink = document.getElementById('timeline-link');
+      const costsLink = document.getElementById('costs-link');
+
+      if (timelineLink) {
+        timelineLink.href = `/timeline.html?trip=${tripId}`;
+      }
+
+      if (costsLink) {
+        costsLink.href = `/costs.html?trip=${tripId}`;
+      }
+    });
+  </script>
 </body>
 </html>
