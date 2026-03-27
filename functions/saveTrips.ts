@@ -9,13 +9,25 @@ type IncomingActivity = {
   start?: string;
   end?: string;
   cost?: number | string | null;
+  km?: number | string | null;
   notes?: string;
 };
 
-type IncomingTrip = {
-  id?: string;
-  name?: string;
-  activities?: IncomingActivity[];
+type NormalizedTrip = {
+  id: string;
+  name: string;
+  activities: NormalizedActivity[];
+};
+
+type NormalizedActivity = {
+  id: string;
+  type: string;
+  location: string;
+  start: string;
+  end: string;
+  cost: number;
+  km: number;
+  notes: string;
 };
 
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
@@ -34,7 +46,6 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
 
     const trips = normalizeTrips(body);
 
-    // Find trips currently owned by this PIN.
     const existingTripsResult = await env.DB.prepare(
       `
       SELECT id
@@ -49,7 +60,6 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
 
     const statements: D1PreparedStatement[] = [];
 
-    // Delete activities belonging to this PIN's current trips first.
     if (existingTripIds.length > 0) {
       const placeholders = existingTripIds.map(() => '?').join(', ');
       statements.push(
@@ -62,7 +72,6 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
       );
     }
 
-    // Delete this PIN's trips.
     statements.push(
       env.DB.prepare(
         `
@@ -72,7 +81,6 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
       ).bind(pin)
     );
 
-    // Re-insert trips and activities for this PIN only.
     for (const trip of trips) {
       statements.push(
         env.DB.prepare(
@@ -95,9 +103,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
               start,
               end,
               cost,
+              km,
               notes
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             `
           ).bind(
             activity.id,
@@ -107,6 +116,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
             activity.start,
             activity.end,
             activity.cost,
+            activity.km,
             activity.notes
           )
         );
@@ -143,6 +153,7 @@ function normalizeTrips(input: unknown[]): NormalizedTrip[] {
         start: asString(activityObj.start),
         end: asString(activityObj.end),
         cost: asNumber(activityObj.cost),
+        km: asNumber(activityObj.km),
         notes: asString(activityObj.notes),
       };
     });
@@ -154,22 +165,6 @@ function normalizeTrips(input: unknown[]): NormalizedTrip[] {
     };
   });
 }
-
-type NormalizedTrip = {
-  id: string;
-  name: string;
-  activities: NormalizedActivity[];
-};
-
-type NormalizedActivity = {
-  id: string;
-  type: string;
-  location: string;
-  start: string;
-  end: string;
-  cost: number;
-  notes: string;
-};
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
