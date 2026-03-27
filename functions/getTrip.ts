@@ -16,6 +16,7 @@ type ActivityRow = {
   start: string | null;
   end: string | null;
   cost: number | string | null;
+  km: number | string | null;
   notes: string | null;
 };
 
@@ -26,6 +27,7 @@ type Activity = {
   start: string;
   end: string;
   cost: number;
+  km: number;
   notes: string;
 };
 
@@ -66,7 +68,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
 
     const activityResult = await env.DB.prepare(
       `
-      SELECT id, trip_id, type, location, start, end, cost, notes
+      SELECT id, trip_id, type, location, start, end, cost, km, notes
       FROM activities
       WHERE trip_id = ?
       ORDER BY start ASC, id ASC
@@ -82,6 +84,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
       start: row.start ?? '',
       end: row.end ?? '',
       cost: Number(row.cost ?? 0),
+      km: Number(row.km ?? 0),
       notes: row.notes ?? '',
     }));
 
