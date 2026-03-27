@@ -8,18 +8,23 @@
 </head>
 <body>
   <div class="page compact-stack">
+
+    <!-- TOP BAR -->
     <div class="topbar">
       <a class="btn btn-secondary" href="/">← Back to Trips</a>
+
       <div class="section-actions">
-        <a class="btn btn-secondary" id="costs-trip-link" href="#">Trip</a>
-        <a class="btn" id="costs-timeline-link" href="#">Timeline</a>
+        <a class="btn btn-secondary" id="costs-trip-link">Trip</a>
+        <a class="btn" id="costs-timeline-link">Timeline</a>
       </div>
     </div>
 
+    <!-- TITLE -->
     <div class="section-header">
       <h1 id="costs-title">Trip Costs</h1>
     </div>
 
+    <!-- TABLE -->
     <div class="card">
       <table>
         <thead>
@@ -28,19 +33,50 @@
             <th>Location</th>
             <th>Start</th>
             <th>Cost</th>
+            <th>KM</th> <!-- ✅ NEW -->
           </tr>
         </thead>
+
         <tbody id="cost-table"></tbody>
+
         <tfoot>
           <tr class="total-row">
             <td colspan="3">Total</td>
             <td><span id="total">0.00</span> €</td>
+            <td><span id="total-km">0.0</span> km</td> <!-- ✅ NEW -->
           </tr>
         </tfoot>
       </table>
     </div>
+
   </div>
 
   <script src="/script.js" defer></script>
+
+  <!-- 🔗 NAVIGATION FIX -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const tripId = params.get('trip');
+
+      if (!tripId) {
+        alert('Missing trip ID');
+        return;
+      }
+
+      // Navigation links
+      const tripLink = document.getElementById('costs-trip-link');
+      const timelineLink = document.getElementById('costs-timeline-link');
+
+      if (tripLink) {
+        tripLink.href = `/trip.html?trip=${tripId}`;
+      }
+
+      if (timelineLink) {
+        timelineLink.href = `/timeline.html?trip=${tripId}`;
+      }
+    });
+  </script>
+
 </body>
 </html>
