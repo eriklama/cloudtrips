@@ -1,87 +1,117 @@
-interface Env {
+export interface Env {
   DB: D1Database;
 }
 
 type TripRow = {
   id: string;
   name: string;
+  pin: string;
 };
 
 type ActivityRow = {
   id: string;
   trip_id: string;
-  type: string;
+  type: string | null;
   location: string | null;
   start: string | null;
   end: string | null;
-  cost: number | null;
+  cost: number | string | null;
   notes: string | null;
 };
 
-export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
+type Activity = {
+  id: string;
+  type: string;
+  location: string;
+  start: string;
+  end: string;
+  cost: number;
+  notes: string;
+};
+
+type Trip = {
+  id: string;
+  name: string;
+  activities: Activity[];
+};
+
+export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   try {
-    const tripsResult = await env.DB
-      .prepare('SELECT id, name FROM trips ORDER BY rowid DESC')
-      .all<TripRow>();
+    const pin = request.headers.get('x-pin')?.trim();
 
-    const activitiesResult = await env.DB
-      .prepare(`
-        SELECT id, trip_id, type, location, start, "end", cost, notes
-        FROM activities
-        ORDER BY datetime(start) ASC, rowid ASC
-      `)
-      .all<ActivityRow>();
-
-    const trips = (tripsResult.results || []).map((trip) => ({
-      id: trip.id,
-      name: trip.name,
-      activities: [] as Array<{
-        id: string;
-        type: string;
-        location: string;
-        start: string;
-        end: string;
-        cost: number;
-        notes: string;
-      }>
-    }));
-
-    const byTripId = new Map(trips.map((t) => [String(t.id), t]));
-
-    for (const a of activitiesResult.results || []) {
-      const trip = byTripId.get(String(a.trip_id));
-      if (!trip) continue;
-
-      trip.activities.push({
-        id: a.id,
-        type: a.type,
-        location: a.location ?? '',
-        start: a.start ?? '',
-        end: a.end ?? '',
-        cost: Number(a.cost ?? 0),
-        notes: a.notes ?? ''
-      });
+    if (!pin) {
+      return json({ error: 'Unauthorized' }, 401);
     }
 
-    return new Response(JSON.stringify(trips), {
-      headers: {
-        'content-type': 'application/json; charset=UTF-8',
-        'cache-control': 'no-store'
-      }
-    });
-  } catch (e) {
-    return new Response(
-      JSON.stringify({
-        error: 'D1 read failed',
-        message: String(e)
-      }),
-      {
-        status: 500,
-        headers: {
-          'content-type': 'application/json; charset=UTF-8',
-          'cache-control': 'no-store'
-        }
-      }
-    );
+    const tripResult = await env.DB.prepare(
+      `
+      SELECT id, name, pin
+      FROM trips
+      WHERE pin = ?
+      ORDER BY name COLLATE NOCASE
+      `
+    )
+      .bind(pin)
+      .all<TripRow>();
+
+    const tripRows = tripResult.results ?? [];
+
+    if (tripRows.length === 0) {
+      return json([]);
+    }
+
+    const tripIds = tripRows.map((trip) => trip.id);
+    const placeholders = tripIds.map(() => '?').join(', ');
+
+    const activityResult = await env.DB.prepare(
+      `
+      SELECT id, trip_id, type, location, start, end, cost, notes
+      FROM activities
+      WHERE trip_id IN (${placeholders})
+      ORDER BY start ASC, id ASC
+      `
+    )
+      .bind(...tripIds)
+      .all<ActivityRow>();
+
+    const activityRows = activityResult.results ?? [];
+
+    const activitiesByTripId = new Map<string, Activity[]>();
+
+    for (const row of activityRows) {
+      const activity: Activity = {
+        id: row.id,
+        type: row.type ?? 'other',
+        location: row.location ?? '',
+        start: row.start ?? '',
+        end: row.end ?? '',
+        cost: Number(row.cost ?? 0),
+        notes: row.notes ?? '',
+      };
+
+      const existing = activitiesByTripId.get(row.trip_id) ?? [];
+      existing.push(activity);
+      activitiesByTripId.set(row.trip_id, existing);
+    }
+
+    const trips: Trip[] = tripRows.map((trip) => ({
+      id: trip.id,
+      name: trip.name,
+      activities: activitiesByTripId.get(trip.id) ?? [],
+    }));
+
+    return json(trips);
+  } catch (error) {
+    console.error('getTrips failed', error);
+    return json({ error: 'Failed to load trips' }, 500);
   }
 };
+
+function json(data: unknown, status = 200): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+    },
+  });
+}
