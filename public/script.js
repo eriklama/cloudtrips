@@ -523,7 +523,7 @@ async function loadTripPage() {
 }
 
 async function fetchTrip(tripId) {
-  const data = await apiGet(`${API_GET_TRIP}?id=${encodeURIComponent(tripId)}`);
+  const data = await apiGet(`${API_GET_TRIP}?trip=${encodeURIComponent(tripId)}`);
   return normalizeFullTrip(data);
 }
 
