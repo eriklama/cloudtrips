@@ -77,12 +77,24 @@ function getStoredTripPin(tripId) {
 
 function storeTripPin(tripId, pin) {
   if (!tripId || !pin) return;
-  localStorage.setItem(getTripPinKey(tripId), pin);
+  localStorage.setItem(getTripPinKey(tripId), String(pin).trim());
 }
 
 function removeStoredTripPin(tripId) {
   if (!tripId) return;
   localStorage.removeItem(getTripPinKey(tripId));
+}
+
+function ensureTripPin(tripId, promptText = 'Enter trip PIN:') {
+  let pin = getStoredTripPin(tripId);
+  if (pin) return pin;
+
+  const entered = prompt(promptText);
+  if (!entered || !entered.trim()) return '';
+
+  pin = entered.trim();
+  storeTripPin(tripId, pin);
+  return pin;
 }
 
 /* ---------- HELPERS ---------- */
@@ -191,30 +203,23 @@ function normalizeTripsResponse(data) {
 
 function withTripQuery(url, tripId) {
   const full = new URL(url, window.location.origin);
-  if (tripId) {
-    full.searchParams.set('trip', tripId);
-  }
+  full.searchParams.set('trip', tripId);
   return `${full.pathname}${full.search}`;
 }
 
-async function promptAndStorePin(tripId) {
-  if (!tripId) {
-    throw new Error('Trip ID missing for PIN prompt');
+async function parseJsonSafe(res) {
+  const contentType = res.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) return null;
+  try {
+    return await res.json();
+  } catch {
+    return null;
   }
-
-  const enteredPin = prompt('Enter trip PIN:');
-  if (!enteredPin || !enteredPin.trim()) {
-    throw new Error('PIN required');
-  }
-
-  const pin = enteredPin.trim();
-  storeTripPin(tripId, pin);
-  return pin;
 }
 
 /* ---------- API ---------- */
 
-async function apiGet(url) {
+async function apiGet(url, hasRetried = false) {
   const fullUrl = new URL(url, window.location.origin);
   const tripId = fullUrl.searchParams.get('id');
   const pin = tripId ? getStoredTripPin(tripId) : '';
@@ -224,19 +229,24 @@ async function apiGet(url) {
     headers: pin ? { 'x-pin': pin } : {}
   });
 
-  if (res.status === 401 && tripId) {
-    await promptAndStorePin(tripId);
-    return apiGet(url);
+  if (res.status === 401 && tripId && !hasRetried) {
+    removeStoredTripPin(tripId);
+    const enteredPin = ensureTripPin(tripId, 'Enter trip PIN:');
+    if (!enteredPin) {
+      throw new Error('PIN required');
+    }
+    return apiGet(url, true);
   }
 
   if (!res.ok) {
-    throw new Error(`GET ${url} failed with ${res.status}`);
+    const err = await parseJsonSafe(res);
+    throw new Error(`GET ${url} failed with ${res.status}${err?.error ? `: ${err.error}` : ''}`);
   }
 
   return res.json();
 }
 
-async function apiPost(url, payload) {
+async function apiPost(url, payload, hasRetried = false) {
   const tripId = payload?.id || '';
   const pin = tripId ? getStoredTripPin(tripId) : '';
   const isUpdate = !!tripId && !!pin;
@@ -251,27 +261,24 @@ async function apiPost(url, payload) {
     body: JSON.stringify(payload)
   });
 
-  if (res.status === 401 && tripId) {
-    await promptAndStorePin(tripId);
-    return apiPost(url, payload);
+  if (res.status === 401 && tripId && !hasRetried) {
+    removeStoredTripPin(tripId);
+    const enteredPin = ensureTripPin(tripId, 'Enter trip PIN:');
+    if (!enteredPin) {
+      throw new Error('PIN required');
+    }
+    return apiPost(url, payload, true);
   }
 
   if (!res.ok) {
-    let message = `POST ${url} failed with ${res.status}`;
-    try {
-      const err = await res.json();
-      if (err?.error) message = `${message}: ${err.error}`;
-    } catch {
-      // ignore JSON parse failure
-    }
-    throw new Error(message);
+    const err = await parseJsonSafe(res);
+    throw new Error(`POST ${url} failed with ${res.status}${err?.error ? `: ${err.error}` : ''}`);
   }
 
-  const contentType = res.headers.get('content-type') || '';
-  return contentType.includes('application/json') ? res.json() : null;
+  return parseJsonSafe(res);
 }
 
-async function apiDelete(url, payload) {
+async function apiDelete(url, payload, hasRetried = false) {
   const tripId = payload?.id || '';
   const pin = tripId ? getStoredTripPin(tripId) : '';
 
@@ -284,24 +291,21 @@ async function apiDelete(url, payload) {
     body: JSON.stringify(payload)
   });
 
-  if (res.status === 401 && tripId) {
-    await promptAndStorePin(tripId);
-    return apiDelete(url, payload);
+  if (res.status === 401 && tripId && !hasRetried) {
+    removeStoredTripPin(tripId);
+    const enteredPin = ensureTripPin(tripId, 'Enter trip PIN:');
+    if (!enteredPin) {
+      throw new Error('PIN required');
+    }
+    return apiDelete(url, payload, true);
   }
 
   if (!res.ok) {
-    let message = `DELETE ${url} failed with ${res.status}`;
-    try {
-      const err = await res.json();
-      if (err?.error) message = `${message}: ${err.error}`;
-    } catch {
-      // ignore JSON parse failure
-    }
-    throw new Error(message);
+    const err = await parseJsonSafe(res);
+    throw new Error(`DELETE ${url} failed with ${res.status}${err?.error ? `: ${err.error}` : ''}`);
   }
 
-  const contentType = res.headers.get('content-type') || '';
-  return contentType.includes('application/json') ? res.json() : null;
+  return parseJsonSafe(res);
 }
 
 /* ---------- TRIPS LIST PAGE ---------- */
@@ -428,17 +432,22 @@ async function addTrip() {
   } catch (error) {
     console.error(error);
     removeStoredTripPin(newTrip.id);
-    alert('Failed to create trip.');
+    alert(`Failed to create trip.${error?.message ? `\n${error.message}` : ''}`);
   }
 }
 
 function openTrip(tripId) {
+  const pin = ensureTripPin(tripId, 'Enter trip PIN to open this trip:');
+  if (!pin) return;
   window.location.href = `/trip.html?id=${encodeURIComponent(tripId)}`;
 }
 
 async function renameTrip(tripId) {
   const trip = trips.find((t) => String(t.id) === String(tripId));
   if (!trip) return;
+
+  const pin = ensureTripPin(tripId, 'Enter trip PIN to rename this trip:');
+  if (!pin) return;
 
   const newName = prompt('Rename trip:', trip.name);
   if (newName === null) return;
@@ -456,12 +465,15 @@ async function renameTrip(tripId) {
     await loadTrips();
   } catch (error) {
     console.error(error);
-    alert('Failed to rename trip.');
+    alert(`Failed to rename trip.${error?.message ? `\n${error.message}` : ''}`);
   }
 }
 
 async function deleteTrip(tripId) {
   const trip = trips.find((t) => String(t.id) === String(tripId));
+  const pin = ensureTripPin(tripId, 'Enter trip PIN to delete this trip:');
+  if (!pin) return;
+
   const ok = confirm(`Delete trip "${trip?.name || 'this trip'}"?`);
   if (!ok) return;
 
@@ -471,7 +483,7 @@ async function deleteTrip(tripId) {
     await loadTrips();
   } catch (error) {
     console.error(error);
-    alert('Failed to delete trip.');
+    alert(`Failed to delete trip.${error?.message ? `\n${error.message}` : ''}`);
   }
 }
 
@@ -483,6 +495,8 @@ async function loadTripPage() {
     alert('Trip ID is missing.');
     return;
   }
+
+  ensureTripPin(tripId, 'Enter trip PIN:');
 
   try {
     currentTrip = await fetchTrip(tripId);
@@ -500,7 +514,7 @@ async function loadTripPage() {
     if (container) {
       container.innerHTML = emptyState(
         'Failed to load trip',
-        'Check whether the trip exists and the correct PIN is stored.',
+        error?.message || 'Check whether the trip exists and the correct PIN is stored.',
         'triangle-alert'
       );
       refreshIcons();
@@ -701,7 +715,7 @@ async function saveActivity() {
     renderActivities();
   } catch (error) {
     console.error(error);
-    alert('Failed to save activity.');
+    alert(`Failed to save activity.${error?.message ? `\n${error.message}` : ''}`);
   }
 }
 
@@ -738,7 +752,7 @@ async function deleteActivity(activityId) {
     renderActivities();
   } catch (error) {
     console.error(error);
-    alert('Failed to delete activity.');
+    alert(`Failed to delete activity.${error?.message ? `\n${error.message}` : ''}`);
   }
 }
 
@@ -773,6 +787,7 @@ async function loadTimeline() {
   const container = document.getElementById('timeline');
   if (!tripId || !container) return;
 
+  ensureTripPin(tripId, 'Enter trip PIN:');
   container.innerHTML = loadingTimeline();
 
   try {
@@ -789,7 +804,7 @@ async function loadTimeline() {
     console.error(error);
     container.innerHTML = emptyState(
       'Failed to load timeline',
-      'The trip data could not be loaded.',
+      error?.message || 'The trip data could not be loaded.',
       'triangle-alert'
     );
     refreshIcons();
@@ -894,6 +909,8 @@ async function loadCosts() {
   const table = document.getElementById('cost-table');
   if (!tripId || !table) return;
 
+  ensureTripPin(tripId, 'Enter trip PIN:');
+
   table.innerHTML = `
     <tr>
       <td colspan="4" class="px-3 py-8 text-center text-slate-500 dark:text-slate-400">Loading costs…</td>
@@ -914,7 +931,7 @@ async function loadCosts() {
     console.error(error);
     table.innerHTML = `
       <tr>
-        <td colspan="4" class="px-3 py-8 text-center text-red-600 dark:text-red-400">Failed to load costs.</td>
+        <td colspan="4" class="px-3 py-8 text-center text-red-600 dark:text-red-400">${escapeHtml(error?.message || 'Failed to load costs.')}</td>
       </tr>
     `;
   }
