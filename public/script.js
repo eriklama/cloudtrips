@@ -221,8 +221,17 @@ async function parseJsonSafe(res) {
 
 async function apiGet(url, hasRetried = false) {
   const fullUrl = new URL(url, window.location.origin);
-  const tripId = fullUrl.searchParams.get('id');
-  const pin = tripId ? getStoredTripPin(tripId) : '';
+
+  // ✅ FIX: use "trip", not "id"
+  const tripId = fullUrl.searchParams.get('trip');
+
+  let pin = tripId ? getStoredTripPin(tripId) : '';
+
+  // 🔒 Ensure PIN exists BEFORE first request
+  if (tripId && !pin) {
+    pin = ensureTripPin(tripId, 'Enter trip PIN:');
+    if (!pin) throw new Error('PIN required');
+  }
 
   const res = await fetch(fullUrl.toString(), {
     method: 'GET',
@@ -230,17 +239,23 @@ async function apiGet(url, hasRetried = false) {
   });
 
   if (res.status === 401 && tripId && !hasRetried) {
+    console.warn('PIN rejected, retrying…');
+
     removeStoredTripPin(tripId);
-    const enteredPin = ensureTripPin(tripId, 'Enter trip PIN:');
+
+    const enteredPin = ensureTripPin(tripId, 'Wrong PIN, try again:');
     if (!enteredPin) {
       throw new Error('PIN required');
     }
+
     return apiGet(url, true);
   }
 
   if (!res.ok) {
     const err = await parseJsonSafe(res);
-    throw new Error(`GET ${url} failed with ${res.status}${err?.error ? `: ${err.error}` : ''}`);
+    throw new Error(
+      `GET ${url} failed with ${res.status}${err?.error ? `: ${err.error}` : ''}`
+    );
   }
 
   return res.json();
