@@ -212,7 +212,7 @@ async function loadTrips() {
 
   try {
     const data = await apiGet(API_GET_TRIPS);
-    trips = safeArray(data).map(normalizeTripSummary);
+    trips = safeArray(data.trips).map(normalizeTripSummary);
 
     if (!trips.length) {
       container.innerHTML = emptyState(
