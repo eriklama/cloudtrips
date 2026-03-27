@@ -9,14 +9,8 @@ type IncomingActivity = {
   start?: string;
   end?: string;
   cost?: number | string | null;
+  km?: number | string | null;
   notes?: string;
-};
-
-type IncomingTrip = {
-  id?: string;
-  name?: string;
-  pin?: string;
-  activities?: IncomingActivity[];
 };
 
 type NormalizedActivity = {
@@ -26,6 +20,7 @@ type NormalizedActivity = {
   start: string;
   end: string;
   cost: number;
+  km: number;
   notes: string;
 };
 
@@ -48,7 +43,6 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
 
     const trip = normalizeTrip(body);
 
-    // New trip creation: no query trip id yet, pin comes from body.
     if (!tripIdFromQuery) {
       if (!trip.pin) {
         return json({ error: 'PIN is required' }, 400);
@@ -74,9 +68,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
             start,
             end,
             cost,
+            km,
             notes
           )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
           `
         )
           .bind(
@@ -87,6 +82,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
             activity.start,
             activity.end,
             activity.cost,
+            activity.km,
             activity.notes
           )
           .run();
@@ -95,7 +91,6 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
       return json({ ok: true, id: trip.id });
     }
 
-    // Existing trip update: requires matching x-pin header.
     const pin = request.headers.get('x-pin')?.trim();
     if (!pin) {
       return json({ error: 'Unauthorized' }, 401);
@@ -157,9 +152,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
             start,
             end,
             cost,
+            km,
             notes
           )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
           `
         ).bind(
           activity.id,
@@ -169,6 +165,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
           activity.start,
           activity.end,
           activity.cost,
+          activity.km,
           activity.notes
         )
       );
@@ -200,6 +197,7 @@ function normalizeTrip(input: Record<string, unknown>): NormalizedTrip {
       start: asString(a.start),
       end: asString(a.end),
       cost: asNumber(a.cost),
+      km: asNumber(a.km),
       notes: asString(a.notes),
     };
   });
