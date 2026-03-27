@@ -1,12 +1,14 @@
 const API_GET_TRIPS = '/getTrips';
 const API_GET_TRIP = '/getTrip';
 const API_SAVE_TRIP = '/saveTrip';
+const API_DELETE_TRIP = '/deleteTrip';
 
 let trips = [];
 let currentTrip = null;
 let editingActivityId = null;
 
-// ---------- INIT ----------
+/* ---------- INIT ---------- */
+
 document.addEventListener('DOMContentLoaded', () => {
   if (document.getElementById('trip-list')) loadTrips();
   if (document.getElementById('trip-title')) loadTripPage();
@@ -14,7 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (document.getElementById('cost-table')) loadCosts();
 });
 
-// ---------- STORAGE ----------
+/* ---------- PIN STORAGE ---------- */
+
 function getTripPinKey(tripId) {
   return `trip_pin_${tripId}`;
 }
@@ -33,107 +36,34 @@ function clearStoredTripPin(tripId) {
 
 function promptTripPin(tripId) {
   const pin = prompt('Enter PIN for this trip:')?.trim() || '';
-  if (pin) {
-    setStoredTripPin(tripId, pin);
-  }
+  if (pin) setStoredTripPin(tripId, pin);
   return pin;
 }
 
-function getTripPin(tripId, promptIfMissing = true) {
+function getTripPin(tripId, ask = true) {
   let pin = getStoredTripPin(tripId);
-  if (!pin && promptIfMissing) {
-    pin = promptTripPin(tripId);
-  }
+  if (!pin && ask) pin = promptTripPin(tripId);
   return pin;
 }
 
-// ---------- HTTP ----------
+/* ---------- HTTP ---------- */
+
 async function fetchJson(url, options = {}) {
   const res = await fetch(url, options);
 
   if (!res.ok) {
-    const error = new Error(`Request failed: ${res.status}`);
-    error.status = res.status;
-    throw error;
-  }
-
-  const contentType = res.headers.get('content-type') || '';
-  if (!contentType.includes('application/json')) {
-    throw new Error(`Expected JSON response from ${url}, received ${contentType}`);
+    const err = new Error(`HTTP ${res.status}`);
+    err.status = res.status;
+    throw err;
   }
 
   return res.json();
 }
 
-async function fetchProtectedTrip(tripId) {
-  let pin = getTripPin(tripId, false);
+/* ---------- HELPERS ---------- */
 
-  if (!pin) {
-    pin = promptTripPin(tripId);
-  }
-
-  if (!pin) {
-    throw new Error('PIN required');
-  }
-
-  try {
-    return await fetchJson(`${API_GET_TRIP}?trip=${encodeURIComponent(tripId)}`, {
-      headers: {
-        'x-pin': pin
-      }
-    });
-  } catch (error) {
-    if (error.status === 401) {
-      clearStoredTripPin(tripId);
-      const retryPin = promptTripPin(tripId);
-
-      if (!retryPin) {
-        throw error;
-      }
-
-      return fetchJson(`${API_GET_TRIP}?trip=${encodeURIComponent(tripId)}`, {
-        headers: {
-          'x-pin': retryPin
-        }
-      });
-    }
-
-    throw error;
-  }
-}
-
-async function saveExistingTrip(trip) {
-  const pin = getTripPin(trip.id, false);
-  if (!pin) {
-    throw new Error('Missing stored PIN for trip');
-  }
-
-  return fetchJson(`${API_SAVE_TRIP}?trip=${encodeURIComponent(trip.id)}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-pin': pin
-    },
-    body: JSON.stringify(trip)
-  });
-}
-
-async function createNewTrip(trip, pin) {
-  return fetchJson(API_SAVE_TRIP, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      ...trip,
-      pin
-    })
-  });
-}
-
-// ---------- HELPERS ----------
-function escapeHtml(value) {
-  return String(value ?? '')
+function escapeHtml(v) {
+  return String(v ?? '')
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')
@@ -141,25 +71,20 @@ function escapeHtml(value) {
     .replaceAll("'", '&#39;');
 }
 
-function formatDateTime(value) {
-  if (!value) return '';
-
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return escapeHtml(value);
-
+function formatDateTime(v) {
+  if (!v) return '';
+  const d = new Date(v);
   return d.toLocaleString([], {
-    year: 'numeric',
-    month: '2-digit',
     day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
     hour: '2-digit',
     minute: '2-digit'
   });
 }
 
-function formatDayLabel(value) {
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return escapeHtml(value);
-
+function formatDayLabel(v) {
+  const d = new Date(v);
   return d.toLocaleDateString([], {
     weekday: 'short',
     day: '2-digit',
@@ -168,21 +93,13 @@ function formatDayLabel(value) {
   });
 }
 
-function getDayKey(value) {
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return 'unknown';
-
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
+function getDayKey(v) {
+  const d = new Date(v);
+  return d.toISOString().split('T')[0];
 }
 
 function sortByStart(a, b) {
-  const da = new Date(a.start || '');
-  const db = new Date(b.start || '');
-  return da - db;
+  return new Date(a.start) - new Date(b.start);
 }
 
 function getTripId() {
@@ -190,473 +107,318 @@ function getTripId() {
 }
 
 function openTrip(id) {
-  location.href = `/trip.html?trip=${encodeURIComponent(id)}`;
+  location.href = `/trip.html?trip=${id}`;
 }
 
-function resetActivityForm() {
-  const typeEl = document.getElementById('type');
-  const locationEl = document.getElementById('location');
-  const startEl = document.getElementById('start');
-  const endEl = document.getElementById('end');
-  const costEl = document.getElementById('cost');
-  const notesEl = document.getElementById('notes');
+/* ---------- TRIPS ---------- */
 
-  if (typeEl) typeEl.value = 'plane';
-  if (locationEl) locationEl.value = '';
-  if (startEl) startEl.value = '';
-  if (endEl) endEl.value = '';
-  if (costEl) costEl.value = '';
-  if (notesEl) notesEl.value = '';
-
-  editingActivityId = null;
-  updateActivityFormButtons();
-}
-
-function updateActivityFormButtons() {
-  let addBtn = document.getElementById('save-activity-btn');
-  const container = document.getElementById('activity-form-actions');
-
-  if (!addBtn) {
-    addBtn = document.querySelector('button[onclick="addActivity()"]');
-    if (addBtn) addBtn.id = 'save-activity-btn';
-  }
-
-  if (addBtn) {
-    addBtn.textContent = editingActivityId ? 'Save Changes' : 'Add Activity';
-  }
-
-  if (!container) return;
-
-  let cancelBtn = document.getElementById('cancel-edit-btn');
-
-  if (editingActivityId) {
-    if (!cancelBtn) {
-      cancelBtn = document.createElement('button');
-      cancelBtn.type = 'button';
-      cancelBtn.id = 'cancel-edit-btn';
-      cancelBtn.className = 'btn btn-secondary';
-      cancelBtn.textContent = 'Cancel Edit';
-      cancelBtn.addEventListener('click', resetActivityForm);
-      container.appendChild(cancelBtn);
-    }
-  } else if (cancelBtn) {
-    cancelBtn.remove();
-  }
-}
-
-function ensureActivityFormActions() {
-  let saveBtn = document.getElementById('save-activity-btn');
-
-  if (!saveBtn) {
-    saveBtn = document.querySelector('button[onclick="addActivity()"]');
-    if (saveBtn) saveBtn.id = 'save-activity-btn';
-  }
-
-  if (!saveBtn) return;
-
-  let container = document.getElementById('activity-form-actions');
-
-  if (!container) {
-    container = document.createElement('div');
-    container.id = 'activity-form-actions';
-    container.className = 'section-actions';
-    saveBtn.parentNode.insertBefore(container, saveBtn);
-    container.appendChild(saveBtn);
-  }
-}
-
-// ---------- MAIN PAGE ----------
 async function loadTrips() {
-  try {
-    trips = await fetchJson(API_GET_TRIPS);
-    if (!Array.isArray(trips)) trips = [];
-    renderTrips();
-  } catch (e) {
-    console.error('Failed to load trips:', e);
-    const list = document.getElementById('trip-list');
-    if (list) {
-      list.innerHTML = `<div class="empty-state">Failed to load trips.</div>`;
-    }
-  }
+  trips = await fetchJson(API_GET_TRIPS);
+  renderTrips();
 }
 
 function renderTrips() {
   const list = document.getElementById('trip-list');
-  if (!list) return;
-
   list.innerHTML = '';
 
-  if (!Array.isArray(trips) || trips.length === 0) {
-    list.innerHTML = `<div class="empty-state">No trips yet.</div>`;
+  if (!trips.length) {
+    list.innerHTML = `<div class="empty-state">No trips</div>`;
     return;
   }
 
-  trips.forEach((t) => {
-    const card = document.createElement('div');
-    card.className = 'card';
+  trips.forEach(t => {
+    const hasPin = !!getStoredTripPin(t.id);
 
-    const storedPin = getStoredTripPin(t.id);
+    const div = document.createElement('div');
+    div.className = 'card';
 
-    card.innerHTML = `
+    div.innerHTML = `
       <div class="trip-card">
-        <div class="trip-card-main">
-          <div class="trip-card-title">${escapeHtml(t.name || 'Untitled trip')}</div>
-          <div class="trip-card-meta">${storedPin ? 'PIN saved on this device' : 'PIN required to open'}</div>
+        <div>
+          <div class="trip-card-title">${escapeHtml(t.name)}</div>
+          <div class="muted">${hasPin ? '🔓 PIN saved' : '🔒 Locked'}</div>
         </div>
-        <div class="trip-card-actions">
-          <button type="button" class="btn">Open</button>
-          <button type="button" class="btn btn-secondary">Forget PIN</button>
+        <div>
+          <button onclick="openTrip('${t.id}')">Open</button>
+          <button onclick="deleteTrip('${t.id}')" class="btn-secondary">Delete</button>
         </div>
       </div>
     `;
 
-    const buttons = card.querySelectorAll('button');
-    const openBtn = buttons[0];
-    const forgetBtn = buttons[1];
-
-    openBtn.addEventListener('click', () => openTrip(t.id));
-    forgetBtn.addEventListener('click', () => {
-      clearStoredTripPin(t.id);
-      renderTrips();
-    });
-
-    list.appendChild(card);
+    list.appendChild(div);
   });
 }
 
 async function addTrip() {
-  const nameInput = document.getElementById('newTripName');
-  const pinInput = document.getElementById('newTripPin');
-
-  if (!nameInput || !pinInput) return;
-
-  const name = nameInput.value.trim();
-  const pin = pinInput.value.trim();
+  const name = document.getElementById('newTripName').value.trim();
+  const pin = document.getElementById('newTripPin').value.trim();
 
   if (!name || !pin) {
-    alert('Trip name and PIN are required.');
+    alert("Name + PIN required");
     return;
   }
 
-  const newTrip = {
-    id: String(Date.now()),
+  const trip = {
+    id: Date.now().toString(),
     name,
     activities: []
   };
 
-  await createNewTrip(newTrip, pin);
-  setStoredTripPin(newTrip.id, pin);
+  await fetchJson(API_SAVE_TRIP, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...trip, pin })
+  });
 
-  nameInput.value = '';
-  pinInput.value = '';
+  setStoredTripPin(trip.id, pin);
 
-  await loadTrips();
+  document.getElementById('newTripName').value = '';
+  document.getElementById('newTripPin').value = '';
+
+  loadTrips();
 }
 
-// ---------- TRIP PAGE ----------
-async function loadTripPage() {
-  const tripId = getTripId();
-  if (!tripId) return;
+/* ---------- DELETE TRIP ---------- */
+
+async function deleteTrip(tripId) {
+  if (!confirm("Delete this trip?")) return;
+
+  let pin = getTripPin(tripId);
+  if (!pin) return;
 
   try {
-    currentTrip = await fetchProtectedTrip(tripId);
+    await fetchJson(`${API_DELETE_TRIP}?trip=${tripId}`, {
+      method: 'POST',
+      headers: { 'x-pin': pin }
+    });
 
-    const title = document.getElementById('trip-title');
-    if (title) title.innerText = currentTrip.name;
+    clearStoredTripPin(tripId);
+    loadTrips();
 
-    const timelineLink = document.getElementById('timeline-link');
-    if (timelineLink) {
-      timelineLink.href = `/timeline.html?trip=${encodeURIComponent(tripId)}`;
-    }
-
-    const costsLink = document.getElementById('costs-link');
-    if (costsLink) {
-      costsLink.href = `/costs.html?trip=${encodeURIComponent(tripId)}`;
-    }
-
-    ensureActivityFormActions();
-    updateActivityFormButtons();
-    renderActivities(currentTrip);
-  } catch (e) {
-    console.error('Failed to load trip page:', e);
-    const list = document.getElementById('activity-list');
-    const title = document.getElementById('trip-title');
-
-    if (title) title.innerText = 'Trip unavailable';
-    if (list) {
-      list.innerHTML = `<div class="empty-state">Could not open trip. PIN may be missing or incorrect.</div>`;
+  } catch (err) {
+    if (err.status === 401) {
+      clearStoredTripPin(tripId);
+      alert("Wrong PIN");
+    } else {
+      alert("Delete failed");
     }
   }
 }
 
-function renderActivities(trip) {
-  const list = document.getElementById('activity-list');
-  if (!list) return;
+/* ---------- FETCH SINGLE TRIP ---------- */
 
+async function fetchTrip(tripId) {
+  let pin = getTripPin(tripId);
+  if (!pin) return null;
+
+  try {
+    return await fetchJson(`${API_GET_TRIP}?trip=${tripId}`, {
+      headers: { 'x-pin': pin }
+    });
+  } catch (err) {
+    if (err.status === 401) {
+      clearStoredTripPin(tripId);
+      pin = promptTripPin(tripId);
+      if (!pin) return null;
+
+      return fetchJson(`${API_GET_TRIP}?trip=${tripId}`, {
+        headers: { 'x-pin': pin }
+      });
+    }
+    throw err;
+  }
+}
+
+/* ---------- TRIP PAGE ---------- */
+
+async function loadTripPage() {
+  const id = getTripId();
+  if (!id) return;
+
+  currentTrip = await fetchTrip(id);
+  if (!currentTrip) return;
+
+  document.getElementById('trip-title').innerText = currentTrip.name;
+
+  renderActivities();
+}
+
+/* ---------- ACTIVITIES ---------- */
+
+function renderActivities() {
+  const list = document.getElementById('activity-list');
   list.innerHTML = '';
 
-  if (!trip.activities || trip.activities.length === 0) {
-    list.innerHTML = `<div class="empty-state">No activities yet.</div>`;
+  if (!currentTrip.activities.length) {
+    list.innerHTML = `<div class="empty-state">No activities</div>`;
     return;
   }
 
-  const activities = [...trip.activities].sort(sortByStart);
+  currentTrip.activities.sort(sortByStart).forEach(a => {
+    const div = document.createElement('div');
+    div.className = 'card activity-card';
 
-  activities.forEach((a) => {
-    const d = document.createElement('div');
-    d.className = 'card activity-card';
-
-    const notesHtml = a.notes
-      ? `<div class="muted">${escapeHtml(a.notes)}</div>`
-      : '';
-
-    d.innerHTML = `
+    div.innerHTML = `
       <div class="activity-actions-top">
-        <button type="button" class="btn">Edit</button>
-        <button type="button" class="btn btn-secondary">Delete</button>
+        <button onclick="editActivity('${a.id}')">Edit</button>
+        <button onclick="deleteActivity('${a.id}')" class="btn-secondary">Delete</button>
       </div>
 
-      <div class="tag ${escapeHtml(a.type || 'other')}">${escapeHtml(a.type || 'other')}</div>
-      <div class="location-line">${escapeHtml(a.location || '')}</div>
+      <div class="tag ${a.type}">${a.type}</div>
+      <div class="location-line">${escapeHtml(a.location)}</div>
       <div class="muted">
-        ${formatDateTime(a.start)}${a.end ? ` → ${formatDateTime(a.end)}` : ''}
+        ${formatDateTime(a.start)} → ${formatDateTime(a.end)}
       </div>
-      <div class="muted">Cost: ${Number(a.cost || 0).toFixed(2)} €</div>
-      ${notesHtml}
     `;
 
-    const buttons = d.querySelectorAll('button');
-    const editBtn = buttons[0];
-    const deleteBtn = buttons[1];
-
-    editBtn.addEventListener('click', () => editActivity(a.id));
-    deleteBtn.addEventListener('click', () => deleteActivity(a.id));
-
-    list.appendChild(d);
+    list.appendChild(div);
   });
 }
 
 async function addActivity() {
-  if (!currentTrip) return;
-
-  const typeEl = document.getElementById('type');
-  const locationEl = document.getElementById('location');
-  const startEl = document.getElementById('start');
-  const endEl = document.getElementById('end');
-  const costEl = document.getElementById('cost');
-  const notesEl = document.getElementById('notes');
-
-  const activity = {
-    id: editingActivityId || ('a' + Date.now()),
-    type: typeEl ? typeEl.value : 'plane',
-    location: locationEl ? locationEl.value.trim() : '',
-    start: startEl ? startEl.value : '',
-    end: endEl ? endEl.value : '',
-    cost: Number(costEl ? costEl.value || 0 : 0),
-    notes: notesEl ? notesEl.value.trim() : ''
+  const a = {
+    id: editingActivityId || Date.now().toString(),
+    type: document.getElementById('type').value,
+    location: document.getElementById('location').value,
+    start: document.getElementById('start').value,
+    end: document.getElementById('end').value,
+    cost: Number(document.getElementById('cost').value || 0),
+    notes: document.getElementById('notes').value
   };
 
-  if (!currentTrip.activities) currentTrip.activities = [];
-
   if (editingActivityId) {
-    const index = currentTrip.activities.findIndex((a) => String(a.id) === String(editingActivityId));
-    if (index !== -1) {
-      currentTrip.activities[index] = activity;
-    }
+    const i = currentTrip.activities.findIndex(x => x.id === editingActivityId);
+    currentTrip.activities[i] = a;
   } else {
-    currentTrip.activities.push(activity);
+    currentTrip.activities.push(a);
   }
 
-  await saveExistingTrip(currentTrip);
-  resetActivityForm();
-  await loadTripPage();
+  editingActivityId = null;
+
+  await saveTrip();
+  loadTripPage();
 }
 
-function editActivity(activityId) {
-  if (!currentTrip || !Array.isArray(currentTrip.activities)) return;
+function editActivity(id) {
+  const a = currentTrip.activities.find(x => x.id === id);
+  if (!a) return;
 
-  const activity = currentTrip.activities.find((a) => String(a.id) === String(activityId));
-  if (!activity) return;
+  document.getElementById('type').value = a.type;
+  document.getElementById('location').value = a.location;
+  document.getElementById('start').value = a.start;
+  document.getElementById('end').value = a.end;
+  document.getElementById('cost').value = a.cost;
+  document.getElementById('notes').value = a.notes;
 
-  document.getElementById('type').value = activity.type || 'plane';
-  document.getElementById('location').value = activity.location || '';
-  document.getElementById('start').value = activity.start || '';
-  document.getElementById('end').value = activity.end || '';
-  document.getElementById('cost').value = activity.cost ?? '';
-  document.getElementById('notes').value = activity.notes || '';
-
-  editingActivityId = activity.id;
-  updateActivityFormButtons();
-
-  const formCard = document.getElementById('save-activity-btn')?.closest('.card');
-  if (formCard) {
-    formCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
+  editingActivityId = id;
 }
 
-async function deleteActivity(activityId) {
-  if (!currentTrip || !Array.isArray(currentTrip.activities)) return;
-
-  currentTrip.activities = currentTrip.activities.filter((a) => String(a.id) !== String(activityId));
-
-  if (String(editingActivityId) === String(activityId)) {
-    resetActivityForm();
-  }
-
-  await saveExistingTrip(currentTrip);
-  await loadTripPage();
+async function deleteActivity(id) {
+  currentTrip.activities = currentTrip.activities.filter(a => a.id !== id);
+  await saveTrip();
+  loadTripPage();
 }
 
-// ---------- TIMELINE ----------
+/* ---------- SAVE ---------- */
+
+async function saveTrip() {
+  const pin = getTripPin(currentTrip.id, false);
+
+  await fetchJson(`${API_SAVE_TRIP}?trip=${currentTrip.id}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-pin': pin
+    },
+    body: JSON.stringify(currentTrip)
+  });
+}
+
+/* ---------- TIMELINE ---------- */
+
+async function loadTimeline() {
+  const id = getTripId();
+  currentTrip = await fetchTrip(id);
+  if (!currentTrip) return;
+
+  renderTimelineGrouped(currentTrip.activities);
+}
+
 function renderTimelineGrouped(activities) {
   const container = document.getElementById('timeline');
-  if (!container) return;
-
   container.innerHTML = '';
 
-  if (!activities || activities.length === 0) {
-    container.innerHTML = `<div class="empty-state">No activities yet.</div>`;
-    return;
-  }
-
-  const sorted = [...activities].sort(sortByStart);
   const groups = {};
 
-  sorted.forEach((a) => {
+  activities.forEach(a => {
     const key = getDayKey(a.start);
     if (!groups[key]) groups[key] = [];
     groups[key].push(a);
   });
 
-  const dayKeys = Object.keys(groups).sort();
+  Object.keys(groups).forEach((day, i) => {
+    const div = document.createElement('div');
+    div.className = `timeline-day ${i % 2 ? 'alt' : ''}`;
 
-  dayKeys.forEach((day, index) => {
-    const dayBlock = document.createElement('div');
-    dayBlock.className = `timeline-day${index % 2 === 1 ? ' alt' : ''}`;
+    div.innerHTML = `<div class="timeline-day-header">${formatDayLabel(day)}</div>`;
 
-    const label = day === 'unknown' ? 'No date' : formatDayLabel(day);
-    dayBlock.innerHTML = `<div class="timeline-day-header">${escapeHtml(label)}</div>`;
-
-    groups[day].forEach((a) => {
-      const item = document.createElement('div');
-      item.className = 'timeline-item';
-
-      const timeLine = a.end
-        ? `${formatDateTime(a.start)} → ${formatDateTime(a.end)}`
-        : `${formatDateTime(a.start)}`;
-
-      item.innerHTML = `
-        <div class="circle"></div>
-        <div class="timeline-content">
-          <div class="tag ${escapeHtml(a.type || 'other')}">${escapeHtml(a.type || 'other')}</div>
-          <div class="location-line">${escapeHtml(a.location || '')}</div>
-          <div class="muted">${escapeHtml(timeLine)}</div>
-          ${a.notes ? `<div class="muted">${escapeHtml(a.notes)}</div>` : ''}
+    groups[day].forEach(a => {
+      div.innerHTML += `
+        <div class="timeline-item">
+          <div class="circle"></div>
+          <div class="timeline-content">
+            <div class="location-line">${escapeHtml(a.location)}</div>
+            <div class="muted">
+              ${formatDateTime(a.start)} → ${formatDateTime(a.end)}
+            </div>
+          </div>
         </div>
       `;
-
-      dayBlock.appendChild(item);
     });
 
-    container.appendChild(dayBlock);
+    container.appendChild(div);
   });
 }
 
-async function loadTimeline() {
-  const tripId = getTripId();
-  if (!tripId) return;
+/* ---------- COSTS ---------- */
 
-  try {
-    currentTrip = await fetchProtectedTrip(tripId);
-
-    const title = document.getElementById('timeline-title');
-    if (title) title.innerText = `${currentTrip.name} Timeline`;
-
-    const tripLink = document.getElementById('timeline-trip-link');
-    if (tripLink) {
-      tripLink.href = `/trip.html?trip=${encodeURIComponent(tripId)}`;
-    }
-
-    const costsLink = document.getElementById('timeline-costs-link');
-    if (costsLink) {
-      costsLink.href = `/costs.html?trip=${encodeURIComponent(tripId)}`;
-    }
-
-    renderTimelineGrouped(currentTrip.activities || []);
-  } catch (e) {
-    console.error('Failed to load timeline:', e);
-    const c = document.getElementById('timeline');
-    if (c) {
-      c.innerHTML = `<div class="empty-state">Could not open timeline.</div>`;
-    }
-  }
-}
-
-// ---------- COSTS ----------
 async function loadCosts() {
-  const tripId = getTripId();
-  if (!tripId) return;
+  const id = getTripId();
+  currentTrip = await fetchTrip(id);
+  if (!currentTrip) return;
 
-  try {
-    currentTrip = await fetchProtectedTrip(tripId);
+  const table = document.getElementById('cost-table');
+  table.innerHTML = '';
 
-    const title = document.getElementById('costs-title');
-    if (title) title.innerText = `${currentTrip.name} Costs`;
+  let total = 0;
 
-    const tripLink = document.getElementById('costs-trip-link');
-    if (tripLink) {
-      tripLink.href = `/trip.html?trip=${encodeURIComponent(tripId)}`;
-    }
+  currentTrip.activities.forEach(a => {
+    total += a.cost || 0;
 
-    const timelineLink = document.getElementById('costs-timeline-link');
-    if (timelineLink) {
-      timelineLink.href = `/timeline.html?trip=${encodeURIComponent(tripId)}`;
-    }
-
-    const table = document.getElementById('cost-table');
-    if (!table) return;
-
-    table.innerHTML = '';
-
-    let total = 0;
-    const activities = [...(currentTrip.activities || [])].sort(sortByStart);
-
-    if (activities.length === 0) {
-      table.innerHTML = `<tr><td colspan="4">No activities yet.</td></tr>`;
-    }
-
-    activities.forEach((a) => {
-      total += Number(a.cost || 0);
-
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${escapeHtml(a.type || '')}</td>
-        <td>${escapeHtml(a.location || '')}</td>
+    table.innerHTML += `
+      <tr>
+        <td>${a.type}</td>
+        <td>${escapeHtml(a.location)}</td>
         <td>${formatDateTime(a.start)}</td>
-        <td>${Number(a.cost || 0).toFixed(2)} €</td>
-      `;
+        <td>${a.cost.toFixed(2)} €</td>
+      </tr>
+    `;
+  });
 
-      table.appendChild(row);
-    });
-
-    const totalEl = document.getElementById('total');
-    if (totalEl) totalEl.innerText = total.toFixed(2);
-  } catch (e) {
-    console.error('Failed to load costs:', e);
-    const table = document.getElementById('cost-table');
-    if (table) {
-      table.innerHTML = `<tr><td colspan="4">Could not open costs.</td></tr>`;
-    }
-  }
+  document.getElementById('total').innerText = total.toFixed(2);
 }
 
-// ---------- GLOBALS ----------
+/* ---------- GLOBALS ---------- */
+
 window.loadTrips = loadTrips;
 window.addTrip = addTrip;
 window.openTrip = openTrip;
+window.deleteTrip = deleteTrip;
+
 window.loadTripPage = loadTripPage;
 window.addActivity = addActivity;
 window.editActivity = editActivity;
 window.deleteActivity = deleteActivity;
+
 window.loadTimeline = loadTimeline;
 window.loadCosts = loadCosts;
