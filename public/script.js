@@ -619,6 +619,10 @@ async function deleteActivity(activityId) {
 }
 
 async function saveTrip(trip) {
+  if (!trip || !trip.id) {
+    throw new Error('Invalid trip object');
+  }
+
   return apiPost(API_SAVE_TRIP, trip);
 }
 
