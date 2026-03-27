@@ -408,6 +408,18 @@ async function loadCosts() {
   document.getElementById('total').innerText = total.toFixed(2);
 }
 
+function openTimeline() {
+  const id = getTripId();
+  if (!id) return;
+  location.href = `/timeline.html?trip=${id}`;
+}
+
+function openCosts() {
+  const id = getTripId();
+  if (!id) return;
+  location.href = `/costs.html?trip=${id}`;
+}
+
 /* ---------- GLOBALS ---------- */
 
 window.loadTrips = loadTrips;
@@ -422,3 +434,6 @@ window.deleteActivity = deleteActivity;
 
 window.loadTimeline = loadTimeline;
 window.loadCosts = loadCosts;
+
+window.openTimeline = openTimeline;
+window.openCosts = openCosts;
