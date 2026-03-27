@@ -8,28 +8,63 @@
 </head>
 <body>
   <div class="page compact-stack">
+
+    <!-- HEADER -->
     <div class="section-header">
       <h1>My Trips</h1>
     </div>
 
+    <!-- ADD TRIP -->
     <div class="card">
       <div class="section-header">
         <h2>Add Trip</h2>
       </div>
+
       <div class="form-grid">
-        <input id="newTripName" placeholder="Trip Name" />
-        <input id="newTripPin" type="password" placeholder="Trip PIN" />
+        <input 
+          id="newTripName" 
+          placeholder="Trip Name" 
+          autocomplete="off"
+        />
+
+        <input 
+          id="newTripPin" 
+          type="password" 
+          placeholder="Trip PIN"
+          autocomplete="new-password"
+        />
+
         <button type="button" onclick="addTrip()">Add Trip</button>
       </div>
     </div>
 
+    <!-- LIST -->
     <div class="section-header">
       <h2>All Trips</h2>
     </div>
 
     <div id="trip-list"></div>
+
   </div>
 
+  <!-- SCRIPT -->
   <script src="/script.js" defer></script>
+
+  <!-- ENTER KEY SUPPORT -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const nameInput = document.getElementById('newTripName');
+      const pinInput = document.getElementById('newTripPin');
+
+      function handleEnter(e) {
+        if (e.key === 'Enter') {
+          addTrip();
+        }
+      }
+
+      nameInput.addEventListener('keypress', handleEnter);
+      pinInput.addEventListener('keypress', handleEnter);
+    });
+  </script>
 </body>
 </html>
