@@ -14,25 +14,27 @@ document.addEventListener('DOMContentLoaded', async () => {
   applyTheme();
   wireThemeToggle();
 
-  if (document.getElementById('trip-list')) {
-    await loadTrips();
+  try {
+    if (document.getElementById('trip-list')) {
+      await loadTrips();
+    }
+
+    if (document.getElementById('activities')) {
+      await loadTripPage();
+    }
+
+    if (document.getElementById('timeline')) {
+      await loadTimeline();
+    }
+
+    if (document.getElementById('cost-table')) {
+      await loadCosts();
+    }
+  } catch (error) {
+    console.error(error);
   }
 
-  if (document.getElementById('activities')) {
-    await loadTripPage();
-  }
-
-  if (document.getElementById('timeline')) {
-    await loadTimeline();
-  }
-
-  if (document.getElementById('cost-table')) {
-    await loadCosts();
-  }
-
-  if (window.lucide) {
-    lucide.createIcons();
-  }
+  refreshIcons();
 });
 
 /* ---------- THEME ---------- */
@@ -60,6 +62,27 @@ function wireThemeToggle() {
     localStorage.setItem('cloudtrips_theme', next);
     applyTheme();
   });
+}
+
+/* ---------- PIN STORAGE ---------- */
+
+function getTripPinKey(tripId) {
+  return `trip_pin_${tripId}`;
+}
+
+function getStoredTripPin(tripId) {
+  if (!tripId) return '';
+  return localStorage.getItem(getTripPinKey(tripId)) || '';
+}
+
+function storeTripPin(tripId, pin) {
+  if (!tripId || !pin) return;
+  localStorage.setItem(getTripPinKey(tripId), pin);
+}
+
+function removeStoredTripPin(tripId) {
+  if (!tripId) return;
+  localStorage.removeItem(getTripPinKey(tripId));
 }
 
 /* ---------- HELPERS ---------- */
@@ -160,25 +183,88 @@ function escapeHtml(value) {
     .replaceAll("'", '&#039;');
 }
 
+function normalizeTripsResponse(data) {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.trips)) return data.trips;
+  return [];
+}
+
+function withTripQuery(url, tripId) {
+  const full = new URL(url, window.location.origin);
+  if (tripId) {
+    full.searchParams.set('trip', tripId);
+  }
+  return `${full.pathname}${full.search}`;
+}
+
+async function promptAndStorePin(tripId) {
+  if (!tripId) {
+    throw new Error('Trip ID missing for PIN prompt');
+  }
+
+  const enteredPin = prompt('Enter trip PIN:');
+  if (!enteredPin || !enteredPin.trim()) {
+    throw new Error('PIN required');
+  }
+
+  const pin = enteredPin.trim();
+  storeTripPin(tripId, pin);
+  return pin;
+}
+
+/* ---------- API ---------- */
+
 async function apiGet(url) {
-  const res = await fetch(url, { method: 'GET' });
+  const fullUrl = new URL(url, window.location.origin);
+  const tripId = fullUrl.searchParams.get('id');
+  const pin = tripId ? getStoredTripPin(tripId) : '';
+
+  const res = await fetch(fullUrl.toString(), {
+    method: 'GET',
+    headers: pin ? { 'x-pin': pin } : {}
+  });
+
+  if (res.status === 401 && tripId) {
+    await promptAndStorePin(tripId);
+    return apiGet(url);
+  }
+
   if (!res.ok) {
     throw new Error(`GET ${url} failed with ${res.status}`);
   }
+
   return res.json();
 }
 
 async function apiPost(url, payload) {
-  const res = await fetch(url, {
+  const tripId = payload?.id || '';
+  const pin = tripId ? getStoredTripPin(tripId) : '';
+  const isUpdate = !!tripId && !!pin;
+  const finalUrl = isUpdate ? withTripQuery(url, tripId) : url;
+
+  const res = await fetch(finalUrl, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      ...(isUpdate && pin ? { 'x-pin': pin } : {})
     },
     body: JSON.stringify(payload)
   });
 
+  if (res.status === 401 && tripId) {
+    await promptAndStorePin(tripId);
+    return apiPost(url, payload);
+  }
+
   if (!res.ok) {
-    throw new Error(`POST ${url} failed with ${res.status}`);
+    let message = `POST ${url} failed with ${res.status}`;
+    try {
+      const err = await res.json();
+      if (err?.error) message = `${message}: ${err.error}`;
+    } catch {
+      // ignore JSON parse failure
+    }
+    throw new Error(message);
   }
 
   const contentType = res.headers.get('content-type') || '';
@@ -186,16 +272,32 @@ async function apiPost(url, payload) {
 }
 
 async function apiDelete(url, payload) {
+  const tripId = payload?.id || '';
+  const pin = tripId ? getStoredTripPin(tripId) : '';
+
   const res = await fetch(url, {
     method: 'DELETE',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      ...(pin ? { 'x-pin': pin } : {})
     },
     body: JSON.stringify(payload)
   });
 
+  if (res.status === 401 && tripId) {
+    await promptAndStorePin(tripId);
+    return apiDelete(url, payload);
+  }
+
   if (!res.ok) {
-    throw new Error(`DELETE ${url} failed with ${res.status}`);
+    let message = `DELETE ${url} failed with ${res.status}`;
+    try {
+      const err = await res.json();
+      if (err?.error) message = `${message}: ${err.error}`;
+    } catch {
+      // ignore JSON parse failure
+    }
+    throw new Error(message);
   }
 
   const contentType = res.headers.get('content-type') || '';
@@ -212,7 +314,8 @@ async function loadTrips() {
 
   try {
     const data = await apiGet(API_GET_TRIPS);
-    trips = safeArray(data.trips).map(normalizeTripSummary);
+    const list = normalizeTripsResponse(data);
+    trips = safeArray(list).map(normalizeTripSummary);
 
     if (!trips.length) {
       container.innerHTML = emptyState(
@@ -241,8 +344,8 @@ function normalizeTripSummary(raw) {
     id: raw.id ?? raw.tripId ?? raw._id ?? '',
     name: raw.name ?? raw.title ?? 'Untitled trip',
     activitiesCount: Array.isArray(raw.activities) ? raw.activities.length : Number(raw.activitiesCount || 0),
-    startDate: raw.startDate || null,
-    endDate: raw.endDate || null
+    startDate: raw.startDate || raw.start || null,
+    endDate: raw.endDate || raw.end || null
   };
 }
 
@@ -304,18 +407,27 @@ async function addTrip() {
     return;
   }
 
+  const pin = prompt('Set PIN for this trip:');
+  if (!pin || !pin.trim()) {
+    alert('PIN is required.');
+    return;
+  }
+
   const newTrip = {
     id: uuid(),
     name,
+    pin: pin.trim(),
     activities: []
   };
 
   try {
     await apiPost(API_SAVE_TRIP, newTrip);
+    storeTripPin(newTrip.id, newTrip.pin);
     input.value = '';
     await loadTrips();
   } catch (error) {
     console.error(error);
+    removeStoredTripPin(newTrip.id);
     alert('Failed to create trip.');
   }
 }
@@ -355,6 +467,7 @@ async function deleteTrip(tripId) {
 
   try {
     await apiDelete(API_DELETE_TRIP, { id: tripId });
+    removeStoredTripPin(tripId);
     await loadTrips();
   } catch (error) {
     console.error(error);
@@ -387,7 +500,7 @@ async function loadTripPage() {
     if (container) {
       container.innerHTML = emptyState(
         'Failed to load trip',
-        'Check whether the trip exists and your backend route returns the full trip.',
+        'Check whether the trip exists and the correct PIN is stored.',
         'triangle-alert'
       );
       refreshIcons();
@@ -404,14 +517,17 @@ function normalizeFullTrip(raw) {
   return {
     id: raw.id ?? raw.tripId ?? raw._id ?? '',
     name: raw.name ?? raw.title ?? 'Untitled trip',
+    pin: '',
     activities: sortActivities(
       safeArray(raw.activities).map((a) => ({
         id: a.id ?? a.activityId ?? uuid(),
-        name: a.name ?? '',
+        name: a.name ?? a.location ?? '',
         type: (a.type ?? 'other').toLowerCase(),
-        startDate: a.startDate ?? a.start ?? '',
-        endDate: a.endDate ?? a.end ?? '',
+        location: a.location ?? a.name ?? '',
+        startDate: a.start ?? a.startDate ?? '',
+        endDate: a.end ?? a.endDate ?? '',
         cost: Number(a.cost || 0),
+        km: Number(a.km || 0),
         notes: a.notes ?? ''
       }))
     )
@@ -445,7 +561,7 @@ function renderActivities() {
               <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
                 <i data-lucide="${meta.icon}" class="h-5 w-5"></i>
               </span>
-              <h3 class="truncate text-lg font-semibold tracking-tight">${escapeHtml(activity.name || 'Untitled activity')}</h3>
+              <h3 class="truncate text-lg font-semibold tracking-tight">${escapeHtml(activity.location || activity.name || 'Untitled activity')}</h3>
               <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${meta.badge}">
                 ${escapeHtml(activity.type)}
               </span>
@@ -496,7 +612,8 @@ function getActivityFormData() {
     startDate: document.getElementById('startDate')?.value || '',
     endDate: document.getElementById('endDate')?.value || '',
     cost: Number(document.getElementById('cost')?.value || 0),
-    notes: document.getElementById('notes')?.value.trim() || ''
+    notes: document.getElementById('notes')?.value.trim() || '',
+    km: Number(document.getElementById('km')?.value || 0)
   };
 }
 
@@ -507,7 +624,8 @@ function setActivityFormData(activity) {
     startDate: '',
     endDate: '',
     cost: '',
-    notes: ''
+    notes: '',
+    km: ''
   };
 
   const name = document.getElementById('activityName');
@@ -516,13 +634,15 @@ function setActivityFormData(activity) {
   const end = document.getElementById('endDate');
   const cost = document.getElementById('cost');
   const notes = document.getElementById('notes');
+  const km = document.getElementById('km');
 
-  if (name) name.value = data.name || '';
+  if (name) name.value = data.location || data.name || '';
   if (type) type.value = data.type || 'other';
   if (start) start.value = data.startDate || '';
   if (end) end.value = data.endDate || '';
   if (cost) cost.value = data.cost || '';
   if (notes) notes.value = data.notes || '';
+  if (km) km.value = data.km || '';
 }
 
 function resetActivityForm() {
@@ -553,10 +673,14 @@ async function saveActivity() {
   const activity = {
     id: editingActivityId || uuid(),
     name: data.name,
+    location: data.name,
     type: data.type,
     startDate: data.startDate,
     endDate: data.endDate,
+    start: data.startDate,
+    end: data.endDate,
     cost: data.cost,
+    km: data.km,
     notes: data.notes
   };
 
@@ -603,7 +727,7 @@ async function deleteActivity(activityId) {
   if (!currentTrip) return;
 
   const activity = currentTrip.activities.find((a) => String(a.id) === String(activityId));
-  const ok = confirm(`Delete activity "${activity?.name || 'this activity'}"?`);
+  const ok = confirm(`Delete activity "${activity?.location || activity?.name || 'this activity'}"?`);
   if (!ok) return;
 
   currentTrip.activities = currentTrip.activities.filter((a) => String(a.id) !== String(activityId));
@@ -623,7 +747,23 @@ async function saveTrip(trip) {
     throw new Error('Invalid trip object');
   }
 
-  return apiPost(API_SAVE_TRIP, trip);
+  const payload = {
+    id: trip.id,
+    name: trip.name || 'Untitled trip',
+    pin: '',
+    activities: safeArray(trip.activities).map((activity) => ({
+      id: activity.id || uuid(),
+      type: activity.type || 'other',
+      location: activity.location || activity.name || '',
+      start: activity.start || activity.startDate || '',
+      end: activity.end || activity.endDate || '',
+      cost: Number(activity.cost || 0),
+      km: Number(activity.km || 0),
+      notes: activity.notes || ''
+    }))
+  };
+
+  return apiPost(API_SAVE_TRIP, payload);
 }
 
 /* ---------- TIMELINE PAGE ---------- */
@@ -711,7 +851,7 @@ function renderTimeline() {
                     <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
                       <i data-lucide="${meta.icon}" class="h-4 w-4"></i>
                     </span>
-                    <h4 class="text-base font-semibold tracking-tight">${escapeHtml(activity.name || 'Untitled activity')}</h4>
+                    <h4 class="text-base font-semibold tracking-tight">${escapeHtml(activity.location || activity.name || 'Untitled activity')}</h4>
                     <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${meta.badge}">
                       ${escapeHtml(activity.type)}
                     </span>
@@ -845,7 +985,7 @@ function renderCosts() {
                 <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
                   <i data-lucide="${meta.icon}" class="h-4 w-4"></i>
                 </span>
-                <span class="font-medium">${escapeHtml(activity.name || 'Untitled')}</span>
+                <span class="font-medium">${escapeHtml(activity.location || activity.name || 'Untitled')}</span>
               </div>
             </td>
             <td class="px-3 py-3">
