@@ -12,9 +12,64 @@ document.addEventListener('DOMContentLoaded', () => {
   if (document.getElementById('cost-table')) loadCosts();
 });
 
+// ---------- PIN ----------
+function getStoredPin() {
+  return localStorage.getItem('trip_pin') || '';
+}
+
+function setStoredPin(pin) {
+  localStorage.setItem('trip_pin', pin);
+}
+
+function clearStoredPin() {
+  localStorage.removeItem('trip_pin');
+}
+
+function ensurePin() {
+  let pin = getStoredPin();
+
+  if (!pin) {
+    pin = prompt('Enter your PIN:')?.trim() || '';
+    if (pin) {
+      setStoredPin(pin);
+    }
+  }
+
+  return pin;
+}
+
+function logout() {
+  clearStoredPin();
+  location.reload();
+}
+
 // ---------- HTTP ----------
 async function fetchJson(url, options = {}) {
-  const res = await fetch(url, options);
+  const pin = ensurePin();
+
+  const headers = {
+    ...(options.headers || {})
+  };
+
+  if (pin) {
+    headers['x-pin'] = pin;
+  }
+
+  if (options.body && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
+  }
+
+  const res = await fetch(url, {
+    ...options,
+    headers
+  });
+
+  if (res.status === 401) {
+    clearStoredPin();
+    alert('Wrong PIN or unauthorized access.');
+    location.reload();
+    throw new Error('Unauthorized');
+  }
 
   if (!res.ok) {
     throw new Error(`Request failed: ${res.status}`);
@@ -237,11 +292,24 @@ function renderTrips() {
 }
 
 async function addTrip() {
-  const input = document.getElementById('newTripName');
-  if (!input) return;
+  const nameInput = document.getElementById('newTripName');
+  const pinInput = document.getElementById('newTripPin');
 
-  const name = input.value.trim();
-  if (!name) return;
+  if (!nameInput || !pinInput) return;
+
+  const name = nameInput.value.trim();
+  const pin = pinInput.value.trim();
+
+  if (!name || !pin) {
+    alert('Trip name and PIN are required.');
+    return;
+  }
+
+  // The entered PIN becomes the active workspace PIN.
+  setStoredPin(pin);
+
+  const existingTrips = await fetchJson(API_GET).catch(() => []);
+  trips = Array.isArray(existingTrips) ? existingTrips : [];
 
   trips.push({
     id: String(Date.now()),
@@ -250,7 +318,10 @@ async function addTrip() {
   });
 
   await saveTrips();
-  input.value = '';
+
+  nameInput.value = '';
+  pinInput.value = '';
+
   await loadTrips();
 }
 
@@ -269,9 +340,6 @@ async function deleteTrip(tripId) {
 async function saveTrips() {
   await fetchJson(API_SAVE, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
     body: JSON.stringify(trips)
   });
 }
@@ -344,15 +412,11 @@ function renderActivities(tr) {
       </div>
 
       <div class="tag ${escapeHtml(a.type || 'other')}">${escapeHtml(a.type || 'other')}</div>
-
       <div class="location-line">${escapeHtml(a.location || '')}</div>
-
       <div class="muted">
         ${formatDateTime(a.start)}${a.end ? ` → ${formatDateTime(a.end)}` : ''}
       </div>
-
       <div class="muted">Cost: ${Number(a.cost || 0).toFixed(2)} €</div>
-
       ${notesHtml}
     `;
 
@@ -471,7 +535,6 @@ function renderTimelineGrouped(activities) {
     dayBlock.className = `timeline-day${index % 2 === 1 ? ' alt' : ''}`;
 
     const label = day === 'unknown' ? 'No date' : formatDayLabel(day);
-
     dayBlock.innerHTML = `<div class="timeline-day-header">${escapeHtml(label)}</div>`;
 
     groups[day].forEach((a) => {
@@ -487,7 +550,7 @@ function renderTimelineGrouped(activities) {
         <div class="timeline-content">
           <div class="tag ${escapeHtml(a.type || 'other')}">${escapeHtml(a.type || 'other')}</div>
           <div class="location-line">${escapeHtml(a.location || '')}</div>
-          <div class="muted">${escapeHtml(timeLine || formatDateTime(a.start))}</div>
+          <div class="muted">${escapeHtml(timeLine)}</div>
           ${a.notes ? `<div class="muted">${escapeHtml(a.notes)}</div>` : ''}
         </div>
       `;
@@ -602,3 +665,4 @@ window.editActivity = editActivity;
 window.deleteActivity = deleteActivity;
 window.loadTimeline = loadTimeline;
 window.loadCosts = loadCosts;
+window.logout = logout;
