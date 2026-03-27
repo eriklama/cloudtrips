@@ -339,16 +339,31 @@ async function deleteActivity(id) {
 /* ---------- SAVE ---------- */
 
 async function saveTrip() {
-  const pin = getTripPin(currentTrip.id, false);
+  let pin = getTripPin(currentTrip.id);
 
-  await fetchJson(`${API_SAVE_TRIP}?trip=${currentTrip.id}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-pin': pin
-    },
-    body: JSON.stringify(currentTrip)
-  });
+  if (!pin) {
+    alert("PIN required to save");
+    return;
+  }
+
+  try {
+    await fetchJson(`${API_SAVE_TRIP}?trip=${currentTrip.id}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-pin': pin
+      },
+      body: JSON.stringify(currentTrip)
+    });
+
+  } catch (err) {
+    if (err.status === 401) {
+      clearStoredTripPin(currentTrip.id);
+      alert("Wrong PIN");
+    } else {
+      alert("Save failed");
+    }
+  }
 }
 
 /* ---------- TIMELINE ---------- */
