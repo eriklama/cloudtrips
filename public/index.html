@@ -10,17 +10,21 @@
   <div class="page compact-stack">
     <div class="section-header">
       <h1>My Trips</h1>
-      <div class="section-actions">
-        <button onclick="logout()">Change PIN</button>
-      </div>
     </div>
 
     <div class="card">
+      <div class="section-header">
+        <h2>Add Trip</h2>
+      </div>
       <div class="form-grid">
         <input id="newTripName" placeholder="Trip Name" />
-        <input id="newTripPin" placeholder="PIN" type="password" />
-        <button onclick="addTrip()">Add Trip</button>
+        <input id="newTripPin" type="password" placeholder="Trip PIN" />
+        <button type="button" onclick="addTrip()">Add Trip</button>
       </div>
+    </div>
+
+    <div class="section-header">
+      <h2>All Trips</h2>
     </div>
 
     <div id="trip-list"></div>
