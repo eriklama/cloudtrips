@@ -1,7 +1,9 @@
-const API_GET = '/getTrips';
-const API_SAVE = '/saveTrips';
+const API_GET_TRIPS = '/getTrips';
+const API_GET_TRIP = '/getTrip';
+const API_SAVE_TRIP = '/saveTrip';
 
 let trips = [];
+let currentTrip = null;
 let editingActivityId = null;
 
 // ---------- INIT ----------
@@ -12,67 +14,47 @@ document.addEventListener('DOMContentLoaded', () => {
   if (document.getElementById('cost-table')) loadCosts();
 });
 
-// ---------- PIN ----------
-function getStoredPin() {
-  return localStorage.getItem('trip_pin') || '';
+// ---------- STORAGE ----------
+function getTripPinKey(tripId) {
+  return `trip_pin_${tripId}`;
 }
 
-function setStoredPin(pin) {
-  localStorage.setItem('trip_pin', pin);
+function getStoredTripPin(tripId) {
+  return localStorage.getItem(getTripPinKey(tripId)) || '';
 }
 
-function clearStoredPin() {
-  localStorage.removeItem('trip_pin');
+function setStoredTripPin(tripId, pin) {
+  localStorage.setItem(getTripPinKey(tripId), pin);
 }
 
-function ensurePin() {
-  let pin = getStoredPin();
+function clearStoredTripPin(tripId) {
+  localStorage.removeItem(getTripPinKey(tripId));
+}
 
-  if (!pin) {
-    pin = prompt('Enter your PIN:')?.trim() || '';
-    if (pin) {
-      setStoredPin(pin);
-    }
+function promptTripPin(tripId) {
+  const pin = prompt('Enter PIN for this trip:')?.trim() || '';
+  if (pin) {
+    setStoredTripPin(tripId, pin);
   }
-
   return pin;
 }
 
-function logout() {
-  clearStoredPin();
-  location.reload();
+function getTripPin(tripId, promptIfMissing = true) {
+  let pin = getStoredTripPin(tripId);
+  if (!pin && promptIfMissing) {
+    pin = promptTripPin(tripId);
+  }
+  return pin;
 }
 
 // ---------- HTTP ----------
 async function fetchJson(url, options = {}) {
-  const pin = ensurePin();
-
-  const headers = {
-    ...(options.headers || {})
-  };
-
-  if (pin) {
-    headers['x-pin'] = pin;
-  }
-
-  if (options.body && !headers['Content-Type']) {
-    headers['Content-Type'] = 'application/json';
-  }
-
-  const res = await fetch(url, {
-    ...options,
-    headers
-  });
-
-  if (res.status === 401) {
-    clearStoredPin();
-    alert('Wrong PIN or unauthorized access.');
-    location.reload();
-    throw new Error('Unauthorized');
-  }
+  const res = await fetch(url, options);
 
   if (!res.ok) {
-    throw new Error(`Request failed: ${res.status}`);
+    const error = new Error(`Request failed: ${res.status}`);
+    error.status = res.status;
+    throw error;
   }
 
   const contentType = res.headers.get('content-type') || '';
@@ -81,6 +63,72 @@ async function fetchJson(url, options = {}) {
   }
 
   return res.json();
+}
+
+async function fetchProtectedTrip(tripId) {
+  let pin = getTripPin(tripId, false);
+
+  if (!pin) {
+    pin = promptTripPin(tripId);
+  }
+
+  if (!pin) {
+    throw new Error('PIN required');
+  }
+
+  try {
+    return await fetchJson(`${API_GET_TRIP}?trip=${encodeURIComponent(tripId)}`, {
+      headers: {
+        'x-pin': pin
+      }
+    });
+  } catch (error) {
+    if (error.status === 401) {
+      clearStoredTripPin(tripId);
+      const retryPin = promptTripPin(tripId);
+
+      if (!retryPin) {
+        throw error;
+      }
+
+      return fetchJson(`${API_GET_TRIP}?trip=${encodeURIComponent(tripId)}`, {
+        headers: {
+          'x-pin': retryPin
+        }
+      });
+    }
+
+    throw error;
+  }
+}
+
+async function saveExistingTrip(trip) {
+  const pin = getTripPin(trip.id, false);
+  if (!pin) {
+    throw new Error('Missing stored PIN for trip');
+  }
+
+  return fetchJson(`${API_SAVE_TRIP}?trip=${encodeURIComponent(trip.id)}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-pin': pin
+    },
+    body: JSON.stringify(trip)
+  });
+}
+
+async function createNewTrip(trip, pin) {
+  return fetchJson(API_SAVE_TRIP, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      ...trip,
+      pin
+    })
+  });
 }
 
 // ---------- HELPERS ----------
@@ -103,18 +151,6 @@ function formatDateTime(value) {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-}
-
-function formatTime(value) {
-  if (!value) return '';
-
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return '';
-
-  return d.toLocaleTimeString([], {
     hour: '2-digit',
     minute: '2-digit'
   });
@@ -155,11 +191,6 @@ function getTripId() {
 
 function openTrip(id) {
   location.href = `/trip.html?trip=${encodeURIComponent(id)}`;
-}
-
-function getCurrentTrip() {
-  const id = getTripId();
-  return trips.find((t) => String(t.id) === String(id));
 }
 
 function resetActivityForm() {
@@ -237,12 +268,11 @@ function ensureActivityFormActions() {
 // ---------- MAIN PAGE ----------
 async function loadTrips() {
   try {
-    trips = await fetchJson(API_GET);
+    trips = await fetchJson(API_GET_TRIPS);
     if (!Array.isArray(trips)) trips = [];
     renderTrips();
   } catch (e) {
     console.error('Failed to load trips:', e);
-
     const list = document.getElementById('trip-list');
     if (list) {
       list.innerHTML = `<div class="empty-state">Failed to load trips.</div>`;
@@ -265,27 +295,30 @@ function renderTrips() {
     const card = document.createElement('div');
     card.className = 'card';
 
-    const activityCount = Array.isArray(t.activities) ? t.activities.length : 0;
+    const storedPin = getStoredTripPin(t.id);
 
     card.innerHTML = `
       <div class="trip-card">
         <div class="trip-card-main">
           <div class="trip-card-title">${escapeHtml(t.name || 'Untitled trip')}</div>
-          <div class="trip-card-meta">${activityCount} activit${activityCount === 1 ? 'y' : 'ies'}</div>
+          <div class="trip-card-meta">${storedPin ? 'PIN saved on this device' : 'PIN required to open'}</div>
         </div>
         <div class="trip-card-actions">
           <button type="button" class="btn">Open</button>
-          <button type="button" class="btn btn-secondary">Delete</button>
+          <button type="button" class="btn btn-secondary">Forget PIN</button>
         </div>
       </div>
     `;
 
     const buttons = card.querySelectorAll('button');
     const openBtn = buttons[0];
-    const deleteBtn = buttons[1];
+    const forgetBtn = buttons[1];
 
     openBtn.addEventListener('click', () => openTrip(t.id));
-    deleteBtn.addEventListener('click', () => deleteTrip(t.id));
+    forgetBtn.addEventListener('click', () => {
+      clearStoredTripPin(t.id);
+      renderTrips();
+    });
 
     list.appendChild(card);
   });
@@ -305,19 +338,14 @@ async function addTrip() {
     return;
   }
 
-  // The entered PIN becomes the active workspace PIN.
-  setStoredPin(pin);
-
-  const existingTrips = await fetchJson(API_GET).catch(() => []);
-  trips = Array.isArray(existingTrips) ? existingTrips : [];
-
-  trips.push({
+  const newTrip = {
     id: String(Date.now()),
     name,
     activities: []
-  });
+  };
 
-  await saveTrips();
+  await createNewTrip(newTrip, pin);
+  setStoredTripPin(newTrip.id, pin);
 
   nameInput.value = '';
   pinInput.value = '';
@@ -325,77 +353,54 @@ async function addTrip() {
   await loadTrips();
 }
 
-async function deleteTrip(tripId) {
-  const trip = trips.find((t) => String(t.id) === String(tripId));
-  if (!trip) return;
-
-  const confirmed = confirm(`Delete trip "${trip.name}"?`);
-  if (!confirmed) return;
-
-  trips = trips.filter((t) => String(t.id) !== String(tripId));
-  await saveTrips();
-  renderTrips();
-}
-
-async function saveTrips() {
-  await fetchJson(API_SAVE, {
-    method: 'POST',
-    body: JSON.stringify(trips)
-  });
-}
-
 // ---------- TRIP PAGE ----------
 async function loadTripPage() {
+  const tripId = getTripId();
+  if (!tripId) return;
+
   try {
-    trips = await fetchJson(API_GET);
-
-    const id = getTripId();
-    const tr = trips.find((t) => String(t.id) === String(id));
-
-    if (!tr) {
-      const title = document.getElementById('trip-title');
-      if (title) title.innerText = 'Trip not found';
-      return;
-    }
+    currentTrip = await fetchProtectedTrip(tripId);
 
     const title = document.getElementById('trip-title');
-    if (title) title.innerText = tr.name;
+    if (title) title.innerText = currentTrip.name;
 
     const timelineLink = document.getElementById('timeline-link');
     if (timelineLink) {
-      timelineLink.href = `/timeline.html?trip=${encodeURIComponent(id)}`;
+      timelineLink.href = `/timeline.html?trip=${encodeURIComponent(tripId)}`;
     }
 
     const costsLink = document.getElementById('costs-link');
     if (costsLink) {
-      costsLink.href = `/costs.html?trip=${encodeURIComponent(id)}`;
+      costsLink.href = `/costs.html?trip=${encodeURIComponent(tripId)}`;
     }
 
     ensureActivityFormActions();
     updateActivityFormButtons();
-    renderActivities(tr);
+    renderActivities(currentTrip);
   } catch (e) {
     console.error('Failed to load trip page:', e);
-
     const list = document.getElementById('activity-list');
+    const title = document.getElementById('trip-title');
+
+    if (title) title.innerText = 'Trip unavailable';
     if (list) {
-      list.innerHTML = `<div class="empty-state">Failed to load trip.</div>`;
+      list.innerHTML = `<div class="empty-state">Could not open trip. PIN may be missing or incorrect.</div>`;
     }
   }
 }
 
-function renderActivities(tr) {
+function renderActivities(trip) {
   const list = document.getElementById('activity-list');
   if (!list) return;
 
   list.innerHTML = '';
 
-  if (!tr.activities || tr.activities.length === 0) {
+  if (!trip.activities || trip.activities.length === 0) {
     list.innerHTML = `<div class="empty-state">No activities yet.</div>`;
     return;
   }
 
-  const activities = [...tr.activities].sort(sortByStart);
+  const activities = [...trip.activities].sort(sortByStart);
 
   activities.forEach((a) => {
     const d = document.createElement('div');
@@ -432,8 +437,7 @@ function renderActivities(tr) {
 }
 
 async function addActivity() {
-  const tr = getCurrentTrip();
-  if (!tr) return;
+  if (!currentTrip) return;
 
   const typeEl = document.getElementById('type');
   const locationEl = document.getElementById('location');
@@ -452,27 +456,26 @@ async function addActivity() {
     notes: notesEl ? notesEl.value.trim() : ''
   };
 
-  if (!tr.activities) tr.activities = [];
+  if (!currentTrip.activities) currentTrip.activities = [];
 
   if (editingActivityId) {
-    const index = tr.activities.findIndex((a) => String(a.id) === String(editingActivityId));
+    const index = currentTrip.activities.findIndex((a) => String(a.id) === String(editingActivityId));
     if (index !== -1) {
-      tr.activities[index] = activity;
+      currentTrip.activities[index] = activity;
     }
   } else {
-    tr.activities.push(activity);
+    currentTrip.activities.push(activity);
   }
 
-  await saveTrips();
+  await saveExistingTrip(currentTrip);
   resetActivityForm();
   await loadTripPage();
 }
 
 function editActivity(activityId) {
-  const tr = getCurrentTrip();
-  if (!tr || !Array.isArray(tr.activities)) return;
+  if (!currentTrip || !Array.isArray(currentTrip.activities)) return;
 
-  const activity = tr.activities.find((a) => String(a.id) === String(activityId));
+  const activity = currentTrip.activities.find((a) => String(a.id) === String(activityId));
   if (!activity) return;
 
   document.getElementById('type').value = activity.type || 'plane';
@@ -488,22 +491,19 @@ function editActivity(activityId) {
   const formCard = document.getElementById('save-activity-btn')?.closest('.card');
   if (formCard) {
     formCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  } else {
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
   }
 }
 
 async function deleteActivity(activityId) {
-  const tr = getCurrentTrip();
-  if (!tr || !Array.isArray(tr.activities)) return;
+  if (!currentTrip || !Array.isArray(currentTrip.activities)) return;
 
-  tr.activities = tr.activities.filter((a) => String(a.id) !== String(activityId));
+  currentTrip.activities = currentTrip.activities.filter((a) => String(a.id) !== String(activityId));
 
   if (String(editingActivityId) === String(activityId)) {
     resetActivityForm();
   }
 
-  await saveTrips();
+  await saveExistingTrip(currentTrip);
   await loadTripPage();
 }
 
@@ -563,15 +563,14 @@ function renderTimelineGrouped(activities) {
 }
 
 async function loadTimeline() {
-  try {
-    trips = await fetchJson(API_GET);
+  const tripId = getTripId();
+  if (!tripId) return;
 
-    const tripId = getTripId();
-    const tr = trips.find((t) => String(t.id) === String(tripId));
-    if (!tr) return;
+  try {
+    currentTrip = await fetchProtectedTrip(tripId);
 
     const title = document.getElementById('timeline-title');
-    if (title) title.innerText = `${tr.name} Timeline`;
+    if (title) title.innerText = `${currentTrip.name} Timeline`;
 
     const tripLink = document.getElementById('timeline-trip-link');
     if (tripLink) {
@@ -583,28 +582,26 @@ async function loadTimeline() {
       costsLink.href = `/costs.html?trip=${encodeURIComponent(tripId)}`;
     }
 
-    renderTimelineGrouped(tr.activities || []);
+    renderTimelineGrouped(currentTrip.activities || []);
   } catch (e) {
     console.error('Failed to load timeline:', e);
-
     const c = document.getElementById('timeline');
     if (c) {
-      c.innerHTML = `<div class="empty-state">Failed to load timeline.</div>`;
+      c.innerHTML = `<div class="empty-state">Could not open timeline.</div>`;
     }
   }
 }
 
 // ---------- COSTS ----------
 async function loadCosts() {
-  try {
-    trips = await fetchJson(API_GET);
+  const tripId = getTripId();
+  if (!tripId) return;
 
-    const tripId = getTripId();
-    const tr = trips.find((t) => String(t.id) === String(tripId));
-    if (!tr) return;
+  try {
+    currentTrip = await fetchProtectedTrip(tripId);
 
     const title = document.getElementById('costs-title');
-    if (title) title.innerText = `${tr.name} Costs`;
+    if (title) title.innerText = `${currentTrip.name} Costs`;
 
     const tripLink = document.getElementById('costs-trip-link');
     if (tripLink) {
@@ -622,7 +619,7 @@ async function loadCosts() {
     table.innerHTML = '';
 
     let total = 0;
-    const activities = [...(tr.activities || [])].sort(sortByStart);
+    const activities = [...(currentTrip.activities || [])].sort(sortByStart);
 
     if (activities.length === 0) {
       table.innerHTML = `<tr><td colspan="4">No activities yet.</td></tr>`;
@@ -646,10 +643,9 @@ async function loadCosts() {
     if (totalEl) totalEl.innerText = total.toFixed(2);
   } catch (e) {
     console.error('Failed to load costs:', e);
-
     const table = document.getElementById('cost-table');
     if (table) {
-      table.innerHTML = `<tr><td colspan="4">Failed to load costs.</td></tr>`;
+      table.innerHTML = `<tr><td colspan="4">Could not open costs.</td></tr>`;
     }
   }
 }
@@ -657,7 +653,6 @@ async function loadCosts() {
 // ---------- GLOBALS ----------
 window.loadTrips = loadTrips;
 window.addTrip = addTrip;
-window.deleteTrip = deleteTrip;
 window.openTrip = openTrip;
 window.loadTripPage = loadTripPage;
 window.addActivity = addActivity;
@@ -665,4 +660,3 @@ window.editActivity = editActivity;
 window.deleteActivity = deleteActivity;
 window.loadTimeline = loadTimeline;
 window.loadCosts = loadCosts;
-window.logout = logout;
