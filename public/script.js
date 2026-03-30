@@ -1116,6 +1116,7 @@ function renderCosts() {
 
   const activities = sortActivities(currentTrip.activities);
   const total = activities.reduce((sum, a) => sum + Number(a.cost || 0), 0);
+  const totalKm = activities.reduce((sum, a) => sum + Number(a.km || 0), 0);
 
   const byType = activities.reduce((acc, activity) => {
     const key = activity.type || 'other';
@@ -1126,9 +1127,11 @@ function renderCosts() {
   const typeEntries = Object.entries(byType).sort((a, b) => b[1] - a[1]);
 
   totalEl.textContent = formatCurrency(total);
-  if (itemsCountEl) itemsCountEl.textContent = String(activities.length);
-  if (categoriesCountEl) categoriesCountEl.textContent = String(typeEntries.length);
-
+  const totalKmEl = document.getElementById('totalKm');
+if (totalKmEl) {
+  totalKmEl.textContent = totalKm ? `${totalKm} km` : '—';
+}
+  
   summaryEl.innerHTML = typeEntries.length
     ? typeEntries.map(([type, amount]) => {
         const meta = getTypeMeta(type);
@@ -1161,33 +1164,46 @@ function renderCosts() {
       );
 
   table.innerHTML = activities.length
-    ? activities.map((activity) => {
-        const meta = getTypeMeta(activity.type);
-        return `
-          <tr class="rounded-2xl bg-slate-50 dark:bg-slate-950/60">
-            <td class="rounded-l-2xl px-3 py-3">
-              <div class="flex items-center gap-3">
-                <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
-                  <i data-lucide="${meta.icon}" class="h-4 w-4"></i>
-                </span>
-                <span class="font-medium">${escapeHtml(activity.location || activity.name || 'Untitled')}</span>
-              </div>
-            </td>
-            <td class="px-3 py-3">
-              <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${meta.badge}">
-                ${escapeHtml(activity.type)}
+  ? activities.map((activity) => {
+      const meta = getTypeMeta(activity.type);
+      return `
+        <tr class="rounded-2xl bg-slate-50 dark:bg-slate-950/60">
+          <td class="rounded-l-2xl px-3 py-3">
+            <div class="flex items-center gap-3">
+              <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
+                <i data-lucide="${meta.icon}" class="h-4 w-4"></i>
               </span>
-            </td>
-            <td class="px-3 py-3 text-sm text-slate-600 dark:text-slate-300">${escapeHtml(formatDateTime(activity.startDate))}</td>
-            <td class="rounded-r-2xl px-3 py-3 text-right font-semibold">${escapeHtml(formatCurrency(activity.cost))}</td>
-          </tr>
-        `;
-      }).join('')
-    : `
-      <tr>
-        <td colspan="4" class="px-3 py-8 text-center text-slate-500 dark:text-slate-400">No activities yet.</td>
-      </tr>
-    `;
+              <span class="font-medium">${escapeHtml(activity.location || activity.name || 'Untitled')}</span>
+            </div>
+          </td>
+
+          <td class="px-3 py-3">
+            <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${meta.badge}">
+              ${escapeHtml(activity.type)}
+            </span>
+          </td>
+
+          <td class="px-3 py-3 text-sm text-slate-600 dark:text-slate-300">
+            ${escapeHtml(formatDateTime(activity.startDate))}
+          </td>
+
+          <td class="px-3 py-3 text-right font-semibold">
+            ${escapeHtml(formatCurrency(activity.cost))}
+          </td>
+
+          <td class="rounded-r-2xl px-3 py-3 text-right text-sm text-slate-600 dark:text-slate-300">
+            ${activity.km ? activity.km + ' km' : '—'}
+          </td>
+        </tr>
+      `;
+    }).join('')
+  : `
+    <tr>
+      <td colspan="5" class="px-3 py-8 text-center text-slate-500 dark:text-slate-400">
+        No activities yet.
+      </td>
+    </tr>
+  `;
 
   refreshIcons();
 }
