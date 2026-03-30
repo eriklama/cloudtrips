@@ -972,6 +972,7 @@ async function loadTimeline() {
   }
 }
 
+
 function renderTimeline() {
   const container = document.getElementById('timeline');
   if (!container || !currentTrip) return;
@@ -1004,64 +1005,37 @@ function renderTimeline() {
       : formatDayLabel(dayActivities[0]?.startDate);
 
     return `
-      <section class="rounded-3xl border border-slate-200 bg-white p-6 shadow-soft dark:border-slate-800 dark:bg-slate-900">
-        <div class="mb-6 flex items-center gap-3">
-          <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
-            <i data-lucide="calendar-days" class="h-5 w-5"></i>
-          </div>
-          <div>
-            <h3 class="text-lg font-semibold tracking-tight">${escapeHtml(label)}</h3>
-            <p class="text-sm text-slate-500 dark:text-slate-400">${dayActivities.length} item${dayActivities.length === 1 ? '' : 's'}</p>
-          </div>
+      <div class="mb-2 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
+
+        <!-- DAY HEADER -->
+        <button onclick="toggleDay('${key}')"
+          class="w-full text-left px-3 py-2 bg-slate-100 dark:bg-slate-800 font-medium text-sm flex justify-between items-center">
+          <span>📅 ${escapeHtml(label)}</span>
+          <span id="icon-${key}">▼</span>
+        </button>
+
+        <!-- DAY CONTENT -->
+        <div id="day-${key}" class="p-2 space-y-2">
+          ${dayActivities.map(a => `
+            <div class="p-2 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm">
+              <div class="text-sm font-semibold">${escapeHtml(a.location || a.name || 'Activity')}</div>
+
+              <div class="text-xs text-slate-500 flex flex-wrap gap-x-3 gap-y-1">
+                <span>⏱ ${formatTimeOnly(a.startDate)} – ${formatTimeOnly(a.endDate)}</span>
+                ${a.location ? `<span>📍 ${escapeHtml(a.location)}</span>` : ''}
+                ${a.km ? `<span>🚗 ${a.km} km</span>` : ''}
+              </div>
+            </div>
+          `).join('')}
         </div>
 
-        <div class="relative ml-2 border-l-2 border-slate-200 pl-6 dark:border-slate-700">
-          ${dayActivities.map((activity) => {
-            const meta = getTypeMeta(activity.type);
-            return `
-              <article class="relative mb-5 last:mb-0">
-                <span class="absolute -left-[31px] top-5 flex h-5 w-5 items-center justify-center rounded-full border-4 border-white bg-primary-600 dark:border-slate-900"></span>
-
-                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/60">
-                  <div class="mb-3 flex flex-wrap items-center gap-2">
-                    <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
-                      <i data-lucide="${meta.icon}" class="h-4 w-4"></i>
-                    </span>
-                    <h4 class="text-base font-semibold tracking-tight">${escapeHtml(activity.location || activity.name || 'Untitled activity')}</h4>
-                    <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${meta.badge}">
-                      ${escapeHtml(activity.type)}
-                    </span>
-                  </div>
-
-                  <div class="grid gap-3 md:grid-cols-[120px_120px_1fr_140px]">
-                    <div>
-                      <div class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Start</div>
-                      <div class="text-sm font-medium">${escapeHtml(formatTimeOnly(activity.startDate))}</div>
-                    </div>
-                    <div>
-                      <div class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">End</div>
-                      <div class="text-sm font-medium">${escapeHtml(formatTimeOnly(activity.endDate))}</div>
-                    </div>
-                    <div>
-                      <div class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Notes</div>
-                      <div class="text-sm font-medium">${escapeHtml(activity.notes || '—')}</div>
-                    </div>
-                    <div>
-                      <div class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Cost</div>
-                      <div class="text-sm font-medium">${escapeHtml(formatCurrency(activity.cost))}</div>
-                    </div>
-                  </div>
-                </div>
-              </article>
-            `;
-          }).join('')}
-        </div>
-      </section>
+      </div>
     `;
   }).join('');
 
   refreshIcons();
 }
+
 
 /* ---------- COSTS PAGE ---------- */
 
@@ -1264,4 +1238,15 @@ function refreshIcons() {
   if (window.lucide) {
     lucide.createIcons();
   }
+}
+
+
+function toggleDay(day) {
+  const el = document.getElementById(`day-${day}`);
+  const icon = document.getElementById(`icon-${day}`);
+  if (!el) return;
+
+  const hidden = el.style.display === 'none';
+  el.style.display = hidden ? 'block' : 'none';
+  if (icon) icon.textContent = hidden ? '▼' : '▶';
 }
