@@ -38,6 +38,7 @@
 </head>
 <body class="min-h-full bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-200">
   <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-primary-50 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900">
+    
     <header class="sticky top-0 z-20 border-b border-slate-200/70 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
       <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         <div class="flex items-center gap-3">
@@ -49,21 +50,11 @@
             <p class="text-sm text-slate-500 dark:text-slate-400">Plan trips beautifully</p>
           </div>
         </div>
-
-       <!--  <div class="flex items-center gap-2">
-          <button
-            id="theme-toggle"
-            type="button"
-            class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-          >
-            <i data-lucide="moon-star" class="h-4 w-4"></i>
-            <span>Theme</span>
-          </button>
-        </div> -->
       </div>
     </header>
 
     <main class="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      
       <section class="mb-8 grid gap-4 lg:grid-cols-[1.5fr_1fr]">
         <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-soft dark:border-slate-800 dark:bg-slate-900">
           <div class="flex items-start justify-between gap-4">
@@ -72,7 +63,9 @@
                 <i data-lucide="sparkles" class="h-3.5 w-3.5"></i>
                 Travel planner
               </p>
-              <h2 class="text-3xl font-semibold tracking-tight sm:text-4xl">Trips, activities and costs planning.</h2>
+              <h2 class="text-3xl font-semibold tracking-tight sm:text-4xl">
+                Trips, activities and costs planning.
+              </h2>
               <p class="mt-3 max-w-2xl text-slate-600 dark:text-slate-400">
                 Keep all your trips, plans, transport, stays, notes, and costs in one place.
               </p>
@@ -91,12 +84,14 @@
 
           <div class="space-y-3">
             <div>
-              <label for="newTripName" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Trip name</label>
+              <label for="newTripName" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                Trip name
+              </label>
               <input
                 id="newTripName"
                 type="text"
                 placeholder="e.g. Iceland Summer 2026"
-                class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none ring-0 transition placeholder:text-slate-400 focus:border-primary-500 focus:ring-4 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-950 dark:placeholder:text-slate-500 dark:focus:ring-primary-500/20"
+                class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-primary-500 focus:ring-4 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-950 dark:placeholder:text-slate-500 dark:focus:ring-primary-500/20"
               />
             </div>
 
@@ -116,12 +111,15 @@
         <div class="mb-4 flex items-center justify-between">
           <div>
             <h3 class="text-xl font-semibold tracking-tight">My trips</h3>
-            <p class="text-sm text-slate-500 dark:text-slate-400">Open, rename, or delete any trip.</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400">
+              Open, rename, or delete any trip.
+            </p>
           </div>
         </div>
 
         <div id="trip-list" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3"></div>
       </section>
+
     </main>
   </div>
 
