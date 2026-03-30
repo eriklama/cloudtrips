@@ -3,39 +3,133 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Costs</title>
+  <title>Trip Costs</title>
+
+  <script>
+    tailwind = {
+      config: {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              primary: {
+                500: '#6366f1'
+              }
+            }
+          }
+        }
+      }
+    };
+  </script>
 
   <link href="/styles.css" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 
-<body class="min-h-full bg-slate-950 text-slate-200">
-<div class="min-h-screen">
+<body class="min-h-full bg-slate-950 text-slate-100">
+<div class="min-h-screen bg-gradient-to-br from-slate-950 via-slate-950 to-slate-900">
 
-  <header class="border-b border-slate-800">
-    <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-      <h1 class="text-lg font-semibold">Costs</h1>
+<header class="border-b border-slate-800">
+  <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+    <h1 id="costs-title" class="text-xl font-semibold">Costs</h1>
+  </div>
+</header>
 
-      <div class="flex gap-2">
-        <button onclick="goToTrip()" class="text-sm px-3 py-2 bg-slate-800 rounded-xl">Trip</button>
-        <button onclick="goToTimeline()" class="text-sm px-3 py-2 bg-slate-800 rounded-xl">Timeline</button>
+<main class="max-w-6xl mx-auto px-4 py-6 sm:py-8 pb-20">
+
+<!-- HERO -->
+<section class="mb-4 sm:mb-6 flex flex-col gap-3 sm:gap-4 rounded-2xl border border-slate-800 bg-slate-900 p-4 sm:p-6 shadow-soft lg:flex-row lg:items-center lg:justify-between">
+
+  <!-- LEFT -->
+  <div>
+    <div class="mb-2 inline-flex items-center gap-2 rounded-full bg-primary-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary-300">
+      <i data-lucide="badge-euro" class="h-3.5 w-3.5"></i>
+      Trip costs
+    </div>
+
+    <h2 id="costs-hero-title" class="text-xl sm:text-2xl font-semibold tracking-tight">
+      Costs
+    </h2>
+
+    <p class="mt-1 sm:mt-2 text-sm text-slate-400">
+      Track total spend and distance.
+    </p>
+  </div>
+
+  <!-- RIGHT: NAV -->
+  <div class="flex gap-2 w-full sm:w-auto">
+
+    <button onclick="goToTrip()"
+      class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-200 hover:bg-slate-800">
+      <i data-lucide="notebook-pen" class="h-4 w-4"></i>
+      Trip
+    </button>
+
+    <button onclick="goToTimeline()"
+      class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-200 hover:bg-slate-800">
+      <i data-lucide="list-tree" class="h-4 w-4"></i>
+      Timeline
+    </button>
+
+  </div>
+
+</section>
+
+<!-- MAIN GRID -->
+<section class="grid gap-4 sm:gap-6 xl:grid-cols-[0.7fr_1.3fr]">
+
+  <!-- SUMMARY -->
+  <div class="rounded-2xl border border-slate-800 bg-slate-900 p-4 sm:p-5">
+
+    <div class="flex justify-between items-center mb-3 sm:mb-4">
+      <div class="text-base sm:text-lg font-semibold">
+        Total
+      </div>
+
+      <div class="text-sm sm:text-lg font-semibold">
+        <span id="totalCost">0</span>
+        <span class="mx-2 opacity-50">·</span>
+        <span id="totalKm">0 km</span>
       </div>
     </div>
-  </header>
 
-  <main class="max-w-4xl mx-auto px-4 py-4 space-y-4 pb-20">
+    <!-- REQUIRED ID -->
+    <div id="cost-summary" class="space-y-2 text-sm"></div>
 
-    <div id="cost-summary" class="space-y-2"></div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="rounded-2xl border border-slate-800 bg-slate-900 p-4 sm:p-5">
+
+    <h3 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4">
+      Detailed costs
+    </h3>
 
     <div class="overflow-x-auto">
-      <table class="w-full text-sm">
-        <tbody id="cost-table"></tbody>
+      <table class="min-w-full border-separate border-spacing-y-2 text-sm">
+
+        <thead>
+          <tr class="text-left text-xs sm:text-sm text-slate-400">
+            <th class="px-2 py-1">Activity</th>
+            <th class="px-2 py-1">Type</th>
+            <th class="px-2 py-1">Start</th>
+            <th class="px-2 py-1 text-right">Cost</th>
+            <th class="px-2 py-1 text-right">KM</th>
+          </tr>
+        </thead>
+
+        <!-- REQUIRED ID -->
+        <tbody id="cost-table" class="text-slate-200"></tbody>
+
       </table>
     </div>
 
-  </main>
+  </div>
 
-</div>
+</section>
+</main>
 
 <script src="/script.js" defer></script>
+</div>
 </body>
 </html>
