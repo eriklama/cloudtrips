@@ -29,13 +29,15 @@
 <body class="min-h-full bg-slate-950 text-slate-100">
 <div class="min-h-screen bg-gradient-to-br from-slate-950 via-slate-950 to-slate-900">
 
+<!-- HEADER -->
 <header class="border-b border-slate-800">
   <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
     <h1 id="costs-title" class="text-xl font-semibold">Costs</h1>
   </div>
 </header>
 
-<main class="max-w-6xl mx-auto px-4 py-6 sm:py-8 pb-20">
+<!-- MAIN -->
+<main class="max-w-6xl mx-auto px-4 py-6 sm:py-8 pb-20 overflow-x-hidden">
 
 <!-- HERO -->
 <section class="mb-4 sm:mb-6 flex flex-col gap-3 sm:gap-4 rounded-2xl border border-slate-800 bg-slate-900 p-4 sm:p-6 shadow-soft lg:flex-row lg:items-center lg:justify-between">
@@ -56,9 +58,8 @@
     </p>
   </div>
 
-  <!-- RIGHT: NAV -->
+  <!-- NAV -->
   <div class="flex gap-2 w-full sm:w-auto">
-
     <button onclick="goToTrip()"
       class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-200 hover:bg-slate-800">
       <i data-lucide="notebook-pen" class="h-4 w-4"></i>
@@ -70,7 +71,6 @@
       <i data-lucide="list-tree" class="h-4 w-4"></i>
       Timeline
     </button>
-
   </div>
 
 </section>
@@ -81,20 +81,29 @@
   <!-- SUMMARY -->
   <div class="rounded-2xl border border-slate-800 bg-slate-900 p-4 sm:p-5">
 
-    <div class="flex justify-between items-center mb-3 sm:mb-4">
+    <!-- TOTAL -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 sm:mb-4">
+
       <div class="text-base sm:text-lg font-semibold">
         Total
       </div>
 
-      <div class="text-sm sm:text-lg font-semibold">
-        <span id="totalCost">0</span>
-        <span class="mx-2 opacity-50">·</span>
-        <span id="totalKm">0 km</span>
+      <div class="flex flex-wrap gap-2 text-sm sm:text-lg font-semibold">
+
+        <div class="bg-slate-800 px-3 py-1.5 rounded-lg">
+          <span id="totalCost">0</span>
+        </div>
+
+        <div class="bg-slate-800 px-3 py-1.5 rounded-lg">
+          <span id="totalKm">0 km</span>
+        </div>
+
       </div>
+
     </div>
 
-    <!-- REQUIRED ID -->
-    <div id="cost-summary" class="space-y-2 text-sm"></div>
+    <!-- REQUIRED -->
+    <div id="cost-summary" class="space-y-2 text-sm break-words"></div>
 
   </div>
 
@@ -106,9 +115,11 @@
     </h3>
 
     <div class="overflow-x-auto">
-      <table class="min-w-full border-separate border-spacing-y-2 text-sm">
 
-        <thead>
+      <table class="min-w-full table-fixed border-separate border-spacing-y-2 text-sm">
+
+        <!-- DESKTOP HEADER -->
+        <thead class="hidden sm:table-header-group">
           <tr class="text-left text-xs sm:text-sm text-slate-400">
             <th class="px-2 py-1">Activity</th>
             <th class="px-2 py-1">Type</th>
@@ -118,10 +129,11 @@
           </tr>
         </thead>
 
-        <!-- REQUIRED ID -->
+        <!-- REQUIRED -->
         <tbody id="cost-table" class="text-slate-200"></tbody>
 
       </table>
+
     </div>
 
   </div>
