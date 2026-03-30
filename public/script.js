@@ -724,26 +724,40 @@ function renderActivities() {
               </span>
             </div>
 
-            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-              <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
-                <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Start</div>
-                <div class="text-sm font-medium">${escapeHtml(formatDateTime(activity.startDate))}</div>
-              </div>
-              <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
-                <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">End</div>
-                <div class="text-sm font-medium">${escapeHtml(formatDateTime(activity.endDate))}</div>
-              </div>
-              <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
-                <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Cost</div>
-                <div class="text-sm font-medium">${escapeHtml(formatCurrency(activity.cost))}</div>
-              </div>
-              <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
-                <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Distance</div>
-                <div class="text-sm font-medium">${activity.km ? activity.km + ' km' : '—'}</div>
-              </div>
-              <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
-                <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Notes</div>
-                <div class="text-sm font-medium">${escapeHtml(activity.notes || '—')}</div>
+           <div class="space-y-3">
+
+  <!-- ROW 1: START + END -->
+  <div class="grid grid-cols-2 gap-3">
+    <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
+      <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Start</div>
+      <div class="text-sm font-medium">${escapeHtml(formatDateTime(activity.startDate))}</div>
+    </div>
+
+    <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
+      <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">End</div>
+      <div class="text-sm font-medium">${escapeHtml(formatDateTime(activity.endDate))}</div>
+    </div>
+  </div>
+
+  <!-- ROW 2: COST + DISTANCE -->
+  <div class="grid grid-cols-2 gap-3">
+    <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
+      <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Cost</div>
+      <div class="text-sm font-medium">${escapeHtml(formatCurrency(activity.cost))}</div>
+    </div>
+
+    <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
+      <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Distance</div>
+      <div class="text-sm font-medium">${activity.km ? activity.km + ' km' : '—'}</div>
+    </div>
+  </div>
+
+  <!-- ROW 3: NOTES FULL WIDTH -->
+  <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
+    <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Notes</div>
+    <div class="text-sm font-medium whitespace-pre-wrap break-words">
+      ${escapeHtml(activity.notes || '—')}
+    </div>
               </div>
             </div>
           </div>
