@@ -33,19 +33,19 @@
       }
     };
   </script>
+
   <link href="/styles.css" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
+
 <body class="min-h-full bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-200">
   <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-primary-50 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900">
+
+    <!-- HEADER -->
     <header class="sticky top-0 z-20 border-b border-slate-200/70 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
       <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         <div class="flex items-center gap-3">
-          <a
-            href="/"
-            class="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-600 text-white shadow-soft"
-            title="Back to trips"
-          >
+          <a href="/" class="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-600 text-white shadow-soft">
             <i data-lucide="plane" class="h-5 w-5"></i>
           </a>
           <div>
@@ -53,21 +53,13 @@
             <p class="text-sm text-slate-500 dark:text-slate-400">Manage itinerary and activities</p>
           </div>
         </div>
-
-        <div class="flex items-center gap-2">
-         <!--  <button
-            id="theme-toggle"
-            type="button"
-            class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-          >
-            <i data-lucide="moon-star" class="h-4 w-4"></i>
-            <span>Theme</span>
-          </button> -->
-        </div>
       </div>
     </header>
 
+    <!-- MAIN -->
     <main class="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+
+      <!-- HERO -->
       <section class="mb-6 flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-soft dark:border-slate-800 dark:bg-slate-900 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <div class="mb-2 inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
@@ -79,93 +71,97 @@
         </div>
 
         <div class="flex flex-wrap gap-2">
-          <a href="/" class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800">
-            <i data-lucide="arrow-left" class="h-4 w-4"></i>
-            Trips
-          </a>
-          <button onclick="goToTimeline()" class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800">
-            <i data-lucide="list-tree" class="h-4 w-4"></i>
-            Timeline
-          </button>
-          <button onclick="goToCosts()" class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800">
-  <i data-lucide="wallet" class="h-4 w-4"></i>
-  Costs
-</button>
+          <a href="/" class="btn">Trips</a>
+          <button onclick="goToTimeline()" class="btn">Timeline</button>
+          <button onclick="goToCosts()" class="btn">Costs</button>
         </div>
       </section>
 
+      <!-- CONTENT -->
       <section class="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+
+        <!-- ACTIVITIES -->
         <div class="space-y-4">
-          <div class="flex items-center justify-between">
-            <div>
-              <h3 class="text-xl font-semibold tracking-tight">Activities</h3>
-              <p class="text-sm text-slate-500 dark:text-slate-400">Transport, stays, cities, hikes, and more.</p>
-            </div>
+          <div>
+            <h3 class="text-xl font-semibold">Activities</h3>
           </div>
           <div id="activities" class="space-y-4"></div>
         </div>
 
+        <!-- FORM -->
         <aside class="rounded-3xl border border-slate-200 bg-white p-6 shadow-soft dark:border-slate-800 dark:bg-slate-900">
-          <div class="mb-4 flex items-center gap-2">
-            <i data-lucide="plus-circle" class="h-5 w-5 text-primary-600 dark:text-primary-400"></i>
-            <h3 id="activity-form-title" class="text-lg font-semibold">Add activity</h3>
-          </div>
+
+          <h3 id="activity-form-title" class="text-lg font-semibold mb-4">Add activity</h3>
 
           <div class="space-y-4">
-            <div>
-              <label for="activityName" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Name</label>
-              <input id="activityName" type="text" placeholder="e.g. Flight to Reykjavík" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-primary-500 focus:ring-4 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-950 dark:focus:ring-primary-500/20" />
-            </div>
 
-            <div>
-              <label for="activityType" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Type</label>
-              <select id="activityType" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-primary-500 focus:ring-4 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-950 dark:focus:ring-primary-500/20">
-                <option value="plane">Plane</option>
-                <option value="car">Car</option>
-                <option value="hike">Hike</option>
-                <option value="city">City</option>
-                <option value="accommodation">Accommodation</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
+            <!-- NAME -->
+            <input id="activityName" type="text" placeholder="Name" class="input" />
 
+            <!-- TYPE -->
+            <select id="activityType" class="input">
+              <option value="plane">Plane</option>
+              <option value="car">Car</option>
+              <option value="hike">Hike</option>
+              <option value="city">City</option>
+              <option value="accommodation">Accommodation</option>
+              <option value="other">Other</option>
+            </select>
+
+            <!-- DATES -->
             <div class="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label for="startDate" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Start</label>
-                <input id="startDate" type="datetime-local" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-primary-500 focus:ring-4 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-950 dark:focus:ring-primary-500/20" />
-              </div>
-              <div>
-                <label for="endDate" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">End</label>
-                <input id="endDate" type="datetime-local" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-primary-500 focus:ring-4 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-950 dark:focus:ring-primary-500/20" />
-              </div>
+              <input id="startDate" type="datetime-local" class="input" />
+              <input id="endDate" type="datetime-local" class="input" />
             </div>
 
-            <div>
-              <label for="cost" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Cost</label>
-              <input id="cost" type="number" min="0" step="0.01" placeholder="0" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-primary-500 focus:ring-4 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-950 dark:focus:ring-primary-500/20" />
+            <!-- COST + DISTANCE -->
+            <div class="grid gap-4 sm:grid-cols-2">
+              <input id="cost" type="number" placeholder="Cost" class="input" />
+              <input id="activity-distance" type="number" step="0.1" placeholder="Distance (km)" class="input" />
             </div>
 
-            <div>
-              <label for="notes" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Notes</label>
-              <textarea id="notes" rows="4" placeholder="Optional notes" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-primary-500 focus:ring-4 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-950 dark:focus:ring-primary-500/20"></textarea>
-            </div>
+            <!-- NOTES -->
+            <textarea id="notes" rows="3" placeholder="Notes" class="input"></textarea>
 
+            <!-- ACTIONS -->
             <div class="flex gap-2">
-              <button onclick="saveActivity()" class="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary-600 px-4 py-3 font-medium text-white hover:bg-primary-700">
-                <i data-lucide="save" class="h-4 w-4"></i>
-                Save activity
-              </button>
-              <button onclick="cancelEditActivity()" id="cancel-edit-btn" class="hidden items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800">
-                <i data-lucide="x" class="h-4 w-4"></i>
-                Cancel
-              </button>
+              <button onclick="saveActivity()" class="btn-primary flex-1">Save</button>
+              <button onclick="cancelEditActivity()" id="cancel-edit-btn" class="btn hidden">Cancel</button>
             </div>
+
           </div>
         </aside>
+
       </section>
     </main>
   </div>
 
   <script src="/script.js" defer></script>
+
+  <!-- SMALL STYLE HELPERS -->
+  <style>
+    .input {
+      width: 100%;
+      border-radius: 1rem;
+      padding: 0.75rem;
+      border: 1px solid #e2e8f0;
+      background: white;
+    }
+
+    .btn {
+      padding: 0.5rem 1rem;
+      border-radius: 1rem;
+      border: 1px solid #e2e8f0;
+      background: white;
+    }
+
+    .btn-primary {
+      padding: 0.75rem;
+      border-radius: 1rem;
+      background: #6366f1;
+      color: white;
+    }
+  </style>
+
 </body>
 </html>
