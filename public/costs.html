@@ -38,8 +38,41 @@
 <main class="max-w-6xl mx-auto px-4 py-8">
 
 <!-- HERO -->
-<section class="mb-6 rounded-3xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-  <h2 id="costs-hero-title" class="text-2xl font-semibold">Costs</h2>
+<section class="mb-6 flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-soft dark:border-slate-800 dark:bg-slate-900 lg:flex-row lg:items-center lg:justify-between">
+
+  <!-- LEFT -->
+  <div>
+    <div class="mb-2 inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
+      <i data-lucide="badge-euro" class="h-3.5 w-3.5"></i>
+      Trip costs
+    </div>
+
+    <h2 id="costs-hero-title" class="text-2xl font-semibold tracking-tight sm:text-3xl">
+      Costs
+    </h2>
+
+    <p class="mt-2 text-slate-600 dark:text-slate-400">
+      Track total spend and cost breakdown by activity type.
+    </p>
+  </div>
+
+  <!-- RIGHT: NAVIGATION -->
+  <div class="flex flex-wrap gap-2">
+
+    <button onclick="goToTrip()"
+      class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800">
+      <i data-lucide="notebook-pen" class="h-4 w-4"></i>
+      Trip
+    </button>
+
+    <button onclick="goToTimeline()"
+      class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800">
+      <i data-lucide="list-tree" class="h-4 w-4"></i>
+      Timeline
+    </button>
+
+  </div>
+
 </section>
 
 <!-- MAIN GRID -->
