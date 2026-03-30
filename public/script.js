@@ -1152,12 +1152,19 @@ if (totalKmEl) {
     </div>
 
     <!-- RIGHT -->
-    <div class="flex items-center gap-4 text-sm min-w-[120px] justify-end">
-      <span class="text-slate-400">${percent}%</span>
-      <span class="font-medium">${escapeHtml(formatCurrency(amount))}</span>
-    </div>
+    <div class="flex items-center text-sm min-w-[140px] justify-end tabular-nums">
 
-  </div>
+  <!-- % -->
+  <span class="w-[40px] text-right text-slate-400">
+    ${percent}%
+  </span>
+
+  <!-- € -->
+  <span class="w-[80px] text-right font-medium">
+    ${escapeHtml(formatCurrency(amount))}
+  </span>
+
+</div>
 `;
       }).join('')
     : emptyState(
