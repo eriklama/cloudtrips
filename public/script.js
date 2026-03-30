@@ -1138,21 +1138,27 @@ if (totalKmEl) {
         const percent = total > 0 ? Math.round((amount / total) * 100) : 0;
 
         return `
-          <div class="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-            <div class="mb-3 flex items-center justify-between gap-3">
-              <div class="flex items-center gap-3">
-                <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
-                  <i data-lucide="${meta.icon}" class="h-4 w-4"></i>
-                </span>
-                <div>
-                  <div class="font-medium capitalize">${escapeHtml(type)}</div>
-                  <div class="text-sm text-slate-500 dark:text-slate-400">${percent}% of total</div>
-                </div>
-              </div>
-              <div class="font-semibold">${escapeHtml(formatCurrency(amount))}</div>
-            </div>
-          </div>
-        `;
+  <div class="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-2 dark:border-slate-800">
+
+    <!-- LEFT -->
+    <div class="flex items-center gap-2">
+      <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
+        <i data-lucide="${meta.icon}" class="h-4 w-4"></i>
+      </span>
+
+      <span class="font-medium capitalize">
+        ${escapeHtml(type)}
+      </span>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="flex items-center gap-4 text-sm min-w-[120px] justify-end">
+      <span class="text-slate-400">${percent}%</span>
+      <span class="font-medium">${escapeHtml(formatCurrency(amount))}</span>
+    </div>
+
+  </div>
+`;
       }).join('')
     : emptyState(
         'No costs yet',
