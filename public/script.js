@@ -1151,9 +1151,6 @@ if (totalKmEl) {
               </div>
               <div class="font-semibold">${escapeHtml(formatCurrency(amount))}</div>
             </div>
-            <div class="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-              <div class="h-full rounded-full bg-primary-600" style="width:${percent}%"></div>
-            </div>
           </div>
         `;
       }).join('')
