@@ -1131,20 +1131,31 @@ function renderCosts() {
         const percent = total > 0 ? Math.round((amount / total) * 100) : 0;
 
         return `
-          <div class="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-2 dark:border-slate-800">
-            <div class="flex items-center gap-2 min-w-0">
-              <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
-                <i data-lucide="${meta.icon}" class="h-4 w-4"></i>
-              </span>
-              <span class="font-medium capitalize truncate">${escapeHtml(type)}</span>
-            </div>
+  <div class="grid grid-cols-[1fr_auto_auto] items-center gap-3 rounded-xl border border-slate-200 px-3 py-2 dark:border-slate-800 min-w-[260px]">
 
-            <div class="flex items-center gap-3 text-sm tabular-nums shrink-0">
-              <span class="text-right text-slate-400 w-10">${percent}%</span>
-              <span class="text-right font-medium w-20">${escapeHtml(formatCurrency(amount))}</span>
-            </div>
-          </div>
-        `;
+    <!-- LEFT: icon + name -->
+    <div class="flex items-center gap-2 min-w-0">
+      <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
+        <i data-lucide="${meta.icon}" class="h-4 w-4"></i>
+      </span>
+
+      <span class="font-medium capitalize truncate">
+        ${escapeHtml(type)}
+      </span>
+    </div>
+
+    <!-- % -->
+    <div class="text-right text-sm text-slate-400 tabular-nums w-[40px]">
+      ${percent}%
+    </div>
+
+    <!-- € -->
+    <div class="text-right text-sm font-medium tabular-nums w-[80px]">
+      ${escapeHtml(formatCurrency(amount))}
+    </div>
+
+  </div>
+`;
       }).join('')
     : emptyState(
         'No costs yet',
