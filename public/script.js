@@ -724,40 +724,34 @@ function renderActivities() {
               </span>
             </div>
 
-           <div class="space-y-3">
+            <div class="space-y-3">
+              <div class="grid grid-cols-2 gap-3">
+                <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
+                  <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Start</div>
+                  <div class="text-sm font-medium">${escapeHtml(formatDateTime(activity.startDate))}</div>
+                </div>
 
-  <!-- ROW 1: START + END -->
-  <div class="grid grid-cols-2 gap-3">
-    <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
-      <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Start</div>
-      <div class="text-sm font-medium">${escapeHtml(formatDateTime(activity.startDate))}</div>
-    </div>
+                <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
+                  <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">End</div>
+                  <div class="text-sm font-medium">${escapeHtml(formatDateTime(activity.endDate))}</div>
+                </div>
+              </div>
 
-    <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
-      <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">End</div>
-      <div class="text-sm font-medium">${escapeHtml(formatDateTime(activity.endDate))}</div>
-    </div>
-  </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
+                  <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Cost</div>
+                  <div class="text-sm font-medium">${escapeHtml(formatCurrency(activity.cost))}</div>
+                </div>
 
-  <!-- ROW 2: COST + DISTANCE -->
-  <div class="grid grid-cols-2 gap-3">
-    <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
-      <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Cost</div>
-      <div class="text-sm font-medium">${escapeHtml(formatCurrency(activity.cost))}</div>
-    </div>
+                <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
+                  <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Distance</div>
+                  <div class="text-sm font-medium">${activity.km ? escapeHtml(`${activity.km} km`) : '—'}</div>
+                </div>
+              </div>
 
-    <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
-      <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Distance</div>
-      <div class="text-sm font-medium">${activity.km ? activity.km + ' km' : '—'}</div>
-    </div>
-  </div>
-
-  <!-- ROW 3: NOTES FULL WIDTH -->
-  <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
-    <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Notes</div>
-    <div class="text-sm font-medium whitespace-pre-wrap break-words">
-      ${escapeHtml(activity.notes || '—')}
-    </div>
+              <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
+                <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Notes</div>
+                <div class="text-sm font-medium whitespace-pre-wrap break-words">${escapeHtml(activity.notes || '—')}</div>
               </div>
             </div>
           </div>
@@ -1081,7 +1075,7 @@ async function loadCosts() {
 
   table.innerHTML = `
     <tr>
-      <td colspan="4" class="px-3 py-8 text-center text-slate-500 dark:text-slate-400">Loading costs…</td>
+      <td colspan="5" class="px-3 py-8 text-center text-slate-500 dark:text-slate-400">Loading costs…</td>
     </tr>
   `;
 
@@ -1099,7 +1093,7 @@ async function loadCosts() {
     console.error(error);
     table.innerHTML = `
       <tr>
-        <td colspan="4" class="px-3 py-8 text-center text-red-600 dark:text-red-400">${escapeHtml(error?.message || 'Failed to load costs.')}</td>
+        <td colspan="5" class="px-3 py-8 text-center text-red-600 dark:text-red-400">${escapeHtml(error?.message || 'Failed to load costs.')}</td>
       </tr>
     `;
   }
@@ -1109,8 +1103,6 @@ function renderCosts() {
   const table = document.getElementById('cost-table');
   const totalEl = document.getElementById('totalCost');
   const summaryEl = document.getElementById('cost-summary');
-  const itemsCountEl = document.getElementById('cost-items-count');
-  const categoriesCountEl = document.getElementById('cost-categories-count');
 
   if (!table || !totalEl || !summaryEl || !currentTrip) return;
 
@@ -1127,43 +1119,32 @@ function renderCosts() {
   const typeEntries = Object.entries(byType).sort((a, b) => b[1] - a[1]);
 
   totalEl.textContent = formatCurrency(total);
+
   const totalKmEl = document.getElementById('totalKm');
-if (totalKmEl) {
-  totalKmEl.textContent = totalKm ? `${totalKm} km` : '—';
-}
-  
+  if (totalKmEl) {
+    totalKmEl.textContent = totalKm ? `${totalKm} km` : '—';
+  }
+
   summaryEl.innerHTML = typeEntries.length
     ? typeEntries.map(([type, amount]) => {
         const meta = getTypeMeta(type);
         const percent = total > 0 ? Math.round((amount / total) * 100) : 0;
 
         return `
-  <div class="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-2 dark:border-slate-800">
+          <div class="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-2 dark:border-slate-800">
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
+                <i data-lucide="${meta.icon}" class="h-4 w-4"></i>
+              </span>
+              <span class="font-medium capitalize truncate">${escapeHtml(type)}</span>
+            </div>
 
-    <!-- LEFT -->
-    <div class="flex items-center gap-2">
-      <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
-        <i data-lucide="${meta.icon}" class="h-4 w-4"></i>
-      </span>
-
-      <span class="font-medium capitalize">
-        ${escapeHtml(type)}
-      </span>
-    </div>
-
-    <!-- RIGHT -->
-  <div class="grid grid-cols-[auto_auto] gap-3 items-center text-sm tabular-nums justify-end">
-
-  <span class="text-right text-slate-400">
-    ${percent}%
-  </span>
-
-  <span class="text-right font-medium">
-    ${escapeHtml(formatCurrency(amount))}
-  </span>
-
-</div>
-`;
+            <div class="flex items-center gap-3 text-sm tabular-nums shrink-0">
+              <span class="text-right text-slate-400 w-10">${percent}%</span>
+              <span class="text-right font-medium w-20">${escapeHtml(formatCurrency(amount))}</span>
+            </div>
+          </div>
+        `;
       }).join('')
     : emptyState(
         'No costs yet',
@@ -1172,46 +1153,46 @@ if (totalKmEl) {
       );
 
   table.innerHTML = activities.length
-  ? activities.map((activity) => {
-      const meta = getTypeMeta(activity.type);
-      return `
-        <tr class="rounded-2xl bg-slate-50 dark:bg-slate-950/60">
-          <td class="rounded-l-2xl px-3 py-3">
-            <div class="flex items-center gap-3">
-              <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
-                <i data-lucide="${meta.icon}" class="h-4 w-4"></i>
+    ? activities.map((activity) => {
+        const meta = getTypeMeta(activity.type);
+        return `
+          <tr class="rounded-2xl bg-slate-50 dark:bg-slate-950/60">
+            <td class="rounded-l-2xl px-3 py-3">
+              <div class="flex items-center gap-3">
+                <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
+                  <i data-lucide="${meta.icon}" class="h-4 w-4"></i>
+                </span>
+                <span class="font-medium">${escapeHtml(activity.location || activity.name || 'Untitled')}</span>
+              </div>
+            </td>
+
+            <td class="px-3 py-3">
+              <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${meta.badge}">
+                ${escapeHtml(activity.type)}
               </span>
-              <span class="font-medium">${escapeHtml(activity.location || activity.name || 'Untitled')}</span>
-            </div>
-          </td>
+            </td>
 
-          <td class="px-3 py-3">
-            <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${meta.badge}">
-              ${escapeHtml(activity.type)}
-            </span>
-          </td>
+            <td class="px-3 py-3 text-sm text-slate-600 dark:text-slate-300">
+              ${escapeHtml(formatDateTime(activity.startDate))}
+            </td>
 
-          <td class="px-3 py-3 text-sm text-slate-600 dark:text-slate-300">
-            ${escapeHtml(formatDateTime(activity.startDate))}
-          </td>
+            <td class="px-3 py-3 text-right font-semibold">
+              ${escapeHtml(formatCurrency(activity.cost))}
+            </td>
 
-          <td class="px-3 py-3 text-right font-semibold">
-            ${escapeHtml(formatCurrency(activity.cost))}
-          </td>
-
-          <td class="rounded-r-2xl px-3 py-3 text-right text-sm text-slate-600 dark:text-slate-300">
-            ${activity.km ? activity.km + ' km' : '—'}
-          </td>
-        </tr>
-      `;
-    }).join('')
-  : `
-    <tr>
-      <td colspan="5" class="px-3 py-8 text-center text-slate-500 dark:text-slate-400">
-        No activities yet.
-      </td>
-    </tr>
-  `;
+            <td class="rounded-r-2xl px-3 py-3 text-right text-sm text-slate-600 dark:text-slate-300">
+              ${activity.km ? escapeHtml(`${activity.km} km`) : '—'}
+            </td>
+          </tr>
+        `;
+      }).join('')
+    : `
+      <tr>
+        <td colspan="5" class="px-3 py-8 text-center text-slate-500 dark:text-slate-400">
+          No activities yet.
+        </td>
+      </tr>
+    `;
 
   refreshIcons();
 }
