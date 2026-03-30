@@ -306,7 +306,7 @@ function normalizeActivity(raw) {
     start: startDate,
     end: endDate,
     cost: Number(raw.cost || 0),
-    km: Number(raw.km || 0),
+    km: Number(raw.km || raw.distance || 0),
     notes: raw.notes ?? ''
   };
 }
@@ -738,6 +738,10 @@ function renderActivities() {
                 <div class="text-sm font-medium">${escapeHtml(formatCurrency(activity.cost))}</div>
               </div>
               <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
+                <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Distance</div>
+                <div class="text-sm font-medium">${activity.km ? activity.km + ' km' : '—'}</div>
+              </div>
+              <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
                 <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Notes</div>
                 <div class="text-sm font-medium">${escapeHtml(activity.notes || '—')}</div>
               </div>
@@ -770,7 +774,7 @@ function getActivityFormData() {
     endDate: document.getElementById('endDate')?.value || '',
     cost: Number(document.getElementById('cost')?.value || 0),
     notes: document.getElementById('notes')?.value.trim() || '',
-    km: Number(document.getElementById('km')?.value || 0)
+    km: Number(document.getElementById('activity-distance')?.value || 0)
   };
 }
 
@@ -792,7 +796,7 @@ function setActivityFormData(activity) {
   const end = document.getElementById('endDate');
   const cost = document.getElementById('cost');
   const notes = document.getElementById('notes');
-  const km = document.getElementById('km');
+  const km = document.getElementById('activity-distance');
 
   if (name) name.value = data.location || data.name || '';
   if (type) type.value = data.type || 'other';
