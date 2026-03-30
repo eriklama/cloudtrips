@@ -1152,15 +1152,13 @@ if (totalKmEl) {
     </div>
 
     <!-- RIGHT -->
-    <div class="flex items-center text-sm min-w-[140px] justify-end tabular-nums">
+  <div class="grid grid-cols-[auto_auto] gap-3 items-center text-sm tabular-nums justify-end">
 
-  <!-- % -->
-  <span class="w-[40px] text-right text-slate-400">
+  <span class="text-right text-slate-400">
     ${percent}%
   </span>
 
-  <!-- € -->
-  <span class="w-[80px] text-right font-medium">
+  <span class="text-right font-medium">
     ${escapeHtml(formatCurrency(amount))}
   </span>
 
