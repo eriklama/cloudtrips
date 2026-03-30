@@ -724,7 +724,7 @@ function renderActivities() {
               </span>
             </div>
 
-            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
               <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
                 <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Start</div>
                 <div class="text-sm font-medium">${escapeHtml(formatDateTime(activity.startDate))}</div>
