@@ -1131,9 +1131,9 @@ function renderCosts() {
         const percent = total > 0 ? Math.round((amount / total) * 100) : 0;
 
         return `
-  <div class="grid grid-cols-[1fr_auto_auto] items-center gap-3 rounded-xl border border-slate-200 px-3 py-2 dark:border-slate-800 min-w-[260px]">
+  <div class="grid grid-cols-[1fr_60px_100px] items-center rounded-xl border border-slate-200 px-3 py-2 dark:border-slate-800">
 
-    <!-- LEFT: icon + name -->
+    <!-- LEFT -->
     <div class="flex items-center gap-2 min-w-0">
       <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
         <i data-lucide="${meta.icon}" class="h-4 w-4"></i>
@@ -1145,12 +1145,12 @@ function renderCosts() {
     </div>
 
     <!-- % -->
-    <div class="text-right text-sm text-slate-400 tabular-nums w-[40px]">
+    <div class="text-right text-sm text-slate-400 tabular-nums">
       ${percent}%
     </div>
 
     <!-- € -->
-    <div class="text-right text-sm font-medium tabular-nums w-[80px]">
+    <div class="text-right text-sm font-medium tabular-nums">
       ${escapeHtml(formatCurrency(amount))}
     </div>
 
