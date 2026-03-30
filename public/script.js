@@ -297,14 +297,30 @@ async function apiDelete(url, payload, hasRetried = false) {
   const tripId = payload?.id || '';
   const pin = tripId ? getStoredTripPin(tripId) : '';
 
-  const res = await fetch(url, {
-    method: 'DELETE',
+  const finalUrl = `${url}?trip=${encodeURIComponent(tripId)}`;
+
+  const res = await fetch(finalUrl, {
+    method: 'POST', // ✅ FIX HERE
     headers: {
       'Content-Type': 'application/json',
       ...(pin ? { 'x-pin': pin } : {})
-    },
-    body: JSON.stringify(payload)
+    }
   });
+
+  if (res.status === 401 && tripId && !hasRetried) {
+    removeStoredTripPin(tripId);
+    const enteredPin = ensureTripPin(tripId, 'Enter trip PIN:');
+    if (!enteredPin) throw new Error('PIN required');
+    return apiDelete(url, payload, true);
+  }
+
+  if (!res.ok) {
+    const err = await parseJsonSafe(res);
+    throw new Error(`DELETE ${url} failed with ${res.status}${err?.error ? `: ${err.error}` : ''}`);
+  }
+
+  return parseJsonSafe(res);
+}
 
   if (res.status === 401 && tripId && !hasRetried) {
     removeStoredTripPin(tripId);
