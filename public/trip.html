@@ -9,36 +9,49 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 
-<body class="min-h-full bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+<body class="min-h-full bg-slate-950 text-slate-100">
 <div class="min-h-screen">
 
-  <header class="border-b px-4 py-3 flex justify-between">
-    <h1 id="trip-title" class="text-lg font-semibold">Trip</h1>
+  <header class="border-b border-slate-800">
+    <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+      <h1 id="trip-title" class="text-lg font-semibold">Trip</h1>
+
+      <div class="flex gap-2">
+        <button onclick="goToTimeline()" class="text-sm px-3 py-2 bg-slate-800 rounded-xl">Timeline</button>
+        <button onclick="goToCosts()" class="text-sm px-3 py-2 bg-slate-800 rounded-xl">Costs</button>
+      </div>
+    </div>
   </header>
 
   <main class="max-w-4xl mx-auto px-4 py-4 space-y-4 pb-20">
 
     <!-- Form -->
-    <section class="p-4 rounded-2xl border bg-white dark:bg-slate-900 space-y-3">
+    <section class="p-4 sm:p-6 rounded-3xl border border-slate-700 bg-slate-900 space-y-3">
 
-      <input id="activityName" placeholder="Activity"
-        class="w-full rounded-xl border px-3 py-2.5 text-sm" />
+      <input id="activityName"
+        placeholder="Activity"
+        class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white" />
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <input id="startDate" type="datetime-local" class="rounded-xl border px-3 py-2.5 text-sm" />
-        <input id="endDate" type="datetime-local" class="rounded-xl border px-3 py-2.5 text-sm" />
+        <input id="startDate" type="datetime-local"
+          class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white" />
+        <input id="endDate" type="datetime-local"
+          class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white" />
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <input id="cost" placeholder="Cost" class="rounded-xl border px-3 py-2.5 text-sm" />
-        <input id="activity-distance" placeholder="KM" class="rounded-xl border px-3 py-2.5 text-sm" />
+        <input id="cost" placeholder="Cost"
+          class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white" />
+        <input id="activity-distance" placeholder="KM"
+          class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white" />
       </div>
 
-      <textarea id="notes" placeholder="Notes"
-        class="w-full rounded-xl border px-3 py-2.5 text-sm"></textarea>
+      <textarea id="notes"
+        placeholder="Notes"
+        class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white"></textarea>
 
       <button onclick="saveActivity()"
-        class="w-full sm:w-auto rounded-xl bg-primary-600 text-white px-3 py-2.5 text-sm">
+        class="w-full sm:w-auto rounded-xl bg-primary-600 px-4 py-2.5 text-sm text-white">
         Save Activity
       </button>
 
