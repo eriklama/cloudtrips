@@ -381,3 +381,8 @@ button {
 button:active {
   transform: scale(0.97);
 }
+
+/* Prevent any accidental overflow */
+body {
+  overflow-x: hidden;
+}
