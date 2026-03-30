@@ -5,162 +5,52 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Trip</title>
 
-  <script>
-    tailwind = {
-      config: {
-        darkMode: 'class',
-        theme: {
-          extend: {
-            colors: {
-              primary: {
-                50: '#eef2ff',
-                100: '#e0e7ff',
-                200: '#c7d2fe',
-                300: '#a5b4fc',
-                400: '#818cf8',
-                500: '#6366f1',
-                600: '#4f46e5',
-                700: '#4338ca',
-                800: '#3730a3',
-                900: '#312e81'
-              }
-            },
-            boxShadow: {
-              soft: '0 10px 30px rgba(2, 6, 23, 0.08)'
-            }
-          }
-        }
-      }
-    };
-  </script>
-
   <link href="/styles.css" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 
-<body class="min-h-full bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-200">
-  <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-primary-50 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900">
+<body class="min-h-full bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+<div class="min-h-screen">
 
-    <!-- HEADER -->
-    <header class="sticky top-0 z-20 border-b border-slate-200/70 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
-      <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-        <div class="flex items-center gap-3">
-          <a href="/" class="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-600 text-white shadow-soft">
-            <i data-lucide="plane" class="h-5 w-5"></i>
-          </a>
-          <div>
-            <h1 id="trip-title" class="text-xl font-semibold tracking-tight">Trip</h1>
-            <p class="text-sm text-slate-500 dark:text-slate-400">Manage itinerary and activities</p>
-          </div>
-        </div>
+  <header class="border-b px-4 py-3 flex justify-between">
+    <h1 id="trip-title" class="text-lg font-semibold">Trip</h1>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-4 py-4 space-y-4 pb-20">
+
+    <!-- Form -->
+    <section class="p-4 rounded-2xl border bg-white dark:bg-slate-900 space-y-3">
+
+      <input id="activityName" placeholder="Activity"
+        class="w-full rounded-xl border px-3 py-2.5 text-sm" />
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <input id="startDate" type="datetime-local" class="rounded-xl border px-3 py-2.5 text-sm" />
+        <input id="endDate" type="datetime-local" class="rounded-xl border px-3 py-2.5 text-sm" />
       </div>
-    </header>
 
-    <!-- MAIN -->
-    <main class="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <input id="cost" placeholder="Cost" class="rounded-xl border px-3 py-2.5 text-sm" />
+        <input id="activity-distance" placeholder="KM" class="rounded-xl border px-3 py-2.5 text-sm" />
+      </div>
 
-      <!-- HERO -->
-      <section class="mb-6 flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-soft dark:border-slate-800 dark:bg-slate-900 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <div class="mb-2 inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
-            <i data-lucide="route" class="h-3.5 w-3.5"></i>
-            Trip overview
-          </div>
-          <h2 id="trip-title-hero" class="text-2xl font-semibold tracking-tight sm:text-3xl">Trip</h2>
-          <p class="mt-2 text-slate-600 dark:text-slate-400">Add activities, edit plans, and keep everything organized.</p>
-        </div>
+      <textarea id="notes" placeholder="Notes"
+        class="w-full rounded-xl border px-3 py-2.5 text-sm"></textarea>
 
-        <!-- ✅ FIXED BUTTONS -->
-        <div class="flex flex-wrap gap-2">
-          <a href="/" class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800">
-            Trips
-          </a>
+      <button onclick="saveActivity()"
+        class="w-full sm:w-auto rounded-xl bg-primary-600 text-white px-3 py-2.5 text-sm">
+        Save Activity
+      </button>
 
-          <button onclick="goToTimeline()" class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800">
-            Timeline
-          </button>
+    </section>
 
-          <button onclick="goToCosts()" class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800">
-            Costs
-          </button>
-        </div>
-      </section>
+    <!-- Activities -->
+    <div id="activities" class="space-y-3"></div>
 
-      <!-- CONTENT -->
-      <section class="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+  </main>
 
-        <!-- ACTIVITIES -->
-        <div class="space-y-4">
-          <h3 class="text-xl font-semibold">Activities</h3>
-          <div id="activities" class="space-y-4"></div>
-        </div>
+</div>
 
-        <!-- FORM -->
-        <aside class="rounded-3xl border border-slate-200 bg-white p-6 shadow-soft dark:border-slate-800 dark:bg-slate-900">
-
-          <h3 id="activity-form-title" class="text-lg font-semibold mb-4">Add activity</h3>
-
-          <div class="space-y-4">
-
-            <!-- NAME -->
-            <input id="activityName" type="text" placeholder="Name"
-              class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-primary-500 focus:ring-4 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-primary-500/20" />
-
-            <!-- TYPE -->
-            <select id="activityType"
-              class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-primary-500 focus:ring-4 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-primary-500/20">
-              <option value="plane">Plane</option>
-              <option value="car">Car</option>
-              <option value="hike">Hike</option>
-              <option value="city">City</option>
-              <option value="accommodation">Accommodation</option>
-              <option value="other">Other</option>
-            </select>
-
-            <!-- DATES -->
-            <div class="grid gap-4 sm:grid-cols-2">
-              <input id="startDate" type="datetime-local"
-                class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-primary-500 focus:ring-4 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-primary-500/20" />
-
-              <input id="endDate" type="datetime-local"
-                class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-primary-500 focus:ring-4 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-primary-500/20" />
-            </div>
-
-            <!-- COST + DISTANCE -->
-            <div class="grid gap-4 sm:grid-cols-2">
-              <input id="cost" type="number" placeholder="Cost"
-                class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-primary-500 focus:ring-4 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-primary-500/20" />
-
-              <input id="activity-distance" type="number" step="0.1" placeholder="Distance (km)"
-                class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-primary-500 focus:ring-4 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-primary-500/20" />
-            </div>
-
-            <!-- NOTES -->
-            <textarea id="notes" rows="3" placeholder="Notes"
-              class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-primary-500 focus:ring-4 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-primary-500/20"></textarea>
-
-            <!-- ACTIONS -->
-            <div class="flex gap-2">
-              <button onclick="saveActivity()"
-  class="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-medium text-slate-200 hover:bg-slate-800 transition">
-  <i data-lucide="save" class="h-4 w-4"></i>
-  Save
-</button>
-
-              <button onclick="cancelEditActivity()" id="cancel-edit-btn"
-                class="hidden rounded-2xl border border-slate-200 bg-white px-4 py-3 font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800">
-                Cancel
-              </button>
-            </div>
-
-          </div>
-        </aside>
-
-      </section>
-    </main>
-  </div>
-
-  <script src="/script.js" defer></script>
-
+<script src="/script.js" defer></script>
 </body>
 </html>
