@@ -12,30 +12,45 @@ type TripRow = {
 export async function onRequestGet(context: { request: Request; env: Env }) {
   const { request, env } = context;
 
+  // 🔐 Auth
   const user = await requireUser(request, env);
   if (!user) {
     return error('Unauthorized.', 401);
   }
 
-  const result = await env.DB
-    .prepare(`
-      SELECT id, name, activities_json, created_at
-      FROM trips
-      WHERE user_id = ?
-      ORDER BY COALESCE(created_at, '') DESC, name ASC
-    `)
-    .bind(user.id)
-    .all<TripRow>();
+  // 📦 Fetch trips for user
+  let result;
+  try {
+    result = await env.DB
+      .prepare(`
+        SELECT id, name, activities_json, created_at
+        FROM trips
+        WHERE user_id = ?
+        ORDER BY COALESCE(created_at, '') DESC, name ASC
+      `)
+      .bind(user.id)
+      .all<TripRow>();
+  } catch (err) {
+    console.error('DB error (getTrips):', err);
+    return error('Failed to load trips.', 500);
+  }
 
-  const rows = Array.isArray(result.results) ? result.results : [];
+  const rows = Array.isArray(result?.results) ? result.results : [];
 
+  // 🧠 Transform
   const trips = rows.map((row) => {
     let activities: any[] = [];
-    try {
-      const parsed = JSON.parse(row.activities_json || '[]');
-      activities = Array.isArray(parsed) ? parsed : [];
-    } catch {
-      activities = [];
+
+    if (row.activities_json) {
+      try {
+        const parsed = JSON.parse(row.activities_json);
+        if (Array.isArray(parsed)) {
+          activities = parsed;
+        }
+      } catch {
+        // ignore corrupted JSON
+        activities = [];
+      }
     }
 
     const sortedDates = activities
@@ -52,7 +67,11 @@ export async function onRequestGet(context: { request: Request; env: Env }) {
     };
   });
 
-  return json(trips);
+  // ✅ Consistent API response
+  return json({
+    ok: true,
+    trips
+  });
 }
 
 export function onRequest() {
