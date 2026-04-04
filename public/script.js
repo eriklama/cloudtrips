@@ -1413,11 +1413,17 @@
   }
 
   function openPrintView() {
-    const tripId = new URLSearchParams(window.location.search).get('id');
-    if (!tripId) return;
-
-    window.open(`/print.html?id=${encodeURIComponent(tripId)}`, '_blank');
+  if (!state.currentTrip) {
+    alert('Trip not loaded');
+    return;
   }
+
+  // store full trip (API-free print)
+  sessionStorage.setItem('print_trip', JSON.stringify(state.currentTrip));
+
+  // open print page
+  window.open('/print.html', '_blank');
+}
 
   /* =========================
    * APP INIT
