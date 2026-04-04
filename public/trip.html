@@ -39,12 +39,10 @@
           Costs
         </button>
 
-        <!-- User -->
         <span id="auth-user-email"
           class="hidden sm:inline text-sm text-slate-400 truncate max-w-[160px]">
         </span>
 
-        <!-- Logout -->
         <button id="logout-button"
           class="inline-flex items-center gap-1 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm hover:bg-slate-800 transition">
           <i data-lucide="log-out" class="w-4 h-4"></i>
@@ -62,8 +60,16 @@
     <!-- Add Activity -->
     <div class="mb-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
 
-      <input id="activityType" placeholder="Type"
-        class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white placeholder-slate-400 outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
+      <!-- FIXED TYPE SELECT -->
+      <select id="activityType"
+        class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500">
+        <option value="plane">✈️ Plane</option>
+        <option value="car">🚗 Car</option>
+        <option value="hike">🥾 Hike</option>
+        <option value="city">🏙️ City</option>
+        <option value="accommodation">🏨 Accommodation</option>
+        <option value="other">📍 Other</option>
+      </select>
 
       <input id="activityStart" type="datetime-local"
         class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
@@ -98,22 +104,17 @@
 
 </div>
 
-<!-- ✅ AUTH FIRST -->
 <script src="/auth.js"></script>
-
-<!-- MAIN LOGIC -->
 <script src="/script.js" defer></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
 
-  // 🔐 Protect page
   if (typeof requireAuth === 'function') {
     const user = await requireAuth();
     if (!user) return;
   }
 
-  // 🎨 Icons
   if (window.lucide) {
     lucide.createIcons();
   }
