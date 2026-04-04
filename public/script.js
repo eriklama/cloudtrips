@@ -7,10 +7,10 @@
    * ========================= */
 
   const API = {
-    GET_TRIPS: '/getTrips',
-    GET_TRIP: '/getTrip',
-    SAVE_TRIP: '/saveTrip',
-    DELETE_TRIP: '/deleteTrip'
+    GET_TRIPS: '/api/getTrips',
+    GET_TRIP: '/api/getTrip',
+    SAVE_TRIP: '/api/saveTrip',
+    DELETE_TRIP: '/api/deleteTrip'
   };
 
   const state = {
@@ -354,6 +354,7 @@
     return {
       id: raw.id ?? raw.tripId ?? raw._id ?? '',
       name: raw.name ?? raw.title ?? 'Untitled trip',
+      activitiesCount: Number(raw.activitiesCount ?? normalizedActivities.length ?? 0),
       startDate,
       endDate
     };
@@ -463,16 +464,16 @@
 
   async function fetchTrip(tripId) {
     const data = await apiGet(`${API.GET_TRIP}?id=${encodeURIComponent(tripId)}`);
-    return normalizeFullTrip(data);
+    return normalizeFullTrip(data?.trip || data);
   }
 
   async function saveTrip(trip) {
-    if (!trip || !trip.id) {
+    if (!trip) {
       throw new Error('Invalid trip object');
     }
 
     const payload = {
-      id: trip.id,
+      ...(trip.id ? { id: trip.id } : {}),
       name: trip.name || 'Untitled trip',
       activities: safeArray(trip.activities).map((activity) => {
         const normalized = normalizeActivity(activity);
@@ -623,14 +624,11 @@
       return;
     }
 
-    const newTrip = {
-      id: uuid(),
-      name,
-      activities: []
-    };
-
     try {
-      await apiPost(API.SAVE_TRIP, newTrip);
+      await apiPost(API.SAVE_TRIP, {
+        name,
+        activities: []
+      });
       input.value = '';
       await loadTrips();
     } catch (error) {
