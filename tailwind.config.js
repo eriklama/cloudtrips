@@ -5,7 +5,13 @@ export default {
     "../public/**/*.js"
   ],
   theme: {
-    extend: {}
+    extend: {
+      colors: {
+        primary: {
+          500: '#6366f1'
+        }
+      }
+    }
   },
   plugins: []
 };
