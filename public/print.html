@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Trip Itinerary</title>
+
+  <style>
+    @page {
+      size: A4;
+      margin: 16mm;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      color: #111;
+      background: white;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    h1 {
+      font-size: 22px;
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      font-size: 14px;
+      margin: 16px 0 6px;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 4px;
+    }
+
+    .day {
+      page-break-inside: avoid;
+      margin-bottom: 10px;
+    }
+
+    .activity {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid #eee;
+      padding: 4px 0;
+    }
+
+    .left {
+      flex: 1;
+    }
+
+    .right {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .muted {
+      color: #666;
+      font-size: 11px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1 id="title">Trip</h1>
+
+<div id="content">Loading...</div>
+
+<script>
+async function load() {
+  const params = new URLSearchParams(window.location.search);
+  const tripId = params.get('id');
+  if (!tripId) return;
+
+  // PIN support (reuse localStorage)
+  const pin = localStorage.getItem(`trip_pin_${tripId}`) || '';
+
+  const res = await fetch(`/getTrip?trip=${tripId}`, {
+    headers: pin ? { 'x-pin': pin } : {}
+  });
+
+  const data = await res.json();
+
+  document.getElementById('title').textContent = data.name;
+
+  const activities = (data.activities || [])
+    .sort((a,b)=> new Date(a.start)-new Date(b.start));
+
+  const groups = {};
+
+  activities.forEach(a => {
+    const d = new Date(a.start);
+    const key = d.toISOString().slice(0,10);
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(a);
+  });
+
+  const container = document.getElementById('content');
+  container.innerHTML = '';
+
+  Object.keys(groups).forEach(day => {
+    const date = new Date(day);
+
+    const section = document.createElement('div');
+    section.className = 'day';
+
+    section.innerHTML = `
+      <h2>${date.toDateString()}</h2>
+      ${groups[day].map(a => `
+        <div class="activity">
+          <div class="left">
+            <strong>${a.location || ''}</strong>
+            <div class="muted">${a.notes || ''}</div>
+          </div>
+          <div class="right">
+            ${formatTime(a.start)}<br>
+            €${a.cost || 0}${a.km ? `<br>${a.km} km` : ''}
+          </div>
+        </div>
+      `).join('')}
+    `;
+
+    container.appendChild(section);
+  });
+
+  setTimeout(() => window.print(), 500);
+}
+
+function formatTime(v){
+  if(!v) return '';
+  const d = new Date(v);
+  return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+}
+
+load();
+</script>
+
+</body>
+</html>
