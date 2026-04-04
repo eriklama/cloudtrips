@@ -112,7 +112,7 @@ async function requireAuth() {
   }
 
   try {
-    const data = await apiGet('/me');
+    const data = await apiGet('/api/me');
     updateAuthUi(data.user);
     return data.user;
   } catch {
@@ -152,7 +152,7 @@ async function handleLoginSubmit(event) {
   submitButton.disabled = true;
 
   try {
-    const data = await apiPost('/login', { email, password });
+    const data = await apiPost('/api/login', { email, password });
     setAuthSession(data.token, data.user);
     window.location.href = '/';
   } catch (err) {
@@ -182,7 +182,7 @@ async function handleSignupSubmit(event) {
   submitButton.disabled = true;
 
   try {
-    const data = await apiPost('/signup', { email, password });
+    const data = await apiPost('/api/signup', { email, password });
     setAuthSession(data.token, data.user);
     window.location.href = '/';
   } catch (err) {
