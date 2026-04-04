@@ -1543,6 +1543,56 @@
 
   document.addEventListener('DOMContentLoaded', init);
 
+ /* =========================
+   * HEADER NAVIGATION
+   * ========================= */
+  
+function renderHeaderNav(current) {
+  const nav = document.getElementById('nav-actions');
+  if (!nav) return;
+
+  nav.innerHTML = '';
+
+  function createBtn(label, icon, onClick) {
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-secondary';
+    btn.onclick = onClick;
+
+    btn.innerHTML = `
+      <i data-lucide="${icon}" class="h-4 w-4"></i>
+      ${label}
+    `;
+
+    return btn;
+  }
+
+  // Home
+  nav.appendChild(createBtn('Home', 'home', () => {
+    window.location.href = '/';
+  }));
+
+  if (current !== 'trip') {
+    nav.appendChild(createBtn('Trip', 'notebook-pen', goToTrip));
+  }
+
+  if (current !== 'timeline') {
+    nav.appendChild(createBtn('Timeline', 'list-tree', goToTimeline));
+  }
+
+  if (current !== 'costs') {
+    nav.appendChild(createBtn('Costs', 'badge-euro', goToCosts));
+  }
+
+  if (current === 'timeline') {
+    nav.appendChild(createBtn('Export', 'printer', openPrintView));
+  }
+
+  if (window.lucide) {
+    window.lucide.createIcons();
+  }
+}
+  
+      
   /* =========================
    * GLOBAL EXPORTS
    * ========================= */
@@ -1561,4 +1611,5 @@
   window.toggleTimelineDay = toggleTimelineDay;
   window.switchTimelineView = switchTimelineView;
   window.openPrintView = openPrintView;
+  window.renderHeaderNav = renderHeaderNav;
 })();
