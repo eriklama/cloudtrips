@@ -7,22 +7,22 @@
   <style>
     @page {
       size: A4;
-      margin: 16mm;
+      margin: 18mm 14mm;
     }
 
     body {
       font-family: system-ui, -apple-system, sans-serif;
       color: #111;
-      background: white;
       font-size: 12px;
-      line-height: 1.45;
+      line-height: 1.5;
     }
 
     /* HEADER */
     .header {
-      margin-bottom: 16px;
+      position: running(header);
       border-bottom: 2px solid #000;
-      padding-bottom: 8px;
+      padding-bottom: 6px;
+      margin-bottom: 10px;
     }
 
     h1 {
@@ -33,10 +33,28 @@
     .subtitle {
       font-size: 12px;
       color: #555;
-      margin-top: 4px;
     }
 
-    /* DAY BLOCK */
+    /* FOOTER */
+    @page {
+      @bottom-right {
+        content: "Page " counter(page);
+        font-size: 10px;
+        color: #666;
+      }
+    }
+
+    /* SUMMARY */
+    .summary {
+      margin: 10px 0 14px;
+      padding: 6px 8px;
+      border: 1px solid #ddd;
+      font-size: 12px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* DAY */
     .day {
       margin-bottom: 14px;
       page-break-inside: avoid;
@@ -45,18 +63,13 @@
     .day-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #ccc;
-      margin-bottom: 6px;
-      padding-bottom: 3px;
+      border-bottom: 1px solid #bbb;
+      padding-bottom: 2px;
+      margin-bottom: 5px;
       font-weight: 600;
     }
 
-    /* TABLE */
-    .table {
-      width: 100%;
-    }
-
+    /* ROW */
     .row {
       display: grid;
       grid-template-columns: 70px 1fr 90px;
@@ -88,12 +101,16 @@
       font-variant-numeric: tabular-nums;
     }
 
-    /* TOTALS */
-    .totals {
-      margin-top: 4px;
+    .km {
       font-size: 11px;
-      color: #444;
+      color: #666;
+    }
+
+    .totals {
       text-align: right;
+      font-size: 11px;
+      margin-top: 4px;
+      color: #444;
     }
   </style>
 </head>
@@ -104,6 +121,8 @@
   <h1 id="title">Trip</h1>
   <div id="subtitle" class="subtitle"></div>
 </div>
+
+<div id="summary" class="summary"></div>
 
 <div id="content">Loading...</div>
 
@@ -147,7 +166,7 @@ async function load() {
   const activities = (data.activities || [])
     .sort((a, b) => new Date(a.start) - new Date(b.start));
 
-  // DATE RANGE
+  /* DATE RANGE */
   if (activities.length) {
     const first = new Date(activities[0].start);
     const last = new Date(activities[activities.length - 1].start);
@@ -155,7 +174,21 @@ async function load() {
       `${first.toDateString()} — ${last.toDateString()}`;
   }
 
-  // GROUP
+  /* TOTALS */
+  let totalCost = 0;
+  let totalKm = 0;
+
+  activities.forEach(a => {
+    totalCost += Number(a.cost) || 0;
+    totalKm += Number(a.distance) || 0;
+  });
+
+  document.getElementById('summary').innerHTML = `
+    <div>Total cost: €${totalCost}</div>
+    <div>Total distance: ${totalKm} km</div>
+  `;
+
+  /* GROUP */
   const groups = {};
   activities.forEach(a => {
     const key = new Date(a.start).toISOString().slice(0,10);
@@ -170,11 +203,8 @@ async function load() {
     const date = new Date(day);
     const list = groups[day];
 
-    let totalCost = 0;
-    let totalKm = 0;
-
-    const section = document.createElement('div');
-    section.className = 'day';
+    let dayCost = 0;
+    let dayKm = 0;
 
     const rows = list.map(a => {
       const meta = getTypeMeta(a.type);
@@ -182,8 +212,8 @@ async function load() {
       const cost = Number(a.cost) || 0;
       const km = Number(a.distance) || 0;
 
-      totalCost += cost;
-      totalKm += km;
+      dayCost += cost;
+      dayKm += km;
 
       return `
         <div class="row">
@@ -195,12 +225,15 @@ async function load() {
           </div>
 
           <div class="right">
-            ${cost ? '€' + cost : ''}
-            ${km ? `<br>${km} km` : ''}
+            ${cost ? `€${cost}` : ''}
+            ${km ? `<div class="km">${km} km</div>` : ''}
           </div>
         </div>
       `;
     }).join('');
+
+    const section = document.createElement('div');
+    section.className = 'day';
 
     section.innerHTML = `
       <div class="day-header">
@@ -208,13 +241,11 @@ async function load() {
         <div>${list.length} activities</div>
       </div>
 
-      <div class="table">
-        ${rows}
-      </div>
+      ${rows}
 
       <div class="totals">
-        ${totalCost ? `Total: €${totalCost}` : ''}
-        ${totalKm ? ` • ${totalKm} km` : ''}
+        ${dayCost ? `€${dayCost}` : ''}
+        ${dayKm ? ` • ${dayKm} km` : ''}
       </div>
     `;
 
