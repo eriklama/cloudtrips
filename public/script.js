@@ -1,3 +1,4 @@
+
 (() => {
   'use strict';
 
@@ -17,8 +18,7 @@
     currentTrip: null,
     editingActivityId: null,
     timelineCollapsedDays: new Set(),
-    timelineView: 'timeline',
-    calendarExpandedDays: new Set()
+    timelineView: 'timeline'
   };
 
   /* =========================
@@ -1108,17 +1108,6 @@
     renderTimelinePage();
   }
 
-  function toggleCalendarDay(day) {
-    if (state.calendarExpandedDays.has(day)) {
-      state.calendarExpandedDays.delete(day);
-    } else {
-      state.calendarExpandedDays.clear();
-      state.calendarExpandedDays.add(day);
-    }
-
-    renderCalendarView();
-  }
-
   function switchTimelineView(view) {
     if (!state.currentTrip) return;
 
@@ -1138,7 +1127,6 @@
 
     container.innerHTML = loadingTimeline();
     calendar.innerHTML = '';
-    state.calendarExpandedDays.clear();
 
     try {
       state.currentTrip = await fetchTrip(tripId);
@@ -1307,9 +1295,7 @@
     const dayNumber = key === 'undated' ? '—' : formatDayNumber(dateValue);
     const totalCost = dayActivities.reduce((sum, activity) => sum + Number(activity.cost || 0), 0);
     const totalKm = dayActivities.reduce((sum, activity) => sum + Number(activity.km || 0), 0);
-    const isExpanded = state.calendarExpandedDays.has(key);
-
-    const detailItems = dayActivities.map((activity) => {
+    const previewItems = dayActivities.slice(0, 4).map((activity) => {
       const meta = getTypeMeta(activity.type);
       const name = activity.location || activity.name || 'Activity';
       return `
@@ -1324,47 +1310,36 @@
               ${activity.km ? `<span>${escapeHtml(`${activity.km} km`)}</span>` : ''}
               <span>${escapeHtml(formatCurrency(activity.cost))}</span>
             </div>
-            ${activity.notes ? `<div class="mt-1 text-[11px] text-slate-500">${escapeHtml(activity.notes)}</div>` : ''}
           </div>
         </div>
       `;
     }).join('');
 
+    const extraCount = Math.max(dayActivities.length - 4, 0);
+
     return `
-      <article class="flex min-h-[180px] flex-col rounded-2xl border ${isExpanded ? 'border-primary-500/60 bg-slate-800' : 'border-slate-800 bg-slate-800/60'} p-4 transition hover:border-primary-500/60 hover:bg-slate-800">
-        <button
-          type="button"
-          onclick="toggleCalendarDay('${escapeHtml(key)}')"
-          class="flex h-full w-full flex-col text-left"
-        >
-          <div class="mb-3 flex items-start justify-between gap-3">
-            <div>
-              <div class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">${escapeHtml(weekday)}</div>
-              <div class="mt-1 text-3xl font-semibold leading-none text-slate-100">${escapeHtml(dayNumber)}</div>
-            </div>
-            <div class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-right">
-              <div class="text-[11px] uppercase tracking-wide text-slate-500">Summary</div>
-              <div class="mt-1 text-xs text-slate-300">${escapeHtml(formatCurrency(totalCost))}</div>
-              <div class="text-xs text-slate-400">${escapeHtml(`${totalKm || 0} km`)}</div>
-            </div>
+      <article class="flex min-h-[220px] flex-col rounded-2xl border border-slate-800 bg-slate-800/60 p-4 transition hover:border-primary-500/60 hover:bg-slate-800">
+        <div class="mb-3 flex items-start justify-between gap-3">
+          <div>
+            <div class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">${escapeHtml(weekday)}</div>
+            <div class="mt-1 text-3xl font-semibold leading-none text-slate-100">${escapeHtml(dayNumber)}</div>
           </div>
-
-          <div class="mb-3 flex items-center justify-between gap-3 text-xs text-slate-400">
-            <span>${escapeHtml(label)}</span>
-            <span class="inline-flex items-center gap-2 rounded-full border border-slate-700 px-2.5 py-1 text-[11px] font-medium text-slate-300">
-              ${dayActivities.length} item${dayActivities.length === 1 ? '' : 's'}
-              <span>${isExpanded ? '▲' : '▼'}</span>
-            </span>
+          <div class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-right">
+            <div class="text-[11px] uppercase tracking-wide text-slate-500">Summary</div>
+            <div class="mt-1 text-xs text-slate-300">${escapeHtml(formatCurrency(totalCost))}</div>
+            <div class="text-xs text-slate-400">${escapeHtml(`${totalKm || 0} km`)}</div>
           </div>
+        </div>
 
-          <div class="mt-auto rounded-xl border border-dashed border-slate-700 px-3 py-2 text-xs text-slate-400">
-            ${isExpanded ? 'Hide details' : 'Show details'}
-          </div>
-        </button>
+        <div class="mb-3 text-xs text-slate-400">${escapeHtml(label)}</div>
 
-        ${isExpanded ? `
-          <div class="mt-3 space-y-2 border-t border-slate-700 pt-3">
-            ${detailItems}
+        <div class="space-y-2">
+          ${previewItems}
+        </div>
+
+        ${extraCount ? `
+          <div class="mt-3 rounded-xl border border-dashed border-slate-700 px-3 py-2 text-xs text-slate-400">
+            +${extraCount} more item${extraCount === 1 ? '' : 's'} on this day
           </div>
         ` : ''}
       </article>
@@ -1577,6 +1552,5 @@
   window.goToTimeline = goToTimeline;
   window.goToCosts = goToCosts;
   window.toggleTimelineDay = toggleTimelineDay;
-  window.toggleCalendarDay = toggleCalendarDay;
   window.switchTimelineView = switchTimelineView;
 })();
