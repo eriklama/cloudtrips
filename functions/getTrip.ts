@@ -1,111 +1,57 @@
-export interface Env {
-  DB: D1Database;
-}
+import { requireUser } from './_lib/auth';
+import type { Env } from './_lib/auth';
+import { error, json, methodNotAllowed } from './_lib/http';
 
 type TripRow = {
   id: string;
   name: string;
-  pin: string;
+  activities_json: string | null;
 };
 
-type ActivityRow = {
-  id: string;
-  trip_id: string;
-  type: string | null;
-  location: string | null;
-  start: string | null;
-  end: string | null;
-  cost: number | string | null;
-  km: number | string | null;
-  notes: string | null;
-};
+export async function onRequestGet(context: { request: Request; env: Env }) {
+  const { request, env } = context;
 
-type Activity = {
-  id: string;
-  type: string;
-  location: string;
-  start: string;
-  end: string;
-  cost: number;
-  km: number;
-  notes: string;
-};
-
-type Trip = {
-  id: string;
-  name: string;
-  activities: Activity[];
-};
-
-export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
-  try {
-    const url = new URL(request.url);
-    const tripId = url.searchParams.get('trip')?.trim();
-    const pin = request.headers.get('x-pin')?.trim();
-
-    if (!tripId || !pin) {
-      return json({ error: 'Unauthorized' }, 401);
-    }
-
-    const tripResult = await env.DB.prepare(
-      `
-      SELECT id, name, pin
-      FROM trips
-      WHERE id = ?
-      LIMIT 1
-      `
-    )
-      .bind(tripId)
-      .first<TripRow>();
-
-    if (!tripResult) {
-      return json({ error: 'Trip not found' }, 404);
-    }
-
-    if (tripResult.pin !== pin) {
-      return json({ error: 'Unauthorized' }, 401);
-    }
-
-    const activityResult = await env.DB.prepare(
-      `
-      SELECT id, trip_id, type, location, start, end, cost, km, notes
-      FROM activities
-      WHERE trip_id = ?
-      ORDER BY start ASC, id ASC
-      `
-    )
-      .bind(tripId)
-      .all<ActivityRow>();
-
-    const activities: Activity[] = (activityResult.results ?? []).map((row) => ({
-      id: row.id,
-      type: row.type ?? 'other',
-      location: row.location ?? '',
-      start: row.start ?? '',
-      end: row.end ?? '',
-      cost: Number(row.cost ?? 0),
-      km: Number(row.km ?? 0),
-      notes: row.notes ?? '',
-    }));
-
-    const trip: Trip = {
-      id: tripResult.id,
-      name: tripResult.name,
-      activities,
-    };
-
-    return json(trip);
-  } catch (error) {
-    console.error('getTrip failed', error);
-    return json({ error: 'Failed to load trip' }, 500);
+  const user = await requireUser(request, env);
+  if (!user) {
+    return error('Unauthorized.', 401);
   }
-};
 
-function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-    },
+  const url = new URL(request.url);
+  const id = url.searchParams.get('id') || '';
+
+  if (!id) {
+    return error('Trip id is required.', 400);
+  }
+
+  const row = await env.DB
+    .prepare(`
+      SELECT id, name, activities_json
+      FROM trips
+      WHERE id = ? AND user_id = ?
+      LIMIT 1
+    `)
+    .bind(id, user.id)
+    .first<TripRow>();
+
+  if (!row) {
+    return error('Trip not found.', 404);
+  }
+
+  let activities: any[] = [];
+  try {
+    const parsed = JSON.parse(row.activities_json || '[]');
+    activities = Array.isArray(parsed) ? parsed : [];
+  } catch {
+    activities = [];
+  }
+
+  return json({
+    id: row.id,
+    name: row.name,
+    activities
   });
+}
+
+export function onRequest() {
+  return methodNotAllowed(['GET']);
 }
