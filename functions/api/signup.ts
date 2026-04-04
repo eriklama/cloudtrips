@@ -1,6 +1,6 @@
-import { createAuthToken, hashPassword, isStrongEnoughPassword, isValidEmail, normalizeUserEmail } from './_lib/auth';
-import type { Env } from './_lib/auth';
-import { error, json, methodNotAllowed } from './_lib/http';
+import { createAuthToken, hashPassword, isStrongEnoughPassword, isValidEmail, normalizeUserEmail } from '../_lib/auth';
+import type { Env } from '../_lib/auth';
+import { error, json, methodNotAllowed } from '../_lib/http';
 
 export async function onRequestPost(context: { request: Request; env: Env }) {
   const { request, env } = context;
