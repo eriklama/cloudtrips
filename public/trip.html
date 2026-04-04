@@ -10,77 +10,84 @@
 </head>
 
 <body class="min-h-full bg-slate-950 text-slate-100">
-<div class="min-h-screen">
+<div class="min-h-screen bg-gradient-to-br from-slate-950 via-slate-950 to-slate-900">
 
   <!-- HEADER -->
   <header class="border-b border-slate-800">
-    <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
-      <h1 id="trip-title" class="text-lg font-semibold">Trip</h1>
-      <div id="nav-actions" class="flex gap-2"></div>
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
+
+      <div class="flex items-center gap-2">
+        <button onclick="goBack()"
+          class="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm hover:bg-slate-800">
+          ← Trips
+        </button>
+
+        <h1 id="trip-title" class="text-xl font-semibold tracking-tight">
+          Trip
+        </h1>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button onclick="goToTimeline()"
+          class="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm hover:bg-slate-800">
+          Timeline
+        </button>
+
+        <button onclick="goToCosts()"
+          class="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm hover:bg-slate-800">
+          Costs
+        </button>
+
+        <span id="auth-user-email" class="hidden sm:inline text-sm text-slate-400"></span>
+
+        <button id="logout-button"
+          class="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm hover:bg-slate-800">
+          Logout
+        </button>
+      </div>
+
     </div>
   </header>
 
   <!-- MAIN -->
-  <main class="max-w-4xl mx-auto px-4 py-4 space-y-4 pb-20">
+  <main class="max-w-6xl mx-auto px-4 py-5 pb-24">
 
-    <!-- FORM -->
-    <section class="p-4 sm:p-6 rounded-3xl border border-slate-700 bg-slate-900 space-y-4">
+    <!-- Add Activity -->
+    <div class="mb-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
+      <input id="activityType" placeholder="Type"
+        class="input" />
+      <input id="activityStart" type="datetime-local"
+        class="input" />
+      <input id="activityEnd" type="datetime-local"
+        class="input" />
+      <input id="activityCost" type="number" placeholder="Cost"
+        class="input" />
+      <input id="activityLocation" placeholder="Location"
+        class="input" />
+      <input id="activityDistance" type="number" placeholder="km"
+        class="input" />
 
-      <input id="activityName"
-        placeholder="Activity"
-        class="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white" />
+      <textarea id="activityNotes" placeholder="Notes"
+        class="input col-span-full"></textarea>
 
-      <select id="activityType"
-        class="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white">
-        <option value="plane">✈️ Plane</option>
-        <option value="car">🚗 Car</option>
-        <option value="hike">🥾 Hike</option>
-        <option value="city">🏙️ City</option>
-        <option value="accommodation">🏨 Accommodation</option>
-        <option value="other">📍 Other</option>
-      </select>
+      <button onclick="addActivity()"
+        class="btn-primary col-span-full">
+        Add Activity
+      </button>
+    </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <input id="startDate" type="datetime-local"
-          class="rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white" />
-        <input id="endDate" type="datetime-local"
-          class="rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white" />
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <input id="cost" placeholder="Cost"
-          class="rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white" />
-        <input id="activity-distance" placeholder="KM"
-          class="rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white" />
-      </div>
-
-      <textarea id="notes"
-        placeholder="Notes"
-        class="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white"></textarea>
-
-      <div class="flex justify-end">
-        <button onclick="saveActivity()" class="btn btn-primary">
-          <i data-lucide="plus" class="h-4 w-4"></i>
-          Save
-        </button>
-      </div>
-
-    </section>
-
-    <!-- ACTIVITIES -->
+    <!-- Activities -->
     <div id="activities" class="space-y-3"></div>
 
   </main>
 
 </div>
 
+<script src="/auth.js"></script>
 <script src="/script.js" defer></script>
 
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    renderHeaderNav('trip');
-    if (window.lucide) window.lucide.createIcons();
-  });
+  lucide.createIcons();
 </script>
 
 </body>
