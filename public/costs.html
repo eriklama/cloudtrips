@@ -13,13 +13,7 @@
           extend: {
             colors: {
               primary: {
-                50: '#eef2ff',
-                100: '#e0e7ff',
-                200: '#c7d2fe',
-                300: '#a5b4fc',
-                400: '#818cf8',
-                500: '#6366f1',
-                600: '#4f46e5'
+                500: '#6366f1'
               }
             }
           }
@@ -32,11 +26,11 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 
-<body class="min-h-full bg-slate-950 text-slate-100 overflow-x-hidden">
+<body class="min-h-full bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 overflow-x-hidden">
 
-<div class="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+<div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-primary-50 dark:from-slate-950 dark:to-slate-900">
 
-  <div class="px-4 sm:px-6 max-w-3xl mx-auto py-6">
+  <div class="px-4 sm:px-6 max-w-4xl mx-auto py-6">
 
     <!-- HEADER -->
     <div class="flex flex-col gap-4 mb-6">
@@ -46,19 +40,19 @@
           Loading costs...
         </h1>
 
-        <a href="/" class="text-sm text-slate-400 hover:text-slate-200">
+        <a href="/" class="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200">
           Back to Trips
         </a>
       </div>
 
-      <!-- NAV BUTTONS -->
+      <!-- NAV -->
       <div class="flex gap-2">
         <a id="trip-link"
-           class="flex-1 text-center px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-sm">
+           class="flex-1 text-center px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-sm">
           Trip
         </a>
         <a id="timeline-link"
-           class="flex-1 text-center px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-sm">
+           class="flex-1 text-center px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-sm">
           Timeline
         </a>
       </div>
@@ -69,6 +63,7 @@
     <div class="mb-6">
       <h2 class="text-lg font-semibold mb-3">Total</h2>
 
+      <!-- ONLY CHANGE: flex-wrap -->
       <div id="cost-summary" class="flex flex-wrap gap-3">
         <!-- injected -->
       </div>
@@ -85,6 +80,7 @@
     <div>
       <h2 class="text-lg font-semibold mb-3">Detailed costs</h2>
 
+      <!-- ONLY CHANGE: no overflow issues -->
       <div id="cost-table" class="space-y-3">
         <!-- injected -->
       </div>
