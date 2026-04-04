@@ -5,27 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Trip Costs</title>
 
-  <script>
-    tailwind = {
-      config: {
-        darkMode: 'class',
-        theme: {
-          extend: {
-            colors: {
-              primary: {
-                500: '#6366f1'
-              }
-            }
-          }
-        }
-      }
-    };
-  </script>
-
   <link href="/output.css" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
 
-  <!-- ✅ MOBILE TABLE FIX -->
+  <!-- MOBILE TABLE FIX -->
   <style>
     @media (max-width: 640px) {
       #cost-table tr {
@@ -60,6 +43,9 @@
 <header class="border-b border-slate-800">
   <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
     <h1 id="costs-title" class="text-xl font-semibold">Costs</h1>
+
+    <!-- ✅ NEW NAV -->
+    <div id="nav-actions" class="flex gap-2"></div>
   </div>
 </header>
 
@@ -84,19 +70,8 @@
     </p>
   </div>
 
-  <div class="flex gap-2 w-full sm:w-auto">
-    <button onclick="goToTrip()"
-      class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-200 hover:bg-slate-800">
-      <i data-lucide="notebook-pen" class="h-4 w-4"></i>
-      Trip
-    </button>
-
-    <button onclick="goToTimeline()"
-      class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-200 hover:bg-slate-800">
-      <i data-lucide="list-tree" class="h-4 w-4"></i>
-      Timeline
-    </button>
-  </div>
+  <!-- ❌ OLD BUTTONS REMOVED -->
+  <!-- Navigation is now handled by renderHeaderNav -->
 
 </section>
 
@@ -151,7 +126,7 @@
           </tr>
         </thead>
 
-        <!-- IMPORTANT: JS MUST FILL data-label -->
+        <!-- JS FILLS THIS -->
         <tbody id="cost-table" class="text-slate-200"></tbody>
 
       </table>
@@ -167,7 +142,8 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  lucide.createIcons();
+  renderHeaderNav('costs');   // ✅ NEW NAV
+  if (window.lucide) lucide.createIcons();
 });
 </script>
 
