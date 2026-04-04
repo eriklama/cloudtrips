@@ -1,237 +1,95 @@
-export interface Env {
-  DB: D1Database;
-}
+import { requireUser } from './_lib/auth';
+import type { Env } from './_lib/auth';
+import { error, json, methodNotAllowed } from './_lib/http';
 
-type IncomingActivity = {
-  id?: string;
-  type?: string;
-  location?: string;
-  start?: string;
-  end?: string;
-  cost?: number | string | null;
-  km?: number | string | null;
-  notes?: string;
-};
-
-type NormalizedActivity = {
-  id: string;
-  type: string;
-  location: string;
-  start: string;
-  end: string;
-  cost: number;
-  km: number;
-  notes: string;
-};
-
-type NormalizedTrip = {
-  id: string;
-  name: string;
-  pin: string;
-  activities: NormalizedActivity[];
-};
-
-export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
-  try {
-    const url = new URL(request.url);
-    const tripIdFromQuery = url.searchParams.get('trip')?.trim();
-
-    const body = (await request.json()) as unknown;
-    if (!isRecord(body)) {
-      return json({ error: 'Expected a trip object' }, 400);
-    }
-
-    const trip = normalizeTrip(body);
-
-    if (!tripIdFromQuery) {
-      if (!trip.pin) {
-        return json({ error: 'PIN is required' }, 400);
-      }
-
-      await env.DB.prepare(
-        `
-        INSERT INTO trips (id, name, pin)
-        VALUES (?, ?, ?)
-        `
-      )
-        .bind(trip.id, trip.name, trip.pin)
-        .run();
-
-      for (const activity of trip.activities) {
-        await env.DB.prepare(
-          `
-          INSERT INTO activities (
-            id,
-            trip_id,
-            type,
-            location,
-            start,
-            end,
-            cost,
-            km,
-            notes
-          )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `
-        )
-          .bind(
-            activity.id,
-            trip.id,
-            activity.type,
-            activity.location,
-            activity.start,
-            activity.end,
-            activity.cost,
-            activity.km,
-            activity.notes
-          )
-          .run();
-      }
-
-      return json({ ok: true, id: trip.id });
-    }
-
-    const pin = request.headers.get('x-pin')?.trim();
-    if (!pin) {
-      return json({ error: 'Unauthorized' }, 401);
-    }
-
-    const existingTrip = await env.DB.prepare(
-      `
-      SELECT id, pin
-      FROM trips
-      WHERE id = ?
-      LIMIT 1
-      `
-    )
-      .bind(tripIdFromQuery)
-      .first<{ id: string; pin: string }>();
-
-    if (!existingTrip) {
-      return json({ error: 'Trip not found' }, 404);
-    }
-
-    if (existingTrip.pin !== pin) {
-      return json({ error: 'Unauthorized' }, 401);
-    }
-
-    if (trip.id !== tripIdFromQuery) {
-      return json({ error: 'Trip ID mismatch' }, 400);
-    }
-
-    const statements: D1PreparedStatement[] = [];
-
-    statements.push(
-      env.DB.prepare(
-        `
-        UPDATE trips
-        SET name = ?
-        WHERE id = ?
-        `
-      ).bind(trip.name, trip.id)
-    );
-
-    statements.push(
-      env.DB.prepare(
-        `
-        DELETE FROM activities
-        WHERE trip_id = ?
-        `
-      ).bind(trip.id)
-    );
-
-    for (const activity of trip.activities) {
-      statements.push(
-        env.DB.prepare(
-          `
-          INSERT INTO activities (
-            id,
-            trip_id,
-            type,
-            location,
-            start,
-            end,
-            cost,
-            km,
-            notes
-          )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `
-        ).bind(
-          activity.id,
-          trip.id,
-          activity.type,
-          activity.location,
-          activity.start,
-          activity.end,
-          activity.cost,
-          activity.km,
-          activity.notes
-        )
-      );
-    }
-
-    await env.DB.batch(statements);
-
-    return json({ ok: true });
-  } catch (error) {
-    console.error('saveTrip failed', error);
-    return json({ error: 'Failed to save trip' }, 500);
-  }
-};
-
-function normalizeTrip(input: Record<string, unknown>): NormalizedTrip {
-  const tripId = asNonEmptyString(input.id) || `trip_${Date.now()}`;
-  const tripName = asNonEmptyString(input.name) || 'Untitled trip';
-  const tripPin = asNonEmptyString(input.pin);
-
-  const rawActivities = Array.isArray(input.activities) ? input.activities : [];
-
-  const activities: NormalizedActivity[] = rawActivities.map((activity, index) => {
-    const a = isRecord(activity) ? activity : {};
-
-    return {
-      id: asNonEmptyString(a.id) || `activity_${tripId}_${index}`,
-      type: asNonEmptyString(a.type) || 'other',
-      location: asString(a.location),
-      start: asString(a.start),
-      end: asString(a.end),
-      cost: asNumber(a.cost),
-      km: asNumber(a.km),
-      notes: asString(a.notes),
-    };
-  });
-
+function sanitizeActivity(activity: any) {
   return {
-    id: tripId,
-    name: tripName,
-    pin: tripPin,
-    activities,
+    id: String(activity?.id || crypto.randomUUID()),
+    type: String(activity?.type || 'other'),
+    startDate: String(activity?.startDate || ''),
+    endDate: String(activity?.endDate || ''),
+    cost: Number.isFinite(Number(activity?.cost)) ? Number(activity.cost) : 0,
+    notes: String(activity?.notes || ''),
+    location: String(activity?.location || ''),
+    distance: Number.isFinite(Number(activity?.distance)) ? Number(activity.distance) : 0
   };
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
-}
+export async function onRequestPost(context: { request: Request; env: Env }) {
+  const { request, env } = context;
 
-function asString(value: unknown): string {
-  return typeof value === 'string' ? value : '';
-}
+  const user = await requireUser(request, env);
+  if (!user) {
+    return error('Unauthorized.', 401);
+  }
 
-function asNonEmptyString(value: unknown): string {
-  return typeof value === 'string' && value.trim() ? value.trim() : '';
-}
+  let body: any;
+  try {
+    body = await request.json();
+  } catch {
+    return error('Invalid JSON body.', 400);
+  }
 
-function asNumber(value: unknown): number {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : 0;
-}
+  const id = String(body?.id || '').trim();
+  const name = String(body?.name || '').trim();
+  const rawActivities = Array.isArray(body?.activities) ? body.activities : [];
+  const activities = rawActivities.map(sanitizeActivity);
 
-function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-    },
+  if (!name) {
+    return error('Trip name is required.', 400);
+  }
+
+  const activitiesJson = JSON.stringify(activities);
+
+  if (id) {
+    const existing = await env.DB
+      .prepare(`SELECT id FROM trips WHERE id = ? AND user_id = ? LIMIT 1`)
+      .bind(id, user.id)
+      .first();
+
+    if (!existing) {
+      return error('Trip not found.', 404);
+    }
+
+    await env.DB
+      .prepare(`
+        UPDATE trips
+        SET name = ?, activities_json = ?
+        WHERE id = ? AND user_id = ?
+      `)
+      .bind(name, activitiesJson, id, user.id)
+      .run();
+
+    return json({
+      ok: true,
+      trip: {
+        id,
+        name,
+        activities
+      }
+    });
+  }
+
+  const newId = crypto.randomUUID();
+
+  await env.DB
+    .prepare(`
+      INSERT INTO trips (id, user_id, name, activities_json)
+      VALUES (?, ?, ?, ?)
+    `)
+    .bind(newId, user.id, name, activitiesJson)
+    .run();
+
+  return json({
+    ok: true,
+    trip: {
+      id: newId,
+      name,
+      activities
+    }
   });
+}
+
+export function onRequest() {
+  return methodNotAllowed(['POST']);
 }
