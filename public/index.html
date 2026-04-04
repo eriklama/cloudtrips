@@ -12,22 +12,42 @@
 <body class="min-h-full bg-slate-950 text-slate-100">
 <div class="min-h-screen bg-gradient-to-br from-slate-950 via-slate-950 to-slate-900">
 
+  <!-- HEADER -->
   <header class="border-b border-slate-800">
-    <div class="max-w-5xl mx-auto px-4 py-4">
-      <h1 class="text-xl font-semibold">My Trips</h1>
+    <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
+      
+      <h1 class="text-xl font-semibold tracking-tight">
+        My Trips
+      </h1>
+
+      <!-- Auth section -->
+      <div class="flex items-center gap-3">
+        <span id="auth-user-email"
+          class="hidden sm:inline text-sm text-slate-400 truncate max-w-[180px]">
+        </span>
+
+        <button id="logout-button"
+          class="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm font-medium text-slate-200 hover:border-slate-600 hover:bg-slate-800 transition">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+          Logout
+        </button>
+      </div>
+
     </div>
   </header>
 
-  <main class="max-w-5xl mx-auto px-4 py-4 pb-20">
+  <!-- MAIN -->
+  <main class="max-w-5xl mx-auto px-4 py-5 pb-24">
 
     <!-- Add Trip -->
     <div class="mb-6 flex flex-col sm:flex-row gap-2">
       <input id="newTripName"
         placeholder="Trip name"
-        class="flex-1 rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white placeholder-slate-400" />
+        class="flex-1 rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white placeholder-slate-400 outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition" />
 
       <button onclick="addTrip()"
-        class="rounded-2xl bg-primary-600 px-4 py-3 text-sm text-white hover:bg-primary-500">
+        class="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary-600 px-4 py-3 text-sm font-medium text-white hover:bg-primary-500 active:scale-[0.98] transition">
+        <i data-lucide="plus" class="w-4 h-4"></i>
         Add
       </button>
     </div>
@@ -41,6 +61,13 @@
 
 </div>
 
+<!-- Auth MUST be before script.js -->
+<script src="/auth.js"></script>
 <script src="/script.js" defer></script>
+
+<script>
+  lucide.createIcons();
+</script>
+
 </body>
 </html>
