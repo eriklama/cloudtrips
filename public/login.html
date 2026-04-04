@@ -26,26 +26,35 @@
 
 <script>
 async function login() {
-  const email = document.getElementById('email').value;
+  const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
 
-  const res = await fetch('/login', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ email, password })
-  });
+  try {
+    const res = await fetch('/api/login', {   // ✅ FIXED HERE
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email, password })
+    });
 
-  if (!res.ok) {
-    alert('Login failed');
-    return;
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error || 'Login failed');
+      return;
+    }
+
+    // ✅ use SAME keys as auth.js
+    localStorage.setItem('cloudtrips_auth_token', data.token);
+    localStorage.setItem('cloudtrips_auth_user', JSON.stringify(data.user));
+
+    window.location.href = '/';
+
+  } catch (err) {
+    console.error('Login error:', err);
+    alert('Network error');
   }
-
-  const data = await res.json();
-  localStorage.setItem('token', data.token);
-
-  window.location.href = '/';
 }
 </script>
 
