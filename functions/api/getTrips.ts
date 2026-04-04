@@ -1,6 +1,6 @@
-import { requireUser } from './_lib/auth';
-import type { Env } from './_lib/auth';
-import { error, json, methodNotAllowed } from './_lib/http';
+import { requireUser } from '../_lib/auth';
+import type { Env } from '../_lib/auth';
+import { error, json, methodNotAllowed } from '../_lib/http';
 
 type TripRow = {
   id: string;
