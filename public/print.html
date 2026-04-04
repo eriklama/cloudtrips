@@ -180,7 +180,7 @@ async function load() {
 
   activities.forEach(a => {
     totalCost += Number(a.cost) || 0;
-    totalKm += Number(a.distance) || 0;
+    totalKm += Number(a.distance || a.km) || 0;
   });
 
   document.getElementById('summary').innerHTML = `
@@ -210,8 +210,8 @@ async function load() {
       const meta = getTypeMeta(a.type);
 
       const cost = Number(a.cost) || 0;
-      const km = Number(a.distance) || 0;
-
+      const km = Number(a.distance || a.km) || 0;
+      
       dayCost += cost;
       dayKm += km;
 
