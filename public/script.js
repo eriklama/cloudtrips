@@ -1560,4 +1560,5 @@
   window.goToCosts = goToCosts;
   window.toggleTimelineDay = toggleTimelineDay;
   window.switchTimelineView = switchTimelineView;
+  window.openPrintView = openPrintView;
 })();
