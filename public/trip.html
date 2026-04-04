@@ -16,15 +16,7 @@
   <header class="border-b border-slate-800">
     <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
       <h1 id="trip-title" class="text-lg font-semibold">Trip</h1>
-
-      <div class="flex gap-2">
-        <button onclick="goToTimeline()" class="text-sm px-3 py-2 bg-slate-800 rounded-xl hover:bg-slate-700 transition">
-          Timeline
-        </button>
-        <button onclick="goToCosts()" class="text-sm px-3 py-2 bg-slate-800 rounded-xl hover:bg-slate-700 transition">
-          Costs
-        </button>
-      </div>
+      <div id="nav-actions" class="flex gap-2"></div>
     </div>
   </header>
 
@@ -34,14 +26,12 @@
     <!-- FORM -->
     <section class="p-4 sm:p-6 rounded-3xl border border-slate-700 bg-slate-900 space-y-4">
 
-      <!-- NAME -->
       <input id="activityName"
         placeholder="Activity"
-        class="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30" />
+        class="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white" />
 
-      <!-- TYPE -->
       <select id="activityType"
-        class="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30">
+        class="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white">
         <option value="plane">✈️ Plane</option>
         <option value="car">🚗 Car</option>
         <option value="hike">🥾 Hike</option>
@@ -50,33 +40,29 @@
         <option value="other">📍 Other</option>
       </select>
 
-      <!-- DATES -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <input id="startDate" type="datetime-local"
-          class="rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30" />
+          class="rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white" />
         <input id="endDate" type="datetime-local"
-          class="rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30" />
+          class="rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white" />
       </div>
 
-      <!-- COST + KM -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <input id="cost" placeholder="Cost"
-          class="rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30" />
+          class="rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white" />
         <input id="activity-distance" placeholder="KM"
-          class="rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30" />
+          class="rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white" />
       </div>
 
-      <!-- NOTES -->
       <textarea id="notes"
         placeholder="Notes"
-        class="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30"></textarea>
+        class="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white"></textarea>
 
-      <!-- BUTTON -->
-      <div class="pt-2">
-        <button onclick="saveActivity()" type="button" class="btn btn-primary">
-  <i data-lucide="plus" class="h-4 w-4"></i>
-  Save
-</button>
+      <div class="flex justify-end">
+        <button onclick="saveActivity()" class="btn btn-primary">
+          <i data-lucide="plus" class="h-4 w-4"></i>
+          Save
+        </button>
       </div>
 
     </section>
@@ -89,5 +75,13 @@
 </div>
 
 <script src="/script.js" defer></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    renderHeaderNav('trip');
+    if (window.lucide) window.lucide.createIcons();
+  });
+</script>
+
 </body>
 </html>
