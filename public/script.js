@@ -17,7 +17,8 @@
     trips: [],
     currentTrip: null,
     editingActivityId: null,
-    timelineCollapsedDays: new Set()
+    timelineCollapsedDays: new Set(),
+    timelineView: 'timeline'
   };
 
   /* =========================
@@ -91,6 +92,35 @@
     }).format(date);
   }
 
+  function formatMonthLabel(value) {
+    if (!value) return 'No month';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'No month';
+
+    return new Intl.DateTimeFormat('en-GB', {
+      month: 'long',
+      year: 'numeric'
+    }).format(date);
+  }
+
+  function formatWeekdayShort(value) {
+    if (!value) return '—';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '—';
+
+    return new Intl.DateTimeFormat('en-GB', {
+      weekday: 'short'
+    }).format(date);
+  }
+
+  function formatDayNumber(value) {
+    if (!value) return '—';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '—';
+
+    return String(date.getDate());
+  }
+
   function formatTimeOnly(value) {
     if (!value) return '—';
     const date = new Date(value);
@@ -109,6 +139,36 @@
     if (Number.isNaN(date.getTime())) return 'undated';
 
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  }
+
+  function monthKey(value) {
+    if (!value) return 'undated';
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'undated';
+
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+  }
+
+  function getTimelineViewStorageKey(tripId) {
+    return `trip_timeline_view_${tripId}`;
+  }
+
+  function getSavedTimelineView(tripId) {
+    try {
+      const stored = window.localStorage.getItem(getTimelineViewStorageKey(tripId));
+      return stored === 'calendar' ? 'calendar' : 'timeline';
+    } catch {
+      return 'timeline';
+    }
+  }
+
+  function saveTimelineView(tripId, view) {
+    try {
+      window.localStorage.setItem(getTimelineViewStorageKey(tripId), view === 'calendar' ? 'calendar' : 'timeline');
+    } catch {
+      // ignore storage errors
+    }
   }
 
   function uuid() {
@@ -1038,31 +1098,42 @@
     `;
   }
 
-  function toggleDay(day) {
+  function toggleTimelineDay(day) {
     if (state.timelineCollapsedDays.has(day)) {
       state.timelineCollapsedDays.delete(day);
     } else {
       state.timelineCollapsedDays.add(day);
     }
 
-    renderTimeline();
+    renderTimelinePage();
+  }
+
+  function switchTimelineView(view) {
+    if (!state.currentTrip) return;
+
+    state.timelineView = view === 'calendar' ? 'calendar' : 'timeline';
+    saveTimelineView(state.currentTrip.id, state.timelineView);
+    renderTimelinePage();
   }
 
   async function loadTimeline() {
     const tripId = getTripIdFromUrl();
     const container = $('timeline');
-    if (!tripId || !container) return;
+    const calendar = $('calendar-view');
+    if (!tripId || !container || !calendar) return;
 
     const pin = await ensureTripPin(tripId, 'Enter trip PIN:');
     if (!pin) return;
 
     container.innerHTML = loadingTimeline();
+    calendar.innerHTML = '';
 
     try {
       state.currentTrip = await fetchTrip(tripId);
+      state.timelineView = getSavedTimelineView(tripId);
       setText('timeline-title', `${state.currentTrip.name} Timeline`);
       setText('timeline-hero-title', `${state.currentTrip.name} Timeline`);
-      renderTimeline();
+      renderTimelinePage();
     } catch (error) {
       console.error(error);
       container.innerHTML = emptyState(
@@ -1070,8 +1141,47 @@
         error?.message || 'The trip data could not be loaded.',
         'triangle-alert'
       );
+      calendar.innerHTML = '';
       refreshIcons();
     }
+  }
+
+  function renderTimelinePage() {
+    const tripId = state.currentTrip?.id;
+    const timelineContainer = $('timeline');
+    const calendarContainer = $('calendar-view');
+    const timelineButton = $('btnTimelineView');
+    const calendarButton = $('btnCalendarView');
+
+    if (!timelineContainer || !calendarContainer || !state.currentTrip) return;
+
+    if (timelineButton) {
+      timelineButton.className = state.timelineView === 'timeline'
+        ? 'inline-flex items-center justify-center gap-2 rounded-xl border border-primary-500 bg-primary-500 px-3 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-primary-600'
+        : 'inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-slate-800';
+    }
+
+    if (calendarButton) {
+      calendarButton.className = state.timelineView === 'calendar'
+        ? 'inline-flex items-center justify-center gap-2 rounded-xl border border-primary-500 bg-primary-500 px-3 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-primary-600'
+        : 'inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-slate-800';
+    }
+
+    if (tripId) {
+      saveTimelineView(tripId, state.timelineView);
+    }
+
+    if (state.timelineView === 'calendar') {
+      timelineContainer.classList.add('hidden');
+      calendarContainer.classList.remove('hidden');
+      renderCalendarView();
+    } else {
+      calendarContainer.classList.add('hidden');
+      timelineContainer.classList.remove('hidden');
+      renderTimeline();
+    }
+
+    refreshIcons();
   }
 
   function renderTimeline() {
@@ -1094,20 +1204,26 @@
     container.innerHTML = groupEntries.map(([key, dayActivities]) => {
       const label = key === 'undated' ? 'No date' : formatDayLabel(dayActivities[0]?.startDate);
       const isCollapsed = state.timelineCollapsedDays.has(key);
+      const totalCost = dayActivities.reduce((sum, activity) => sum + Number(activity.cost || 0), 0);
+      const totalKm = dayActivities.reduce((sum, activity) => sum + Number(activity.km || 0), 0);
 
       return `
-        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft dark:border-slate-800 dark:bg-slate-900">
+        <section class="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-soft">
           <button
             type="button"
-            onclick="toggleDay('${escapeHtml(key)}')"
-            class="flex w-full items-center justify-between gap-3 bg-slate-50 px-4 py-3 text-left hover:bg-slate-100 dark:bg-slate-800/70 dark:hover:bg-slate-800"
+            onclick="toggleTimelineDay('${escapeHtml(key)}')"
+            class="flex w-full items-center justify-between gap-3 bg-slate-800/70 px-4 py-3 text-left transition hover:bg-slate-800"
           >
             <div class="min-w-0">
-              <div class="text-sm font-semibold tracking-tight">${escapeHtml(label)}</div>
-              <div class="text-xs text-slate-500 dark:text-slate-400">${dayActivities.length} item${dayActivities.length === 1 ? '' : 's'}</div>
+              <div class="text-sm font-semibold tracking-tight text-slate-100">${escapeHtml(label)}</div>
+              <div class="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-400">
+                <span>${dayActivities.length} item${dayActivities.length === 1 ? '' : 's'}</span>
+                <span>${escapeHtml(formatCurrency(totalCost))}</span>
+                ${totalKm ? `<span>${escapeHtml(`${totalKm} km`)}</span>` : ''}
+              </div>
             </div>
 
-            <span class="shrink-0 text-sm text-slate-500 dark:text-slate-300">
+            <span class="shrink-0 text-sm text-slate-300">
               ${isCollapsed ? '▶' : '▼'}
             </span>
           </button>
@@ -1122,6 +1238,112 @@
     }).join('');
 
     refreshIcons();
+  }
+
+  function renderCalendarView() {
+    const container = $('calendar-view');
+    if (!container || !state.currentTrip) return;
+
+    const activities = sortActivities(state.currentTrip.activities);
+    if (!activities.length) {
+      container.innerHTML = emptyState(
+        'No activities in calendar view',
+        'Go back to the trip page and add some activities first.',
+        'calendar-plus'
+      );
+      refreshIcons();
+      return;
+    }
+
+    const dayGroups = buildTimelineGroups(activities);
+    const monthBuckets = new Map();
+
+    for (const [key, dayActivities] of dayGroups) {
+      const bucketKey = key === 'undated' ? 'undated' : monthKey(dayActivities[0]?.startDate);
+      if (!monthBuckets.has(bucketKey)) {
+        monthBuckets.set(bucketKey, []);
+      }
+      monthBuckets.get(bucketKey).push([key, dayActivities]);
+    }
+
+    container.innerHTML = [...monthBuckets.entries()].map(([bucketKey, entries]) => {
+      const monthLabel = bucketKey === 'undated' ? 'Undated activities' : formatMonthLabel(entries[0]?.[1]?.[0]?.startDate);
+
+      return `
+        <section class="rounded-2xl border border-slate-800 bg-slate-900 p-4 sm:p-5 shadow-soft">
+          <div class="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <h3 class="text-base font-semibold tracking-tight text-slate-100">${escapeHtml(monthLabel)}</h3>
+              <p class="mt-1 text-xs text-slate-400">${entries.length} day${entries.length === 1 ? '' : 's'}</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            ${entries.map(([key, dayActivities]) => renderCalendarTile(key, dayActivities)).join('')}
+          </div>
+        </section>
+      `;
+    }).join('');
+
+    refreshIcons();
+  }
+
+  function renderCalendarTile(key, dayActivities) {
+    const dateValue = dayActivities[0]?.startDate;
+    const label = key === 'undated' ? 'No date' : formatDayLabel(dateValue);
+    const weekday = key === 'undated' ? '—' : formatWeekdayShort(dateValue);
+    const dayNumber = key === 'undated' ? '—' : formatDayNumber(dateValue);
+    const totalCost = dayActivities.reduce((sum, activity) => sum + Number(activity.cost || 0), 0);
+    const totalKm = dayActivities.reduce((sum, activity) => sum + Number(activity.km || 0), 0);
+    const previewItems = dayActivities.slice(0, 4).map((activity) => {
+      const meta = getTypeMeta(activity.type);
+      const name = activity.location || activity.name || 'Activity';
+      return `
+        <div class="flex items-start gap-2 rounded-xl bg-slate-950/80 px-3 py-2">
+          <span class="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary-500/10 text-primary-300">
+            <i data-lucide="${meta.icon}" class="h-3.5 w-3.5"></i>
+          </span>
+          <div class="min-w-0 flex-1">
+            <div class="truncate text-sm font-medium text-slate-100">${escapeHtml(name)}</div>
+            <div class="mt-0.5 flex flex-wrap gap-x-2 gap-y-1 text-[11px] text-slate-400">
+              <span>${escapeHtml(formatTimeOnly(activity.startDate))}–${escapeHtml(formatTimeOnly(activity.endDate))}</span>
+              ${activity.km ? `<span>${escapeHtml(`${activity.km} km`)}</span>` : ''}
+              <span>${escapeHtml(formatCurrency(activity.cost))}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    const extraCount = Math.max(dayActivities.length - 4, 0);
+
+    return `
+      <article class="flex min-h-[220px] flex-col rounded-2xl border border-slate-800 bg-slate-800/60 p-4 transition hover:border-primary-500/60 hover:bg-slate-800">
+        <div class="mb-3 flex items-start justify-between gap-3">
+          <div>
+            <div class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">${escapeHtml(weekday)}</div>
+            <div class="mt-1 text-3xl font-semibold leading-none text-slate-100">${escapeHtml(dayNumber)}</div>
+          </div>
+          <div class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-right">
+            <div class="text-[11px] uppercase tracking-wide text-slate-500">Summary</div>
+            <div class="mt-1 text-xs text-slate-300">${escapeHtml(formatCurrency(totalCost))}</div>
+            <div class="text-xs text-slate-400">${escapeHtml(`${totalKm || 0} km`)}</div>
+          </div>
+        </div>
+
+        <div class="mb-3 text-xs text-slate-400">${escapeHtml(label)}</div>
+
+        <div class="space-y-2">
+          ${previewItems}
+        </div>
+
+        ${extraCount ? `
+          <div class="mt-3 rounded-xl border border-dashed border-slate-700 px-3 py-2 text-xs text-slate-400">
+            +${extraCount} more item${extraCount === 1 ? '' : 's'} on this day
+          </div>
+        ` : ''}
+      </article>
+    `;
   }
 
   /* =========================
@@ -1329,5 +1551,6 @@
   window.goToTrip = goToTrip;
   window.goToTimeline = goToTimeline;
   window.goToCosts = goToCosts;
-  window.toggleDay = toggleDay;
+  window.toggleTimelineDay = toggleTimelineDay;
+  window.switchTimelineView = switchTimelineView;
 })();
