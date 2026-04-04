@@ -1,4 +1,4 @@
-import { createAuthToken, normalizeUserEmail, verifyPassword } from './_lib/auth';
+import { createAuthToken, normalizeUserEmail, verifyPassword } from '../_lib/auth';
 import type { Env } from '../_lib/auth';
 import { error, json, methodNotAllowed } from '../_lib/http';
 
