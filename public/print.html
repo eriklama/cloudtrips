@@ -1,3 +1,5 @@
+print.html
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -17,48 +19,24 @@
       line-height: 1.5;
     }
 
-    /* HEADER */
     .header {
-      position: running(header);
       border-bottom: 2px solid #000;
       padding-bottom: 6px;
       margin-bottom: 10px;
     }
 
-    h1 {
-      font-size: 22px;
-      margin: 0;
-    }
+    h1 { font-size: 22px; margin: 0; }
+    .subtitle { font-size: 12px; color: #555; }
 
-    .subtitle {
-      font-size: 12px;
-      color: #555;
-    }
-
-    /* FOOTER */
-    @page {
-      @bottom-right {
-        content: "Page " counter(page);
-        font-size: 10px;
-        color: #666;
-      }
-    }
-
-    /* SUMMARY */
     .summary {
       margin: 10px 0 14px;
       padding: 6px 8px;
       border: 1px solid #ddd;
-      font-size: 12px;
       display: flex;
       justify-content: space-between;
     }
 
-    /* DAY */
-    .day {
-      margin-bottom: 14px;
-      page-break-inside: avoid;
-    }
+    .day { margin-bottom: 14px; page-break-inside: avoid; }
 
     .day-header {
       display: flex;
@@ -69,7 +47,6 @@
       font-weight: 600;
     }
 
-    /* ROW */
     .row {
       display: grid;
       grid-template-columns: 70px 1fr 90px;
@@ -78,39 +55,24 @@
       border-bottom: 1px solid #eee;
     }
 
-    .time {
-      font-variant-numeric: tabular-nums;
-    }
+    .time { font-variant-numeric: tabular-nums; }
 
-    .desc {
-      display: flex;
-      flex-direction: column;
-    }
+    .notes { font-size: 11px; color: #666; }
 
-    .type {
-      font-weight: 600;
-    }
-
-    .notes {
-      font-size: 11px;
-      color: #666;
-    }
-
-    .right {
-      text-align: right;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .km {
-      font-size: 11px;
-      color: #666;
-    }
+    .right { text-align: right; }
+    .km { font-size: 11px; color: #666; }
 
     .totals {
       text-align: right;
       font-size: 11px;
       margin-top: 4px;
       color: #444;
+    }
+
+    .error {
+      padding: 20px;
+      color: red;
+      font-family: monospace;
     }
   </style>
 </head>
@@ -123,15 +85,9 @@
 </div>
 
 <div id="summary" class="summary"></div>
-
 <div id="content">Loading...</div>
 
 <script>
-
-/* =========================
-   TYPE MAPPING
-========================= */
-
 function getTypeMeta(type) {
   const map = {
     plane: { icon: '✈️', label: 'Plane' },
@@ -144,129 +100,116 @@ function getTypeMeta(type) {
   return map[type] || map.other;
 }
 
-/* =========================
-   LOAD
-========================= */
-
-async function load() {
-  const params = new URLSearchParams(window.location.search);
-  const tripId = params.get('id');
-  if (!tripId) return;
-
-  const pin = localStorage.getItem(`trip_pin_${tripId}`) || '';
-
-  const res = await fetch(`/getTrip?trip=${tripId}`, {
-    headers: pin ? { 'x-pin': pin } : {}
-  });
-
-  const data = await res.json();
-
-  document.getElementById('title').textContent = data.name;
-
-  const activities = (data.activities || [])
-    .sort((a, b) => new Date(a.start) - new Date(b.start));
-
-  /* DATE RANGE */
-  if (activities.length) {
-    const first = new Date(activities[0].start);
-    const last = new Date(activities[activities.length - 1].start);
-    document.getElementById('subtitle').textContent =
-      `${first.toDateString()} — ${last.toDateString()}`;
-  }
-
-  /* TOTALS */
-  let totalCost = 0;
-  let totalKm = 0;
-
-  activities.forEach(a => {
-    totalCost += Number(a.cost) || 0;
-    totalKm += Number(a.distance || a.km) || 0;
-  });
-
-  document.getElementById('summary').innerHTML = `
-    <div>Total cost: €${totalCost}</div>
-    <div>Total distance: ${totalKm} km</div>
-  `;
-
-  /* GROUP */
-  const groups = {};
-  activities.forEach(a => {
-    const key = new Date(a.start).toISOString().slice(0,10);
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(a);
-  });
-
-  const container = document.getElementById('content');
-  container.innerHTML = '';
-
-  Object.keys(groups).forEach(day => {
-    const date = new Date(day);
-    const list = groups[day];
-
-    let dayCost = 0;
-    let dayKm = 0;
-
-    const rows = list.map(a => {
-      const meta = getTypeMeta(a.type);
-
-      const cost = Number(a.cost) || 0;
-      const km = Number(a.distance || a.km) || 0;
-      
-      dayCost += cost;
-      dayKm += km;
-
-      return `
-        <div class="row">
-          <div class="time">${formatTime(a.start)}</div>
-
-          <div class="desc">
-            <div class="type">${meta.icon} ${meta.label} — ${a.location || ''}</div>
-            ${a.notes ? `<div class="notes">${a.notes}</div>` : ''}
-          </div>
-
-          <div class="right">
-            ${cost ? `€${cost}` : ''}
-            ${km ? `<div class="km">${km} km</div>` : ''}
-          </div>
-        </div>
-      `;
-    }).join('');
-
-    const section = document.createElement('div');
-    section.className = 'day';
-
-    section.innerHTML = `
-      <div class="day-header">
-        <div>${date.toDateString()}</div>
-        <div>${list.length} activities</div>
-      </div>
-
-      ${rows}
-
-      <div class="totals">
-        ${dayCost ? `€${dayCost}` : ''}
-        ${dayKm ? ` • ${dayKm} km` : ''}
-      </div>
-    `;
-
-    container.appendChild(section);
-  });
-
-  setTimeout(() => window.print(), 500);
-}
-
-/* =========================
-   HELPERS
-========================= */
-
 function formatTime(v) {
   if (!v) return '';
   const d = new Date(v);
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-load();
+function load() {
+  try {
+    const raw = sessionStorage.getItem('print_trip');
+    if (!raw) throw new Error('No data in sessionStorage');
 
+    const trip = JSON.parse(raw);
+
+    document.getElementById('title').textContent = trip.name || 'Trip';
+
+    const activities = (trip.activities || [])
+      .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+
+    // subtitle
+    if (activities.length) {
+      const first = new Date(activities[0].startDate);
+      const last = new Date(activities[activities.length - 1].startDate);
+      document.getElementById('subtitle').textContent =
+        `${first.toDateString()} — ${last.toDateString()}`;
+    }
+
+    // totals
+    let totalCost = 0;
+    let totalKm = 0;
+
+    activities.forEach(a => {
+      totalCost += Number(a.cost) || 0;
+      totalKm += Number(a.distance) || 0;
+    });
+
+    document.getElementById('summary').innerHTML = `
+      <div>Total cost: €${totalCost}</div>
+      <div>Total distance: ${totalKm} km</div>
+    `;
+
+    // group by day
+    const groups = {};
+    activities.forEach(a => {
+      const key = new Date(a.startDate).toISOString().slice(0,10);
+      (groups[key] ||= []).push(a);
+    });
+
+    const container = document.getElementById('content');
+    container.innerHTML = '';
+
+    Object.keys(groups).sort().forEach(day => {
+      const list = groups[day];
+      const date = new Date(day);
+
+      let dayCost = 0;
+      let dayKm = 0;
+
+      const rows = list.map(a => {
+        const meta = getTypeMeta(a.type);
+
+        const cost = Number(a.cost) || 0;
+        const km = Number(a.distance) || 0;
+
+        dayCost += cost;
+        dayKm += km;
+
+        return `
+          <div class="row">
+            <div class="time">${formatTime(a.startDate)}</div>
+
+            <div>
+              <div><strong>${meta.icon} ${meta.label}</strong> — ${a.location || ''}</div>
+              ${a.notes ? `<div class="notes">${a.notes}</div>` : ''}
+            </div>
+
+            <div class="right">
+              ${cost ? `€${cost}` : ''}
+              ${km ? `<div class="km">${km} km</div>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const section = document.createElement('div');
+      section.className = 'day';
+
+      section.innerHTML = `
+        <div class="day-header">
+          <div>${date.toDateString()}</div>
+          <div>${list.length} activities</div>
+        </div>
+        ${rows}
+        <div class="totals">
+          ${dayCost ? `€${dayCost}` : ''}
+          ${dayKm ? ` • ${dayKm} km` : ''}
+        </div>
+      `;
+
+      container.appendChild(section);
+    });
+
+    setTimeout(() => window.print(), 300);
+
+  } catch (err) {
+    document.getElementById('content').innerHTML =
+      `<div class="error">${err.message}</div>`;
+  }
+}
+
+load();
 </script>
 
 </body>
