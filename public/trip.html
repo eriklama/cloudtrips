@@ -18,7 +18,7 @@
 
       <div class="flex items-center gap-2">
         <button onclick="goBack()"
-          class="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm hover:bg-slate-800">
+          class="inline-flex items-center gap-1 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm hover:bg-slate-800 transition">
           ← Trips
         </button>
 
@@ -28,22 +28,29 @@
       </div>
 
       <div class="flex items-center gap-2">
+
         <button onclick="goToTimeline()"
-          class="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm hover:bg-slate-800">
+          class="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm hover:bg-slate-800 transition">
           Timeline
         </button>
 
         <button onclick="goToCosts()"
-          class="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm hover:bg-slate-800">
+          class="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm hover:bg-slate-800 transition">
           Costs
         </button>
 
-        <span id="auth-user-email" class="hidden sm:inline text-sm text-slate-400"></span>
+        <!-- User -->
+        <span id="auth-user-email"
+          class="hidden sm:inline text-sm text-slate-400 truncate max-w-[160px]">
+        </span>
 
+        <!-- Logout -->
         <button id="logout-button"
-          class="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm hover:bg-slate-800">
+          class="inline-flex items-center gap-1 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm hover:bg-slate-800 transition">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
           Logout
         </button>
+
       </div>
 
     </div>
@@ -54,26 +61,34 @@
 
     <!-- Add Activity -->
     <div class="mb-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
+
       <input id="activityType" placeholder="Type"
-        class="input" />
+        class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white placeholder-slate-400 outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
+
       <input id="activityStart" type="datetime-local"
-        class="input" />
+        class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
+
       <input id="activityEnd" type="datetime-local"
-        class="input" />
+        class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
+
       <input id="activityCost" type="number" placeholder="Cost"
-        class="input" />
+        class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
+
       <input id="activityLocation" placeholder="Location"
-        class="input" />
+        class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
+
       <input id="activityDistance" type="number" placeholder="km"
-        class="input" />
+        class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
 
       <textarea id="activityNotes" placeholder="Notes"
-        class="input col-span-full"></textarea>
+        class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm col-span-full outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"></textarea>
 
       <button onclick="addActivity()"
-        class="btn-primary col-span-full">
+        class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-500 active:scale-[0.98] transition col-span-full">
+        <i data-lucide="plus" class="w-4 h-4"></i>
         Add Activity
       </button>
+
     </div>
 
     <!-- Activities -->
@@ -83,11 +98,27 @@
 
 </div>
 
+<!-- ✅ AUTH FIRST -->
 <script src="/auth.js"></script>
+
+<!-- MAIN LOGIC -->
 <script src="/script.js" defer></script>
 
 <script>
-  lucide.createIcons();
+document.addEventListener('DOMContentLoaded', async () => {
+
+  // 🔐 Protect page
+  if (typeof requireAuth === 'function') {
+    const user = await requireAuth();
+    if (!user) return;
+  }
+
+  // 🎨 Icons
+  if (window.lucide) {
+    lucide.createIcons();
+  }
+
+});
 </script>
 
 </body>
