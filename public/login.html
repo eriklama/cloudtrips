@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login · CloudTrips</title>
+  <link href="/output.css" rel="stylesheet" />
+</head>
+<body class="min-h-full bg-slate-950 text-slate-100">
+  <div class="min-h-screen flex items-center justify-center px-4">
+    <div class="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900/80 p-6 shadow-2xl">
+      <h1 class="text-2xl font-semibold tracking-tight">Login</h1>
+      <p class="mt-2 text-sm text-slate-400">Sign in to your CloudTrips workspace.</p>
+
+      <form id="login-form" class="mt-6 space-y-4">
+        <div>
+          <label class="mb-2 block text-sm text-slate-300">Email</label>
+          <input
+            name="email"
+            type="email"
+            autocomplete="email"
+            required
+            class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-slate-100 outline-none ring-0 placeholder:text-slate-500 focus:border-indigo-500"
+            placeholder="you@example.com"
+          />
+        </div>
+
+        <div>
+          <label class="mb-2 block text-sm text-slate-300">Password</label>
+          <input
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            required
+            class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-slate-100 outline-none ring-0 placeholder:text-slate-500 focus:border-indigo-500"
+            placeholder="••••••••"
+          />
+        </div>
+
+        <div id="auth-error" class="min-h-[1.25rem] text-sm text-rose-400"></div>
+
+        <button
+          type="submit"
+          class="inline-flex w-full items-center justify-center rounded-xl bg-indigo-600 px-4 py-3 font-medium text-white transition hover:bg-indigo-500 disabled:opacity-60"
+        >
+          Sign in
+        </button>
+      </form>
+
+      <p class="mt-5 text-sm text-slate-400">
+        No account?
+        <a href="/signup.html" class="text-indigo-400 hover:text-indigo-300">Create one</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="/auth.js"></script>
+</body>
+</html>
