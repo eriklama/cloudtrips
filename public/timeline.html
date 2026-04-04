@@ -15,10 +15,31 @@
   <!-- HEADER -->
   <header class="border-b border-slate-800">
     <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
-      <h1 id="timeline-title" class="text-xl font-semibold tracking-tight">Timeline</h1>
 
-      <!-- ✅ NEW NAV (replaces all buttons) -->
-      <div id="nav-actions" class="flex gap-2"></div>
+      <!-- Title -->
+      <h1 id="timeline-title" class="text-xl font-semibold tracking-tight">
+        Timeline
+      </h1>
+
+      <!-- NAV + AUTH -->
+      <div class="flex items-center gap-2">
+
+        <!-- Dynamic nav (Trip / Costs etc.) -->
+        <div id="nav-actions" class="flex gap-2"></div>
+
+        <!-- User -->
+        <span id="auth-user-email"
+          class="hidden sm:inline text-sm text-slate-400 truncate max-w-[160px]">
+        </span>
+
+        <!-- Logout -->
+        <button id="logout-button"
+          class="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm font-medium text-slate-200 hover:border-slate-600 hover:bg-slate-800 transition">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+        </button>
+
+      </div>
+
     </div>
   </header>
 
@@ -27,6 +48,7 @@
 
     <!-- HERO -->
     <section class="mb-4 sm:mb-6 flex flex-col gap-4 rounded-2xl border border-slate-800 bg-slate-900 p-4 sm:p-6 shadow-soft lg:flex-row lg:items-center lg:justify-between">
+      
       <div>
         <div class="mb-2 inline-flex items-center gap-2 rounded-full bg-primary-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary-300">
           <i data-lucide="list-tree" class="h-3.5 w-3.5"></i>
@@ -42,13 +64,14 @@
         </p>
       </div>
 
-      <!-- VIEW SWITCH (UNCHANGED) -->
+      <!-- VIEW SWITCH -->
       <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+        
         <button
           id="btnTimelineView"
           type="button"
           onclick="switchTimelineView('timeline')"
-          class="btn btn-primary"
+          class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-500 transition"
         >
           <i data-lucide="list-tree" class="h-4 w-4"></i>
           Timeline
@@ -58,34 +81,58 @@
           id="btnCalendarView"
           type="button"
           onclick="switchTimelineView('calendar')"
-          class="btn btn-secondary"
+          class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-4 py-2.5 text-sm font-medium text-slate-200 hover:bg-slate-800 transition"
         >
           <i data-lucide="calendar-days" class="h-4 w-4"></i>
           Calendar
         </button>
+
       </div>
+
     </section>
 
     <!-- CONTENT -->
     <section class="space-y-4">
+
+      <!-- Timeline view -->
       <div id="timeline" class="space-y-3"></div>
+
+      <!-- Calendar view -->
       <div id="calendar-view" class="hidden space-y-4"></div>
+
     </section>
 
   </main>
 
-  <script src="/script.js" defer></script>
-
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      renderHeaderNav('timeline');  // ✅ NEW NAV SYSTEM
-
-      if (window.lucide) {
-        window.lucide.createIcons();
-      }
-    });
-  </script>
-
 </div>
+
+<!-- ✅ AUTH FIRST -->
+<script src="/auth.js"></script>
+
+<!-- MAIN LOGIC -->
+<script src="/script.js" defer></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+
+    // 🔐 Ensure user is authenticated
+    if (typeof requireAuth === 'function') {
+      const user = await requireAuth();
+      if (!user) return;
+    }
+
+    // 🧭 Render dynamic nav (Trip / Costs)
+    if (typeof renderHeaderNav === 'function') {
+      renderHeaderNav('timeline');
+    }
+
+    // 🎨 Icons
+    if (window.lucide) {
+      window.lucide.createIcons();
+    }
+
+  });
+</script>
+
 </body>
 </html>
