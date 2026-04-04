@@ -12,52 +12,78 @@
 <body class="min-h-full bg-slate-950 text-slate-100">
 <div class="min-h-screen">
 
+  <!-- HEADER -->
   <header class="border-b border-slate-800">
     <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
       <h1 id="trip-title" class="text-lg font-semibold">Trip</h1>
 
       <div class="flex gap-2">
-        <button onclick="goToTimeline()" class="text-sm px-3 py-2 bg-slate-800 rounded-xl">Timeline</button>
-        <button onclick="goToCosts()" class="text-sm px-3 py-2 bg-slate-800 rounded-xl">Costs</button>
+        <button onclick="goToTimeline()" class="text-sm px-3 py-2 bg-slate-800 rounded-xl hover:bg-slate-700 transition">
+          Timeline
+        </button>
+        <button onclick="goToCosts()" class="text-sm px-3 py-2 bg-slate-800 rounded-xl hover:bg-slate-700 transition">
+          Costs
+        </button>
       </div>
     </div>
   </header>
 
+  <!-- MAIN -->
   <main class="max-w-4xl mx-auto px-4 py-4 space-y-4 pb-20">
 
-    <!-- Form -->
-    <section class="p-4 sm:p-6 rounded-3xl border border-slate-700 bg-slate-900 space-y-3">
+    <!-- FORM -->
+    <section class="p-4 sm:p-6 rounded-3xl border border-slate-700 bg-slate-900 space-y-4">
 
+      <!-- NAME -->
       <input id="activityName"
         placeholder="Activity"
-        class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white" />
+        class="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30" />
 
+      <!-- TYPE -->
+      <select id="activityType"
+        class="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30">
+        <option value="plane">✈️ Plane</option>
+        <option value="car">🚗 Car</option>
+        <option value="hike">🥾 Hike</option>
+        <option value="city">🏙️ City</option>
+        <option value="accommodation">🏨 Accommodation</option>
+        <option value="other">📍 Other</option>
+      </select>
+
+      <!-- DATES -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <input id="startDate" type="datetime-local"
-          class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white" />
+          class="rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30" />
         <input id="endDate" type="datetime-local"
-          class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white" />
+          class="rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30" />
       </div>
 
+      <!-- COST + KM -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <input id="cost" placeholder="Cost"
-          class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white" />
+          class="rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30" />
         <input id="activity-distance" placeholder="KM"
-          class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white" />
+          class="rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30" />
       </div>
 
+      <!-- NOTES -->
       <textarea id="notes"
         placeholder="Notes"
-        class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white"></textarea>
+        class="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30"></textarea>
 
-      <button onclick="saveActivity()"
-        class="w-full sm:w-auto rounded-xl bg-primary-600 px-4 py-2.5 text-sm text-white">
-        Save Activity
-      </button>
+      <!-- BUTTON -->
+      <div class="pt-2">
+        <button onclick="saveActivity()" type="button"
+          class="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary-600 px-5 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700 active:scale-[0.98]">
+          
+          <i data-lucide="plus" class="h-4 w-4"></i>
+          Save Activity
+        </button>
+      </div>
 
     </section>
 
-    <!-- Activities -->
+    <!-- ACTIVITIES -->
     <div id="activities" class="space-y-3"></div>
 
   </main>
