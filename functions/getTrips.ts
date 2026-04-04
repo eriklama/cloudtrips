@@ -1,34 +1,60 @@
-export interface Env {
-  DB: D1Database;
-}
+import { requireUser } from './_lib/auth';
+import type { Env } from './_lib/auth';
+import { error, json, methodNotAllowed } from './_lib/http';
 
-type TripListRow = {
+type TripRow = {
   id: string;
   name: string;
+  activities_json: string | null;
+  created_at?: string | null;
 };
 
-export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
-  try {
-    const result = await env.DB.prepare(
-      `
-      SELECT id, name
-      FROM trips
-      ORDER BY name COLLATE NOCASE
-      `
-    ).all<TripListRow>();
+export async function onRequestGet(context: { request: Request; env: Env }) {
+  const { request, env } = context;
 
-    return json(result.results ?? []);
-  } catch (error) {
-    console.error('getTrips failed', error);
-    return json({ error: 'Failed to load trips' }, 500);
+  const user = await requireUser(request, env);
+  if (!user) {
+    return error('Unauthorized.', 401);
   }
-};
 
-function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-    },
+  const result = await env.DB
+    .prepare(`
+      SELECT id, name, activities_json, created_at
+      FROM trips
+      WHERE user_id = ?
+      ORDER BY COALESCE(created_at, '') DESC, name ASC
+    `)
+    .bind(user.id)
+    .all<TripRow>();
+
+  const rows = Array.isArray(result.results) ? result.results : [];
+
+  const trips = rows.map((row) => {
+    let activities: any[] = [];
+    try {
+      const parsed = JSON.parse(row.activities_json || '[]');
+      activities = Array.isArray(parsed) ? parsed : [];
+    } catch {
+      activities = [];
+    }
+
+    const sortedDates = activities
+      .map((a) => a?.startDate || '')
+      .filter(Boolean)
+      .sort();
+
+    return {
+      id: row.id,
+      name: row.name,
+      activitiesCount: activities.length,
+      startDate: sortedDates[0] || '',
+      endDate: sortedDates[sortedDates.length - 1] || ''
+    };
   });
+
+  return json(trips);
+}
+
+export function onRequest() {
+  return methodNotAllowed(['GET']);
 }
