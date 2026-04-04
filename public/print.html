@@ -15,62 +15,125 @@
       color: #111;
       background: white;
       font-size: 12px;
-      line-height: 1.4;
+      line-height: 1.45;
+    }
+
+    /* HEADER */
+    .header {
+      margin-bottom: 16px;
+      border-bottom: 2px solid #000;
+      padding-bottom: 8px;
     }
 
     h1 {
       font-size: 22px;
-      margin-bottom: 10px;
+      margin: 0;
     }
 
-    h2 {
-      font-size: 14px;
-      margin: 16px 0 6px;
-      border-bottom: 1px solid #ddd;
-      padding-bottom: 4px;
+    .subtitle {
+      font-size: 12px;
+      color: #555;
+      margin-top: 4px;
     }
 
+    /* DAY BLOCK */
     .day {
+      margin-bottom: 14px;
       page-break-inside: avoid;
-      margin-bottom: 10px;
     }
 
-    .activity {
+    .day-header {
       display: flex;
       justify-content: space-between;
-      border-bottom: 1px solid #eee;
-      padding: 4px 0;
+      align-items: center;
+      border-bottom: 1px solid #ccc;
+      margin-bottom: 6px;
+      padding-bottom: 3px;
+      font-weight: 600;
     }
 
-    .left {
-      flex: 1;
+    /* TABLE */
+    .table {
+      width: 100%;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 70px 1fr 90px;
+      gap: 10px;
+      padding: 4px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .time {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .desc {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .type {
+      font-weight: 600;
+    }
+
+    .notes {
+      font-size: 11px;
+      color: #666;
     }
 
     .right {
       text-align: right;
-      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
     }
 
-    .muted {
-      color: #666;
+    /* TOTALS */
+    .totals {
+      margin-top: 4px;
       font-size: 11px;
+      color: #444;
+      text-align: right;
     }
   </style>
 </head>
 
 <body>
 
-<h1 id="title">Trip</h1>
+<div class="header">
+  <h1 id="title">Trip</h1>
+  <div id="subtitle" class="subtitle"></div>
+</div>
 
 <div id="content">Loading...</div>
 
 <script>
+
+/* =========================
+   TYPE MAPPING
+========================= */
+
+function getTypeMeta(type) {
+  const map = {
+    plane: { icon: '✈️', label: 'Plane' },
+    car: { icon: '🚗', label: 'Car' },
+    hike: { icon: '🥾', label: 'Hike' },
+    city: { icon: '🏙️', label: 'City' },
+    accommodation: { icon: '🏨', label: 'Stay' },
+    other: { icon: '📍', label: 'Other' }
+  };
+  return map[type] || map.other;
+}
+
+/* =========================
+   LOAD
+========================= */
+
 async function load() {
   const params = new URLSearchParams(window.location.search);
   const tripId = params.get('id');
   if (!tripId) return;
 
-  // PIN support (reuse localStorage)
   const pin = localStorage.getItem(`trip_pin_${tripId}`) || '';
 
   const res = await fetch(`/getTrip?trip=${tripId}`, {
@@ -82,13 +145,20 @@ async function load() {
   document.getElementById('title').textContent = data.name;
 
   const activities = (data.activities || [])
-    .sort((a,b)=> new Date(a.start)-new Date(b.start));
+    .sort((a, b) => new Date(a.start) - new Date(b.start));
 
+  // DATE RANGE
+  if (activities.length) {
+    const first = new Date(activities[0].start);
+    const last = new Date(activities[activities.length - 1].start);
+    document.getElementById('subtitle').textContent =
+      `${first.toDateString()} — ${last.toDateString()}`;
+  }
+
+  // GROUP
   const groups = {};
-
   activities.forEach(a => {
-    const d = new Date(a.start);
-    const key = d.toISOString().slice(0,10);
+    const key = new Date(a.start).toISOString().slice(0,10);
     if (!groups[key]) groups[key] = [];
     groups[key].push(a);
   });
@@ -98,24 +168,54 @@ async function load() {
 
   Object.keys(groups).forEach(day => {
     const date = new Date(day);
+    const list = groups[day];
+
+    let totalCost = 0;
+    let totalKm = 0;
 
     const section = document.createElement('div');
     section.className = 'day';
 
-    section.innerHTML = `
-      <h2>${date.toDateString()}</h2>
-      ${groups[day].map(a => `
-        <div class="activity">
-          <div class="left">
-            <strong>${a.location || ''}</strong>
-            <div class="muted">${a.notes || ''}</div>
+    const rows = list.map(a => {
+      const meta = getTypeMeta(a.type);
+
+      const cost = Number(a.cost) || 0;
+      const km = Number(a.distance) || 0;
+
+      totalCost += cost;
+      totalKm += km;
+
+      return `
+        <div class="row">
+          <div class="time">${formatTime(a.start)}</div>
+
+          <div class="desc">
+            <div class="type">${meta.icon} ${meta.label} — ${a.location || ''}</div>
+            ${a.notes ? `<div class="notes">${a.notes}</div>` : ''}
           </div>
+
           <div class="right">
-            ${formatTime(a.start)}<br>
-            €${a.cost || 0}${a.km ? `<br>${a.km} km` : ''}
+            ${cost ? '€' + cost : ''}
+            ${km ? `<br>${km} km` : ''}
           </div>
         </div>
-      `).join('')}
+      `;
+    }).join('');
+
+    section.innerHTML = `
+      <div class="day-header">
+        <div>${date.toDateString()}</div>
+        <div>${list.length} activities</div>
+      </div>
+
+      <div class="table">
+        ${rows}
+      </div>
+
+      <div class="totals">
+        ${totalCost ? `Total: €${totalCost}` : ''}
+        ${totalKm ? ` • ${totalKm} km` : ''}
+      </div>
     `;
 
     container.appendChild(section);
@@ -124,13 +224,18 @@ async function load() {
   setTimeout(() => window.print(), 500);
 }
 
-function formatTime(v){
-  if(!v) return '';
+/* =========================
+   HELPERS
+========================= */
+
+function formatTime(v) {
+  if (!v) return '';
   const d = new Date(v);
-  return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
 load();
+
 </script>
 
 </body>
