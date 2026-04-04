@@ -41,11 +41,32 @@
 
 <!-- HEADER -->
 <header class="border-b border-slate-800">
-  <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-    <h1 id="costs-title" class="text-xl font-semibold">Costs</h1>
+  <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
 
-    <!-- ✅ NEW NAV -->
-    <div id="nav-actions" class="flex gap-2"></div>
+    <!-- Title -->
+    <h1 id="costs-title" class="text-xl font-semibold tracking-tight">
+      Costs
+    </h1>
+
+    <!-- NAV + AUTH -->
+    <div class="flex items-center gap-2">
+
+      <!-- Dynamic nav -->
+      <div id="nav-actions" class="flex gap-2"></div>
+
+      <!-- User -->
+      <span id="auth-user-email"
+        class="hidden sm:inline text-sm text-slate-400 truncate max-w-[160px]">
+      </span>
+
+      <!-- Logout -->
+      <button id="logout-button"
+        class="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm font-medium text-slate-200 hover:border-slate-600 hover:bg-slate-800 transition">
+        <i data-lucide="log-out" class="w-4 h-4"></i>
+      </button>
+
+    </div>
+
   </div>
 </header>
 
@@ -69,9 +90,6 @@
       Track total spend and distance.
     </p>
   </div>
-
-  <!-- ❌ OLD BUTTONS REMOVED -->
-  <!-- Navigation is now handled by renderHeaderNav -->
 
 </section>
 
@@ -138,15 +156,35 @@
 </section>
 </main>
 
+</div>
+
+<!-- ✅ AUTH FIRST -->
+<script src="/auth.js"></script>
+
+<!-- MAIN LOGIC -->
 <script src="/script.js" defer></script>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  renderHeaderNav('costs');   // ✅ NEW NAV
-  if (window.lucide) lucide.createIcons();
+document.addEventListener('DOMContentLoaded', async () => {
+
+  // 🔐 Protect page
+  if (typeof requireAuth === 'function') {
+    const user = await requireAuth();
+    if (!user) return;
+  }
+
+  // 🧭 Navigation
+  if (typeof renderHeaderNav === 'function') {
+    renderHeaderNav('costs');
+  }
+
+  // 🎨 Icons
+  if (window.lucide) {
+    lucide.createIcons();
+  }
+
 });
 </script>
 
-</div>
 </body>
 </html>
