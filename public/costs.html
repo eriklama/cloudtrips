@@ -24,9 +24,36 @@
 
   <link href="/styles.css" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- ✅ MOBILE TABLE FIX -->
+  <style>
+    @media (max-width: 640px) {
+      #cost-table tr {
+        display: block;
+        margin-bottom: 12px;
+        border-radius: 12px;
+        background: rgb(15 23 42);
+        padding: 10px;
+      }
+
+      #cost-table td {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 4px 0;
+        border: none;
+      }
+
+      #cost-table td::before {
+        content: attr(data-label);
+        font-size: 11px;
+        color: rgb(148 163 184);
+      }
+    }
+  </style>
 </head>
 
-<body class="min-h-full bg-slate-950 text-slate-100">
+<body class="min-h-full bg-slate-950 text-slate-100 overflow-x-hidden">
 <div class="min-h-screen bg-gradient-to-br from-slate-950 via-slate-950 to-slate-900">
 
 <!-- HEADER -->
@@ -42,7 +69,6 @@
 <!-- HERO -->
 <section class="mb-4 sm:mb-6 flex flex-col gap-3 sm:gap-4 rounded-2xl border border-slate-800 bg-slate-900 p-4 sm:p-6 shadow-soft lg:flex-row lg:items-center lg:justify-between">
 
-  <!-- LEFT -->
   <div>
     <div class="mb-2 inline-flex items-center gap-2 rounded-full bg-primary-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary-300">
       <i data-lucide="badge-euro" class="h-3.5 w-3.5"></i>
@@ -58,7 +84,6 @@
     </p>
   </div>
 
-  <!-- NAV -->
   <div class="flex gap-2 w-full sm:w-auto">
     <button onclick="goToTrip()"
       class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-200 hover:bg-slate-800">
@@ -81,7 +106,6 @@
   <!-- SUMMARY -->
   <div class="rounded-2xl border border-slate-800 bg-slate-900 p-4 sm:p-5">
 
-    <!-- TOTAL -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 sm:mb-4">
 
       <div class="text-base sm:text-lg font-semibold">
@@ -90,11 +114,11 @@
 
       <div class="flex flex-wrap gap-2 text-sm sm:text-lg font-semibold">
 
-        <div class="bg-slate-800 px-3 py-1.5 rounded-lg">
+        <div class="bg-slate-800 px-3 py-1.5 rounded-lg whitespace-nowrap">
           <span id="totalCost">0</span>
         </div>
 
-        <div class="bg-slate-800 px-3 py-1.5 rounded-lg">
+        <div class="bg-slate-800 px-3 py-1.5 rounded-lg whitespace-nowrap">
           <span id="totalKm">0 km</span>
         </div>
 
@@ -102,7 +126,6 @@
 
     </div>
 
-    <!-- REQUIRED -->
     <div id="cost-summary" class="space-y-2 text-sm break-words"></div>
 
   </div>
@@ -118,7 +141,6 @@
 
       <table class="min-w-full table-fixed border-separate border-spacing-y-2 text-sm">
 
-        <!-- DESKTOP HEADER -->
         <thead class="hidden sm:table-header-group">
           <tr class="text-left text-xs sm:text-sm text-slate-400">
             <th class="px-2 py-1">Activity</th>
@@ -129,7 +151,7 @@
           </tr>
         </thead>
 
-        <!-- REQUIRED -->
+        <!-- IMPORTANT: JS MUST FILL data-label -->
         <tbody id="cost-table" class="text-slate-200"></tbody>
 
       </table>
@@ -142,6 +164,13 @@
 </main>
 
 <script src="/script.js" defer></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  lucide.createIcons();
+});
+</script>
+
 </div>
 </body>
 </html>
