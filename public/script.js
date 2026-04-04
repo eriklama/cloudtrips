@@ -1505,6 +1505,13 @@
     if (!tripId) return;
     window.location.href = `/costs.html?id=${encodeURIComponent(tripId)}`;
   }
+  
+  function openPrintView() {
+  const tripId = new URLSearchParams(window.location.search).get('id');
+  if (!tripId) return;
+
+  window.open(`/print.html?id=${encodeURIComponent(tripId)}`, '_blank');
+}
 
   /* =========================
    * APP INIT
