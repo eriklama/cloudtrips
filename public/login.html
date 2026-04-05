@@ -10,28 +10,36 @@
 <body class="min-h-full bg-slate-950 text-slate-100 flex items-center justify-center">
 
   <div class="w-full max-w-sm bg-slate-900 p-6 rounded-2xl shadow-lg">
-    <h1 class="text-xl font-semibold mb-4">Login</h1>
 
-    <input id="email" placeholder="Email"
-      class="w-full mb-3 px-3 py-2 bg-slate-800 rounded outline-none focus:ring-2 focus:ring-primary-500" />
+    <!-- HEADER -->
+    <h1 class="text-xl font-semibold mb-1">Welcome back</h1>
+    <p class="text-sm text-slate-400 mb-5">
+      Log in to your private trips workspace.
+    </p>
 
-    <input id="password" type="password" placeholder="Password"
-      class="w-full mb-4 px-3 py-2 bg-slate-800 rounded outline-none focus:ring-2 focus:ring-primary-500" />
+    <!-- EMAIL -->
+    <label class="text-sm text-slate-300">Email</label>
+    <input id="email" placeholder="you@example.com"
+      class="w-full mt-1 mb-4 px-3 py-2 bg-slate-800 rounded outline-none focus:ring-2 focus:ring-primary-500" />
 
-    <!-- BUTTONS -->
-    <div class="flex gap-2">
-      <!-- LOGIN -->
-      <button onclick="login()"
-        class="flex-1 bg-primary-500 hover:bg-primary-600 transition py-2 rounded font-medium">
-        Log in
-      </button>
+    <!-- PASSWORD -->
+    <label class="text-sm text-slate-300">Password</label>
+    <input id="password" type="password" placeholder="Your password"
+      class="w-full mt-1 mb-6 px-3 py-2 bg-slate-800 rounded outline-none focus:ring-2 focus:ring-primary-500" />
 
-      <!-- SIGN UP -->
-      <a href="/signup.html"
-        class="flex-1 text-center bg-slate-700 hover:bg-slate-600 transition py-2 rounded font-medium">
-        Sign up
+    <!-- LOGIN BUTTON -->
+    <button onclick="login()"
+      class="w-full bg-primary-500 hover:bg-primary-600 transition py-2 rounded-xl font-medium">
+      Log in
+    </button>
+
+    <!-- SIGNUP LINK -->
+    <p class="text-sm text-slate-400 mt-4 text-center">
+      Don’t you have an account?
+      <a href="/signup.html" class="text-primary-400 hover:underline">
+        Create one...
       </a>
-    </div>
+    </p>
 
   </div>
 
