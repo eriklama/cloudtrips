@@ -13,9 +13,27 @@ export interface AuthUser {
 
 const encoder = new TextEncoder();
 
+/* =====================================================
+ * JWT HELPERS
+ * ===================================================== */
+
 function getJwtKey(secret: string): Uint8Array {
   return encoder.encode(secret);
 }
+
+export function getBearerToken(request: Request): string | null {
+  const auth =
+    request.headers.get('authorization') ||
+    request.headers.get('Authorization') ||
+    '';
+
+  if (!auth.startsWith('Bearer ')) return null;
+  return auth.slice(7).trim() || null;
+}
+
+/* =====================================================
+ * PASSWORD HELPERS
+ * ===================================================== */
 
 function base64UrlFromBytes(bytes: Uint8Array): string {
   let binary = '';
@@ -24,11 +42,17 @@ function base64UrlFromBytes(bytes: Uint8Array): string {
 }
 
 function bytesFromBase64Url(input: string): Uint8Array {
-  const base64 = input.replace(/-/g, '+').replace(/_/g, '/')
-    + '==='.slice((input.length + 3) % 4);
+  const base64 =
+    input.replace(/-/g, '+').replace(/_/g, '/') +
+    '==='.slice((input.length + 3) % 4);
+
   const binary = atob(base64);
   const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+
   return bytes;
 }
 
@@ -52,6 +76,7 @@ export function isStrongEnoughPassword(password: string): boolean {
 export async function hashPassword(password: string, env: Env): Promise<string> {
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const pepper = env.PASSWORD_PEPPER || '';
+
   const passwordMaterial = await crypto.subtle.importKey(
     'raw',
     encoder.encode(password + pepper),
@@ -61,6 +86,7 @@ export async function hashPassword(password: string, env: Env): Promise<string> 
   );
 
   const iterations = 100000;
+
   const derived = await crypto.subtle.deriveBits(
     {
       name: 'PBKDF2',
@@ -82,9 +108,14 @@ export async function hashPassword(password: string, env: Env): Promise<string> 
   ].join('$');
 }
 
-export async function verifyPassword(password: string, stored: string, env: Env): Promise<boolean> {
+export async function verifyPassword(
+  password: string,
+  stored: string,
+  env: Env
+): Promise<boolean> {
   try {
     const [algo, iterationsStr, saltB64, hashB64] = String(stored).split('$');
+
     if (algo !== 'pbkdf2_sha256') return false;
 
     const iterations = Number(iterationsStr);
@@ -94,6 +125,7 @@ export async function verifyPassword(password: string, stored: string, env: Env)
     const expectedHash = bytesFromBase64Url(hashB64);
 
     const pepper = env.PASSWORD_PEPPER || '';
+
     const passwordMaterial = await crypto.subtle.importKey(
       'raw',
       encoder.encode(password + pepper),
@@ -121,13 +153,21 @@ export async function verifyPassword(password: string, stored: string, env: Env)
     for (let i = 0; i < actualHash.length; i++) {
       diff |= actualHash[i] ^ expectedHash[i];
     }
+
     return diff === 0;
   } catch {
     return false;
   }
 }
 
-export async function createAuthToken(user: AuthUser, env: Env): Promise<string> {
+/* =====================================================
+ * JWT AUTH
+ * ===================================================== */
+
+export async function createAuthToken(
+  user: AuthUser,
+  env: Env
+): Promise<string> {
   return await new SignJWT({ email: user.email })
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(user.id)
@@ -138,7 +178,10 @@ export async function createAuthToken(user: AuthUser, env: Env): Promise<string>
     .sign(getJwtKey(env.JWT_SECRET));
 }
 
-export async function verifyAuthToken(token: string, env: Env): Promise<AuthUser | null> {
+export async function verifyAuthToken(
+  token: string,
+  env: Env
+): Promise<AuthUser | null> {
   try {
     const { payload } = await jwtVerify(token, getJwtKey(env.JWT_SECRET), {
       issuer: 'cloudtrips',
@@ -149,31 +192,42 @@ export async function verifyAuthToken(token: string, env: Env): Promise<AuthUser
     const email = typeof payload.email === 'string' ? payload.email : '';
 
     if (!id || !email) return null;
+
     return { id, email };
-  } catch {
+  } catch (err) {
+    console.warn('JWT verify failed:', err);
     return null;
   }
 }
 
-export function getBearerToken(request: Request): string | null {
-  const auth = request.headers.get('authorization') || '';
-  if (!auth.startsWith('Bearer ')) return null;
-  return auth.slice(7).trim() || null;
-}
+/* =====================================================
+ * REQUIRE USER (FIXED + STRICT)
+ * ===================================================== */
 
-export async function requireUser(request: Request, env: Env): Promise<AuthUser | null> {
+export async function requireUser(context: {
+  request: Request;
+  env: Env;
+}): Promise<AuthUser> {
+  const { request, env } = context;
+
   const token = getBearerToken(request);
-  if (!token) return null;
+  if (!token) {
+    throw new Error('Missing Authorization token');
+  }
 
   const jwtUser = await verifyAuthToken(token, env);
-  if (!jwtUser) return null;
+  if (!jwtUser) {
+    throw new Error('Invalid or expired token');
+  }
 
   const row = await env.DB
     .prepare(`SELECT id, email FROM users WHERE id = ? LIMIT 1`)
     .bind(jwtUser.id)
     .first<{ id: string; email: string }>();
 
-  if (!row) return null;
+  if (!row) {
+    throw new Error('User not found');
+  }
 
   return {
     id: row.id,
