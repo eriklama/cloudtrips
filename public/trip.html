@@ -39,6 +39,13 @@
           Costs
         </button>
 
+        <!-- ✅ SHARE BUTTON -->
+        <button onclick="openShareModal()"
+          class="inline-flex items-center gap-2 rounded-xl border border-primary-500/30 bg-primary-500/10 px-3 py-2 text-sm text-primary-300 hover:bg-primary-500/20 transition">
+          <i data-lucide="share-2" class="w-4 h-4"></i>
+          Share
+        </button>
+
         <span id="auth-user-email"
           class="hidden sm:inline text-sm text-slate-400 truncate max-w-[160px]">
         </span>
@@ -58,9 +65,8 @@
   <main class="max-w-6xl mx-auto px-4 py-5 pb-24">
 
     <!-- Add Activity -->
-    <div class="mb-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
+    <div id="activity-form" class="mb-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
 
-      <!-- FIXED TYPE SELECT -->
       <select id="activityType"
         class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500">
         <option value="plane">✈️ Plane</option>
@@ -102,6 +108,37 @@
 
   </main>
 
+</div>
+
+<!-- ✅ SHARE MODAL -->
+<div id="share-modal"
+  class="fixed inset-0 hidden items-center justify-center bg-black/70 z-50 backdrop-blur-sm">
+
+  <div class="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-xl">
+
+    <h2 class="text-lg font-semibold mb-4">Share trip</h2>
+
+    <p class="text-sm text-slate-400 mb-4">
+      Anyone with this link can view the trip.
+    </p>
+
+    <div class="flex gap-2 mb-4">
+      <input id="share-link"
+        class="flex-1 px-3 py-2 rounded-xl bg-slate-800 text-sm outline-none"
+        readonly />
+
+      <button onclick="copyShareLink()"
+        class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-3 py-2 text-sm text-white hover:bg-primary-500 transition">
+        <i data-lucide="copy" class="w-4 h-4"></i>
+      </button>
+    </div>
+
+    <button onclick="closeShareModal()"
+      class="w-full rounded-xl border border-slate-700 bg-slate-800 py-2 text-sm hover:bg-slate-700 transition">
+      Close
+    </button>
+
+  </div>
 </div>
 
 <script src="/auth.js"></script>
