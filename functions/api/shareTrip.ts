@@ -1,12 +1,14 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
 import { requireUser } from '../_lib/auth';
-import { json, badRequest, methodNotAllowed, unauthorized, serverError } from '../_lib/http';
+import { json, error, methodNotAllowed } from '../_lib/http';
 
 export interface Env {
   DB: D1Database;
   JWT_SECRET: string;
   PASSWORD_PEPPER?: string;
 }
+
+/* ---------- TOKEN GENERATION ---------- */
 
 function generateSecureToken(): string {
   const bytes = new Uint8Array(32);
@@ -23,27 +25,30 @@ function generateSecureToken(): string {
     .replace(/=+$/g, '');
 }
 
+/* ---------- HANDLER ---------- */
+
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   try {
     const user = await requireUser(context);
     if (!user?.id) {
-      return unauthorized('Authentication required');
+      return error('Authentication required', 401);
     }
 
     let body: any;
     try {
       body = await context.request.json();
     } catch {
-      return badRequest('Invalid JSON body');
+      return error('Invalid JSON body', 400);
     }
 
     const tripId = String(body?.tripId || '').trim();
     if (!tripId) {
-      return badRequest('tripId is required');
+      return error('tripId is required', 400);
     }
 
-    // Confirm the trip belongs to the authenticated user
-    const ownedTrip = await context.env.DB
+    /* ---------- VERIFY OWNERSHIP ---------- */
+
+    const trip = await context.env.DB
       .prepare(`
         SELECT id
         FROM trips
@@ -53,11 +58,12 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       .bind(tripId, user.id)
       .first<{ id: string }>();
 
-    if (!ownedTrip) {
-      return unauthorized('Trip not found or access denied');
+    if (!trip) {
+      return error('Trip not found or access denied', 401);
     }
 
-    // Revoke any previous active share tokens for this trip
+    /* ---------- REVOKE OLD TOKENS ---------- */
+
     await context.env.DB
       .prepare(`
         UPDATE trip_share_tokens
@@ -68,10 +74,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       .bind(tripId)
       .run();
 
+    /* ---------- CREATE NEW TOKEN ---------- */
+
     const token = generateSecureToken();
 
-    // Optional: set expiry here if you want expiring links
-    const expiresAt = null; // e.g. new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toISOString()
+    const expiresAt = null; // optional expiration
 
     await context.env.DB
       .prepare(`
@@ -86,21 +93,26 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       .bind(tripId, token, user.id, expiresAt)
       .run();
 
+    /* ---------- RESPONSE ---------- */
+
     const shareUrl = `/trip.html?id=${encodeURIComponent(tripId)}&token=${encodeURIComponent(token)}`;
 
     return json({
       ok: true,
       shareUrl
     });
+
   } catch (err: any) {
     console.error('shareTrip error:', err);
-    return serverError('Failed to create share link');
+    return error('Failed to create share link', 500);
   }
 };
 
+/* ---------- METHOD GUARD ---------- */
+
 export const onRequest: PagesFunction<Env> = async (context) => {
   if (context.request.method !== 'POST') {
-    return methodNotAllowed('Method not allowed');
+    return methodNotAllowed(['POST']);
   }
   return onRequestPost(context);
 };
