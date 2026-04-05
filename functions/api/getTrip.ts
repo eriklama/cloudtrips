@@ -1,105 +1,137 @@
+import type { PagesFunction } from '@cloudflare/workers-types';
 import { requireUser } from '../_lib/auth';
-import type { Env } from '../_lib/auth';
-import { error, json, methodNotAllowed } from '../_lib/http';
+import { json, error, methodNotAllowed } from '../_lib/http';
+
+export interface Env {
+  DB: D1Database;
+  JWT_SECRET: string;
+  PASSWORD_PEPPER?: string;
+}
 
 type TripRow = {
   id: string;
   name: string;
+  user_id: string;
   activities_json: string | null;
-  share_token?: string | null;
-  share_enabled?: number | null;
 };
 
-export async function onRequestGet(context: { request: Request; env: Env }) {
-  const { request, env } = context;
+/* ---------- HELPERS ---------- */
 
-  const url = new URL(request.url);
-  const id = url.searchParams.get('id');
-  const token = url.searchParams.get('token');
-
-  if (!id) {
-    return error('Trip id is required.', 400);
-  }
-
-  let row: TripRow | null = null;
-
+function parseActivities(value: string | null) {
+  if (!value) return [];
   try {
-    // =========================================
-    // 🔓 1. GUEST ACCESS (via share token)
-    // =========================================
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+async function getTripForOwner(env: Env, tripId: string, userId: string): Promise<TripRow | null> {
+  return await env.DB
+    .prepare(`
+      SELECT id, name, user_id, activities_json
+      FROM trips
+      WHERE id = ? AND user_id = ?
+      LIMIT 1
+    `)
+    .bind(tripId, userId)
+    .first<TripRow>();
+}
+
+async function getTripForGuest(env: Env, tripId: string, token: string): Promise<TripRow | null> {
+  const row = await env.DB
+    .prepare(`
+      SELECT t.id, t.name, t.user_id, t.activities_json
+      FROM trips t
+      INNER JOIN trip_share_tokens s
+        ON s.trip_id = t.id
+      WHERE t.id = ?
+        AND s.token = ?
+        AND s.revoked_at IS NULL
+        AND (s.expires_at IS NULL OR s.expires_at > CURRENT_TIMESTAMP)
+      LIMIT 1
+    `)
+    .bind(tripId, token)
+    .first<TripRow>();
+
+  if (row) {
+      // non-blocking audit update
+      env.DB.prepare(`
+        UPDATE trip_share_tokens
+        SET last_used_at = CURRENT_TIMESTAMP
+        WHERE token = ?
+      `)
+      .bind(token)
+      .run()
+      .catch(() => {});
+  }
+
+  return row;
+}
+
+/* ---------- HANDLER ---------- */
+
+export const onRequestGet: PagesFunction<Env> = async (context) => {
+  try {
+    const url = new URL(context.request.url);
+    const tripId = (url.searchParams.get('id') || '').trim();
+    const token = (url.searchParams.get('token') || '').trim();
+
+    if (!tripId) {
+      return error('Trip id is required', 400);
+    }
+
+    /* ---------- GUEST ACCESS ---------- */
+
     if (token) {
-      row = await env.DB
-        .prepare(`
-          SELECT id, name, activities_json, share_token, share_enabled
-          FROM trips
-          WHERE id = ?
-            AND share_enabled = 1
-            AND share_token = ?
-          LIMIT 1
-        `)
-        .bind(id, token)
-        .first<TripRow>();
+      const trip = await getTripForGuest(context.env, tripId, token);
 
-      if (!row) {
-        return error('Invalid or expired share link.', 401);
-      }
-    } else {
-      // =========================================
-      // 🔐 2. OWNER ACCESS (auth required)
-      // =========================================
-      const user = await requireUser(request, env);
-      if (!user) {
-        return error('Unauthorized.', 401);
+      if (!trip) {
+        return error('Invalid or expired share token', 401);
       }
 
-      row = await env.DB
-        .prepare(`
-          SELECT id, name, activities_json
-          FROM trips
-          WHERE id = ? AND user_id = ?
-          LIMIT 1
-        `)
-        .bind(id, user.id)
-        .first<TripRow>();
-
-      if (!row) {
-        return error('Trip not found.', 404);
-      }
+      return json({
+        id: trip.id,
+        name: trip.name,
+        activities: parseActivities(trip.activities_json),
+        readOnly: true,
+        access: 'guest'
+      });
     }
-  } catch (err) {
-    console.error('DB error (getTrip):', err);
-    return error('Failed to load trip.', 500);
+
+    /* ---------- OWNER ACCESS ---------- */
+
+    const user = await requireUser(context);
+    if (!user?.id) {
+      return error('Authentication required', 401);
+    }
+
+    const trip = await getTripForOwner(context.env, tripId, user.id);
+
+    if (!trip) {
+      return error('Trip not found', 404);
+    }
+
+    return json({
+      id: trip.id,
+      name: trip.name,
+      activities: parseActivities(trip.activities_json),
+      readOnly: false,
+      access: 'owner'
+    });
+
+  } catch (err: any) {
+    console.error('getTrip error:', err);
+    return error('Failed to load trip', 500);
   }
+};
 
-  // =========================================
-  // 🧠 Parse activities safely
-  // =========================================
-  let activities: any[] = [];
+/* ---------- METHOD GUARD ---------- */
 
-  if (row.activities_json) {
-    try {
-      const parsed = JSON.parse(row.activities_json);
-      if (Array.isArray(parsed)) {
-        activities = parsed;
-      }
-    } catch {
-      activities = [];
-    }
+export const onRequest: PagesFunction<Env> = async (context) => {
+  if (context.request.method !== 'GET') {
+    return methodNotAllowed(['GET']);
   }
-
-  // =========================================
-  // ✅ Response
-  // =========================================
-  return json({
-    ok: true,
-    trip: {
-      id: row.id,
-      name: row.name,
-      activities
-    }
-  });
-}
-
-export function onRequest() {
-  return methodNotAllowed(['GET']);
-}
+  return onRequestGet(context);
+};
