@@ -51,15 +51,12 @@ async function login() {
   try {
     const res = await fetch('/api/login', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
     });
 
     const data = await res.json();
 
-    // ✅ ADD THIS LINE HERE
     console.log('LOGIN RESPONSE:', data);
 
     if (!res.ok) {
@@ -71,7 +68,12 @@ async function login() {
     localStorage.setItem('cloudtrips_auth_user', JSON.stringify(data.user));
 
     console.log('TOKEN AFTER SAVE:', localStorage.getItem('cloudtrips_auth_token'));
-alert('Login done, check console');
+
+    // ✅ FINAL FIX
+    const redirect =
+      new URLSearchParams(window.location.search).get('redirect') || '/';
+
+    window.location.href = redirect;
 
   } catch (err) {
     console.error('Login error:', err);
