@@ -1,4 +1,3 @@
-
 (() => {
   'use strict';
 
@@ -33,6 +32,61 @@
     if (element) {
       element.textContent = text;
     }
+  }
+
+  /* =========================
+   * SHARE / GUEST MODE
+   * ========================= */
+
+  function getShareToken() {
+    return new URLSearchParams(window.location.search).get('token') || '';
+  }
+
+  function isGuestView() {
+    return Boolean(getShareToken());
+  }
+
+  function buildTripPageUrl(page, tripId) {
+    const token = getShareToken();
+    const params = new URLSearchParams();
+    params.set('id', tripId);
+
+    if (token) {
+      params.set('token', token);
+    }
+
+    return `/${page}?${params.toString()}`;
+  }
+
+  function applySharedViewUi(pageTitleId, pageHeroTitleId) {
+    if (!isGuestView()) return;
+
+    const form = document.getElementById('activity-form');
+    if (form) {
+      form.style.display = 'none';
+    }
+
+    const addBtn = document.querySelector('button[onclick="addActivity()"]');
+    if (addBtn) {
+      addBtn.style.display = 'none';
+    }
+
+    const titleTargets = [pageTitleId, pageHeroTitleId].filter(Boolean);
+
+    titleTargets.forEach((id) => {
+      const element = document.getElementById(id);
+      if (!element) return;
+
+      const existingBadge = element.querySelector('[data-shared-view-badge]');
+      if (existingBadge) return;
+
+      const badge = document.createElement('span');
+      badge.setAttribute('data-shared-view-badge', 'true');
+      badge.className = 'ml-2 inline-flex items-center rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-300 align-middle';
+      badge.textContent = 'Shared view';
+
+      element.appendChild(badge);
+    });
   }
 
   /* =========================
@@ -382,11 +436,11 @@
    * ========================= */
 
   async function apiFetch(url, options = {}) {
-    const token = window.localStorage.getItem('cloudtrips_auth_token');
+    const authToken = window.localStorage.getItem('cloudtrips_auth_token');
 
     const headers = {
       ...(options.headers || {}),
-      ...(token ? { Authorization: `Bearer ${token}` } : {})
+      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {})
     };
 
     const response = await fetch(url, {
@@ -395,14 +449,17 @@
     });
 
     if (response.status === 401) {
-      try {
-        window.localStorage.removeItem('cloudtrips_auth_token');
-        window.localStorage.removeItem('cloudtrips_auth_user');
-      } catch {
-        // ignore storage errors
+      if (!isGuestView()) {
+        try {
+          window.localStorage.removeItem('cloudtrips_auth_token');
+          window.localStorage.removeItem('cloudtrips_auth_user');
+        } catch {
+          // ignore storage errors
+        }
+
+        window.location.href = '/login.html';
       }
 
-      window.location.href = '/login.html';
       throw new Error('Unauthorized');
     }
 
@@ -463,7 +520,14 @@
   }
 
   async function fetchTrip(tripId) {
-    const data = await apiGet(`${API.GET_TRIP}?id=${encodeURIComponent(tripId)}`);
+    const token = getShareToken();
+
+    let url = `${API.GET_TRIP}?id=${encodeURIComponent(tripId)}`;
+    if (token) {
+      url += `&token=${encodeURIComponent(token)}`;
+    }
+
+    const data = await apiGet(url);
     return normalizeFullTrip(data?.trip || data);
   }
 
@@ -638,7 +702,7 @@
   }
 
   function openTrip(tripId) {
-    window.location.href = `/trip.html?id=${encodeURIComponent(tripId)}`;
+    window.location.href = buildTripPageUrl('trip.html', tripId);
   }
 
   async function renameTrip(tripId) {
@@ -702,6 +766,7 @@
       state.currentTrip = await fetchTrip(tripId);
       setText('trip-title', state.currentTrip.name || 'Trip');
       setText('trip-title-hero', state.currentTrip.name || 'Trip');
+      applySharedViewUi('trip-title', 'trip-title-hero');
       renderActivities();
     } catch (error) {
       console.error(error);
@@ -782,8 +847,10 @@
 
     if (!activities.length) {
       container.innerHTML = emptyState(
-        'No activities yet',
-        'Add your first activity to build the itinerary.',
+        isGuestView() ? 'No activities available' : 'No activities yet',
+        isGuestView()
+          ? 'This shared trip does not contain any activities yet.'
+          : 'Add your first activity to build the itinerary.',
         'calendar-plus'
       );
       refreshIcons();
@@ -838,16 +905,18 @@
               </div>
             </div>
 
-            <div class="flex gap-2">
-              <button onclick="editActivity('${escapeHtml(activity.id)}')" class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800">
-                <i data-lucide="pencil" class="h-4 w-4"></i>
-                Edit
-              </button>
-              <button onclick="deleteActivity('${escapeHtml(activity.id)}')" class="inline-flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 hover:bg-red-100 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20">
-                <i data-lucide="trash-2" class="h-4 w-4"></i>
-                Delete
-              </button>
-            </div>
+            ${!isGuestView() ? `
+              <div class="flex gap-2">
+                <button onclick="editActivity('${escapeHtml(activity.id)}')" class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800">
+                  <i data-lucide="pencil" class="h-4 w-4"></i>
+                  Edit
+                </button>
+                <button onclick="deleteActivity('${escapeHtml(activity.id)}')" class="inline-flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 hover:bg-red-100 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20">
+                  <i data-lucide="trash-2" class="h-4 w-4"></i>
+                  Delete
+                </button>
+              </div>
+            ` : ''}
           </div>
         </article>
       `;
@@ -857,6 +926,11 @@
   }
 
   async function saveActivity() {
+    if (isGuestView()) {
+      alert('This trip is shared (view-only).');
+      return;
+    }
+
     if (!state.currentTrip) return;
 
     const data = getActivityFormData();
@@ -909,6 +983,11 @@
   }
 
   function editActivity(activityId) {
+    if (isGuestView()) {
+      alert('This trip is shared (view-only).');
+      return;
+    }
+
     if (!state.currentTrip) return;
 
     const activity = state.currentTrip.activities.find((item) => String(item.id) === String(activityId));
@@ -930,6 +1009,11 @@
   }
 
   async function deleteActivity(activityId) {
+    if (isGuestView()) {
+      alert('This trip is shared (view-only).');
+      return;
+    }
+
     if (!state.currentTrip) return;
 
     const activity = state.currentTrip.activities.find((item) => String(item.id) === String(activityId));
@@ -1038,6 +1122,7 @@
       state.timelineView = getSavedTimelineView(tripId);
       setText('timeline-title', `${state.currentTrip.name} Timeline`);
       setText('timeline-hero-title', `${state.currentTrip.name} Timeline`);
+      applySharedViewUi('timeline-title', 'timeline-hero-title');
       renderTimelinePage();
     } catch (error) {
       console.error(error);
@@ -1270,6 +1355,7 @@
       state.currentTrip = await fetchTrip(tripId);
       setText('costs-title', `${state.currentTrip.name} Costs`);
       setText('costs-hero-title', `${state.currentTrip.name} Costs`);
+      applySharedViewUi('costs-title', 'costs-hero-title');
       renderCosts();
     } catch (error) {
       console.error(error);
@@ -1393,19 +1479,19 @@
   function goToTrip() {
     const tripId = getTripIdFromUrl();
     if (!tripId) return;
-    window.location.href = `/trip.html?id=${encodeURIComponent(tripId)}`;
+    window.location.href = buildTripPageUrl('trip.html', tripId);
   }
 
   function goToTimeline() {
     const tripId = getTripIdFromUrl();
     if (!tripId) return;
-    window.location.href = `/timeline.html?id=${encodeURIComponent(tripId)}`;
+    window.location.href = buildTripPageUrl('timeline.html', tripId);
   }
 
   function goToCosts() {
     const tripId = getTripIdFromUrl();
     if (!tripId) return;
-    window.location.href = `/costs.html?id=${encodeURIComponent(tripId)}`;
+    window.location.href = buildTripPageUrl('costs.html', tripId);
   }
 
   function goBack() {
@@ -1413,17 +1499,14 @@
   }
 
   function openPrintView() {
-  if (!state.currentTrip) {
-    alert('Trip not loaded');
-    return;
+    if (!state.currentTrip) {
+      alert('Trip not loaded');
+      return;
+    }
+
+    sessionStorage.setItem('print_trip', JSON.stringify(state.currentTrip));
+    window.open('/print.html', '_blank');
   }
-
-  // store full trip (API-free print)
-  sessionStorage.setItem('print_trip', JSON.stringify(state.currentTrip));
-
-  // open print page
-  window.open('/print.html', '_blank');
-}
 
   /* =========================
    * APP INIT
@@ -1431,7 +1514,9 @@
 
   async function init() {
     try {
-      if (typeof requireAuth === 'function') {
+      const onSharedPage = isGuestView();
+
+      if (!onSharedPage && typeof requireAuth === 'function') {
         const user = await requireAuth();
         if (!user) return;
       }
