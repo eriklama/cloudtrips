@@ -10,6 +10,7 @@
     GET_TRIP: '/api/getTrip',
     SAVE_TRIP: '/api/saveTrip',
     DELETE_TRIP: '/api/deleteTrip'
+    SHARE_TRIP: '/api/shareTrip'
   };
 
   const state = {
@@ -766,7 +767,15 @@
       state.currentTrip = await fetchTrip(tripId);
       setText('trip-title', state.currentTrip.name || 'Trip');
       setText('trip-title-hero', state.currentTrip.name || 'Trip');
+      
       applySharedViewUi('trip-title', 'trip-title-hero');
+
+      if (isGuestView()) {
+  const shareBtn = document.querySelector('button[onclick="openShareModal()"]');
+  if (shareBtn) {
+    shareBtn.style.display = 'none';
+  }
+}
       renderActivities();
     } catch (error) {
       console.error(error);
@@ -1472,6 +1481,75 @@
     refreshIcons();
   }
 
+/* =========================
+ * SHARE
+ * ========================= */
+
+async function openShareModal() {
+  if (!state.currentTrip?.id) {
+    alert('Trip not loaded.');
+    return;
+  }
+
+  if (isGuestView()) {
+    alert('Shared viewers cannot create links.');
+    return;
+  }
+
+  const modal = document.getElementById('share-modal');
+  const input = document.getElementById('share-link');
+
+  if (!modal || !input) {
+    alert('Share modal missing.');
+    return;
+  }
+
+  try {
+    input.value = 'Creating link...';
+
+    const data = await apiPost(API.SHARE_TRIP, {
+      tripId: state.currentTrip.id
+    });
+
+    const shareUrl = data?.shareUrl
+      ? `${window.location.origin}${data.shareUrl}`
+      : '';
+
+    if (!shareUrl) throw new Error('No share link returned');
+
+    input.value = shareUrl;
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+
+  } catch (err) {
+    console.error(err);
+    alert('Failed to create share link');
+  }
+}
+
+function closeShareModal() {
+  const modal = document.getElementById('share-modal');
+  if (!modal) return;
+
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+
+async function copyShareLink() {
+  const input = document.getElementById('share-link');
+  if (!input || !input.value) return;
+
+  try {
+    await navigator.clipboard.writeText(input.value);
+    alert('Copied!');
+  } catch {
+    input.select();
+    document.execCommand('copy');
+    alert('Copied!');
+  }
+}
+
   /* =========================
    * NAVIGATION
    * ========================= */
@@ -1613,4 +1691,7 @@
   window.switchTimelineView = switchTimelineView;
   window.openPrintView = openPrintView;
   window.renderHeaderNav = renderHeaderNav;
+  window.openShareModal = openShareModal;
+  window.closeShareModal = closeShareModal;
+  window.copyShareLink = copyShareLink;
 })();
