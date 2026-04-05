@@ -450,19 +450,20 @@
     });
 
     if (response.status === 401) {
-      if (!isGuestView()) {
-        try {
-          window.localStorage.removeItem('cloudtrips_auth_token');
-          window.localStorage.removeItem('cloudtrips_auth_user');
-        } catch {
-          // ignore storage errors
-        }
+  if (isGuestView()) {
+    throw new Error('Invalid or expired share link');
+  }
 
-        window.location.href = '/login.html';
-      }
+  try {
+    window.localStorage.removeItem('cloudtrips_auth_token');
+    window.localStorage.removeItem('cloudtrips_auth_user');
+  } catch {
+    // ignore storage errors
+  }
 
-      throw new Error('Unauthorized');
-    }
+  window.location.href = '/login.html';
+  return;
+}
 
     const contentType = response.headers.get('content-type') || '';
     const isJson = contentType.includes('application/json');
@@ -496,9 +497,15 @@
     }
   }
 
-  function apiGet(url) {
-    return apiFetch(url);
-  }
+function apiGet(url) {
+  const token = getShareToken();
+
+  const finalUrl = token
+    ? `${url}${url.includes('?') ? '&' : '?'}token=${encodeURIComponent(token)}`
+    : url;
+
+  return apiFetch(finalUrl);
+}
 
   function apiPost(url, payload) {
     return apiFetch(url, {
@@ -520,17 +527,11 @@
     });
   }
 
-  async function fetchTrip(tripId) {
-    const token = getShareToken();
-
-    let url = `${API.GET_TRIP}?id=${encodeURIComponent(tripId)}`;
-    if (token) {
-      url += `&token=${encodeURIComponent(token)}`;
-    }
-
-    const data = await apiGet(url);
-    return normalizeFullTrip(data?.trip || data);
-  }
+ async function fetchTrip(tripId) {
+  const url = `${API.GET_TRIP}?id=${encodeURIComponent(tripId)}`;
+  const data = await apiGet(url);
+  return normalizeFullTrip(data?.trip || data);
+}
 
   async function saveTrip(trip) {
     if (!trip) {
