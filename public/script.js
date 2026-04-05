@@ -1596,9 +1596,13 @@ async function copyShareLink() {
       const onSharedPage = isGuestView();
 
       if (!onSharedPage && typeof requireAuth === 'function') {
-        const user = await requireAuth();
-        if (!user) return;
-      }
+  try {
+    const user = await requireAuth();
+    console.log('AUTH USER:', user);
+  } catch (e) {
+    console.warn('AUTH FAILED (IGNORED):', e);
+  }
+}
 
       if (hasEl('trip-list')) {
         await loadTrips();
