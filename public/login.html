@@ -51,9 +51,7 @@ async function login() {
   try {
     const res = await fetch('/api/login', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
     });
 
@@ -64,10 +62,17 @@ async function login() {
       return;
     }
 
+    // ✅ STORE TOKEN
     localStorage.setItem('cloudtrips_auth_token', data.token);
     localStorage.setItem('cloudtrips_auth_user', JSON.stringify(data.user));
 
-    window.location.href = '/';
+    // ✅ DEBUG (important)
+    console.log('TOKEN SAVED:', localStorage.getItem('cloudtrips_auth_token'));
+
+    // ✅ SMALL DELAY (prevents race condition)
+    setTimeout(() => {
+      window.location.href = '/';
+    }, 50);
 
   } catch (err) {
     console.error('Login error:', err);
