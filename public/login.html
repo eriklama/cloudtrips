@@ -73,7 +73,8 @@ async function login() {
     const redirect =
       new URLSearchParams(window.location.search).get('redirect') || '/';
 
-    window.location.href = redirect;
+    console.log('REDIRECTING NOW');
+    window.location.href = '/';
 
   } catch (err) {
     console.error('Login error:', err);
