@@ -1,4 +1,4 @@
-import { requireUser } from '../_lib/auth';
+import { tryGetUser } from '../_lib/auth';
 import type { Env } from '../_lib/auth';
 import { error, json, methodNotAllowed } from '../_lib/http';
 
@@ -13,10 +13,14 @@ export async function onRequestGet(context: { request: Request; env: Env }) {
   const { request, env } = context;
 
   // 🔐 Auth
-  const user = await requireUser(request, env);
-  if (!user) {
-    return error('Unauthorized.', 401);
-  }
+ const user = await tryGetUser(context);
+
+if (!user) {
+  return json({
+    ok: true,
+    trips: []
+  });
+}
 
   // 📦 Fetch trips for user
   let result;
