@@ -19,55 +19,75 @@ type TripRow = {
 
 function parseActivities(value: string | null) {
   if (!value) return [];
+
   try {
     const parsed = JSON.parse(value);
     return Array.isArray(parsed) ? parsed : [];
-  } catch {
+  } catch (e) {
+    console.warn('Failed to parse activities_json:', e);
     return [];
   }
 }
 
-async function getTripForOwner(env: Env, tripId: string, userId: string): Promise<TripRow | null> {
-  return await env.DB
-    .prepare(`
-      SELECT id, name, user_id, activities_json
-      FROM trips
-      WHERE id = ? AND user_id = ?
-      LIMIT 1
-    `)
-    .bind(tripId, userId)
-    .first<TripRow>();
+async function getTripForOwner(
+  env: Env,
+  tripId: string,
+  userId: string
+): Promise<TripRow | null> {
+  try {
+    return await env.DB
+      .prepare(`
+        SELECT id, name, user_id, activities_json
+        FROM trips
+        WHERE id = ? AND user_id = ?
+        LIMIT 1
+      `)
+      .bind(tripId, userId)
+      .first<TripRow>();
+  } catch (e) {
+    console.error('DB error (owner):', e);
+    throw e;
+  }
 }
 
-async function getTripForGuest(env: Env, tripId: string, token: string): Promise<TripRow | null> {
-  const row = await env.DB
-    .prepare(`
-      SELECT t.id, t.name, t.user_id, t.activities_json
-      FROM trips t
-      INNER JOIN trip_share_tokens s
-        ON s.trip_id = t.id
-      WHERE t.id = ?
-        AND s.token = ?
-        AND s.revoked_at IS NULL
-        AND (s.expires_at IS NULL OR s.expires_at > CURRENT_TIMESTAMP)
-      LIMIT 1
-    `)
-    .bind(tripId, token)
-    .first<TripRow>();
+async function getTripForGuest(
+  env: Env,
+  tripId: string,
+  token: string
+): Promise<TripRow | null> {
+  try {
+    const row = await env.DB
+      .prepare(`
+        SELECT t.id, t.name, t.user_id, t.activities_json
+        FROM trips t
+        INNER JOIN trip_share_tokens s
+          ON s.trip_id = t.id
+        WHERE t.id = ?
+          AND s.token = ?
+          AND s.revoked_at IS NULL
+          AND (s.expires_at IS NULL OR s.expires_at > CURRENT_TIMESTAMP)
+        LIMIT 1
+      `)
+      .bind(tripId, token)
+      .first<TripRow>();
 
-  if (row) {
-      // non-blocking audit update
+    if (row) {
+      // fire & forget audit
       env.DB.prepare(`
         UPDATE trip_share_tokens
         SET last_used_at = CURRENT_TIMESTAMP
         WHERE token = ?
       `)
-      .bind(token)
-      .run()
-      .catch(() => {});
-  }
+        .bind(token)
+        .run()
+        .catch(() => {});
+    }
 
-  return row;
+    return row;
+  } catch (e) {
+    console.error('DB error (guest):', e);
+    throw e;
+  }
 }
 
 /* ---------- HANDLER ---------- */
@@ -75,6 +95,7 @@ async function getTripForGuest(env: Env, tripId: string, token: string): Promise
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   try {
     const url = new URL(context.request.url);
+
     const tripId = (url.searchParams.get('id') || '').trim();
     const token = (url.searchParams.get('token') || '').trim();
 
@@ -82,7 +103,9 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       return error('Trip id is required', 400);
     }
 
-    /* ---------- GUEST ACCESS ---------- */
+    /* =====================================================
+     * 1. GUEST ACCESS (TOKEN)
+     * ===================================================== */
 
     if (token) {
       const trip = await getTripForGuest(context.env, tripId, token);
@@ -100,9 +123,20 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       });
     }
 
-    /* ---------- OWNER ACCESS ---------- */
+    /* =====================================================
+     * 2. OWNER ACCESS (AUTH)
+     * IMPORTANT: requireUser MUST NOT crash the handler
+     * ===================================================== */
 
-    const user = await requireUser(context);
+    let user: any = null;
+
+    try {
+      user = await requireUser(context);
+    } catch (authError) {
+      console.warn('Auth failed (treated as unauthenticated):', authError);
+      user = null;
+    }
+
     if (!user?.id) {
       return error('Authentication required', 401);
     }
@@ -122,8 +156,12 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     });
 
   } catch (err: any) {
-    console.error('getTrip error:', err);
-    return error('Failed to load trip', 500);
+    console.error('getTrip FATAL error:', err?.message || err);
+
+    return error(
+      err?.message || 'Failed to load trip',
+      500
+    );
   }
 };
 
@@ -133,5 +171,6 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   if (context.request.method !== 'GET') {
     return methodNotAllowed(['GET']);
   }
+
   return onRequestGet(context);
 };
