@@ -201,7 +201,7 @@ export async function verifyAuthToken(
 }
 
 /* =====================================================
- * REQUIRE USER (FIXED + STRICT)
+ * REQUIRE USER (STRICT)
  * ===================================================== */
 
 export async function requireUser(context: {
@@ -233,4 +233,19 @@ export async function requireUser(context: {
     id: row.id,
     email: row.email
   };
+}
+
+/* =====================================================
+ * TRY GET USER (SAFE VERSION) ✅ ADD THIS HERE
+ * ===================================================== */
+
+export async function tryGetUser(context: {
+  request: Request;
+  env: Env;
+}): Promise<AuthUser | null> {
+  try {
+    return await requireUser(context);
+  } catch {
+    return null;
+  }
 }
