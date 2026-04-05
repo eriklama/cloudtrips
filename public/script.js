@@ -450,19 +450,12 @@
     });
 
     if (response.status === 401) {
-  if (isGuestView()) {
-    throw new Error('Invalid or expired share link');
-  }
+  console.warn('401 Unauthorized from API:', url);
 
-  try {
-    window.localStorage.removeItem('cloudtrips_auth_token');
-    window.localStorage.removeItem('cloudtrips_auth_user');
-  } catch {
-    // ignore storage errors
-  }
+  // ❗ DO NOT redirect here — causes infinite loop
+  // Let higher-level logic handle auth
 
-  window.location.href = '/login.html';
-  return;
+  throw new Error('Unauthorized');
 }
 
     const contentType = response.headers.get('content-type') || '';
