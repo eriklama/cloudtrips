@@ -9,7 +9,7 @@
     GET_TRIPS: '/api/getTrips',
     GET_TRIP: '/api/getTrip',
     SAVE_TRIP: '/api/saveTrip',
-    DELETE_TRIP: '/api/deleteTrip'
+    DELETE_TRIP: '/api/deleteTrip',
     SHARE_TRIP: '/api/shareTrip'
   };
 
