@@ -70,7 +70,8 @@ async function login() {
     localStorage.setItem('cloudtrips_auth_token', data.token);
     localStorage.setItem('cloudtrips_auth_user', JSON.stringify(data.user));
 
-    window.location.href = '/';
+    console.log('TOKEN AFTER SAVE:', localStorage.getItem('cloudtrips_auth_token'));
+alert('Login done, check console');
 
   } catch (err) {
     console.error('Login error:', err);
