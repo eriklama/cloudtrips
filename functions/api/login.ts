@@ -1,6 +1,12 @@
 import { createAuthToken, normalizeUserEmail, verifyPassword } from '../_lib/auth';
 import type { Env } from '../_lib/auth';
-import { error, json } from '../_lib/http';
+import { error, json, methodNotAllowed } from '../_lib/http';
+
+type UserRow = {
+  id: string;
+  email: string;
+  password_hash: string;
+};
 
 export async function onRequestPost(context: { request: Request; env: Env }) {
   try {
@@ -28,7 +34,7 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
         LIMIT 1
       `)
       .bind(email)
-      .first<{ id: string; email: string; password_hash: string }>();
+      .first<UserRow>();
 
     if (!user) {
       return error('Invalid email or password.', 401);
@@ -52,15 +58,15 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
         email: user.email
       }
     });
-
   } catch (err: any) {
     console.error('LOGIN ERROR:', err);
-
-    return new Response(JSON.stringify({
-      error: err?.message || String(err)
-    }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return error(err?.message || 'Login failed.', 500);
   }
+}
+
+export function onRequest(context: { request: Request; env: Env }) {
+  if (context.request.method !== 'POST') {
+    return methodNotAllowed(['POST']);
+  }
+  return onRequestPost(context);
 }
