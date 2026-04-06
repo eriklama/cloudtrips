@@ -1,39 +1,65 @@
-export interface Env {
-  DB: D1Database;
-}
+import { requireUser } from '../_lib/auth';
+import type { Env } from '../_lib/auth';
+import { error, json, methodNotAllowed } from '../_lib/http';
 
-function json(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      'Content-Type': 'application/json',
-      'Cache-Control': 'no-store'
-    }
-  });
-}
+export async function onRequestPost(context: { request: Request; env: Env }) {
+  const { request, env } = context;
 
-export async function onRequestPost({ request, env }: { request: Request; env: Env }) {
+  let user: { id: string; email?: string };
   try {
-    const body = await request.json().catch(() => null) as { tripId?: string } | null;
-    const tripId = body?.tripId?.trim();
+    user = await requireUser(context);
+  } catch (err) {
+    console.warn('Auth failed (disableShare):', err);
+    return error('Unauthorized.', 401);
+  }
 
-    if (!tripId) {
-      return json({ error: 'Missing tripId' }, 400);
+  let body: any;
+  try {
+    body = await request.json();
+  } catch {
+    return error('Invalid JSON body.', 400);
+  }
+
+  const tripId = String(body?.tripId || '').trim();
+  if (!tripId) {
+    return error('tripId is required.', 400);
+  }
+
+  try {
+    const trip = await env.DB
+      .prepare(`
+        SELECT id
+        FROM trips
+        WHERE id = ? AND user_id = ?
+        LIMIT 1
+      `)
+      .bind(tripId, user.id)
+      .first<{ id: string }>();
+
+    if (!trip) {
+      return error('Trip not found.', 404);
     }
 
     await env.DB
       .prepare(`
-        UPDATE trips
-        SET share_token = NULL,
-            share_enabled = 0
-        WHERE id = ?
+        UPDATE trip_share_tokens
+        SET revoked_at = CURRENT_TIMESTAMP
+        WHERE trip_id = ?
+          AND revoked_at IS NULL
       `)
       .bind(tripId)
       .run();
 
     return json({ ok: true });
-  } catch (error) {
-    console.error('disableShare error:', error);
-    return json({ error: 'Failed to disable sharing' }, 500);
+  } catch (err) {
+    console.error('disableShare error:', err);
+    return error('Failed to disable sharing.', 500);
   }
+}
+
+export function onRequest(context: { request: Request; env: Env }) {
+  if (context.request.method !== 'POST') {
+    return methodNotAllowed(['POST']);
+  }
+  return onRequestPost(context);
 }
