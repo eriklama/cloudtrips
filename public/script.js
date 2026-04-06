@@ -450,10 +450,16 @@ async function apiFetch(url, options = {}) {
   });
 
   // ✅ Handle unauthorized (DO NOT redirect here)
-  if (response.status === 401) {
-    console.warn('401 Unauthorized from API:', url);
-    throw new Error('Unauthorized');
+ if (response.status === 401) {
+  console.warn('401 Unauthorized from API:', url);
+
+  // ✅ Allow shared (guest) access
+  if (isGuestView()) {
+    return null;
   }
+
+  throw new Error('Unauthorized');
+}
 
   const contentType = response.headers.get('content-type') || '';
   const isJson = contentType.includes('application/json');
@@ -496,8 +502,11 @@ async function requireAuth() {
   const token = localStorage.getItem('cloudtrips_auth_token');
 
   if (!token) {
-    throw new Error('No token');
+  if (isGuestView()) {
+    return true; // allow shared access
   }
+  throw new Error('No token');
+}
 
   let res;
 
@@ -570,8 +579,12 @@ function apiDelete(url, payload) {
 async function fetchTrip(tripId) {
   const url = `${API.GET_TRIP}?id=${encodeURIComponent(tripId)}`;
   const data = await apiGet(url);
-  return normalizeFullTrip(data?.trip || data);
+
+if (!data) {
+  throw new Error('Failed to load trip (unauthorized or missing)');
 }
+
+return normalizeFullTrip(data?.trip || data);
 
 async function saveTrip(trip) {
   if (!trip) {
