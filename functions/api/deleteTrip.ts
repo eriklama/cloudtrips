@@ -5,13 +5,14 @@ import { error, json, methodNotAllowed } from '../_lib/http';
 export async function onRequestPost(context: { request: Request; env: Env }) {
   const { request, env } = context;
 
-  // 🔐 Auth
-  const user = await requireUser(request, env);
-  if (!user) {
+  let user: { id: string; email?: string };
+  try {
+    user = await requireUser(context);
+  } catch (err) {
+    console.warn('Auth failed (deleteTrip):', err);
     return error('Unauthorized.', 401);
   }
 
-  // 📥 Input
   let body: any = {};
   try {
     body = await request.json();
@@ -27,34 +28,50 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
   }
 
   try {
-    // 🔍 Check existence (and ownership)
     const existing = await env.DB
-      .prepare(`SELECT id FROM trips WHERE id = ? AND user_id = ? LIMIT 1`)
+      .prepare(`
+        SELECT id
+        FROM trips
+        WHERE id = ? AND user_id = ?
+        LIMIT 1
+      `)
       .bind(id, user.id)
-      .first();
+      .first<{ id: string }>();
 
     if (!existing) {
       return error('Trip not found.', 404);
     }
 
-    // 🗑️ Delete
     await env.DB
-      .prepare(`DELETE FROM trips WHERE id = ? AND user_id = ?`)
+      .prepare(`
+        DELETE FROM trip_share_tokens
+        WHERE trip_id = ?
+      `)
+      .bind(id)
+      .run()
+      .catch(() => {});
+
+    await env.DB
+      .prepare(`
+        DELETE FROM trips
+        WHERE id = ? AND user_id = ?
+      `)
       .bind(id, user.id)
       .run();
 
+    return json({
+      ok: true,
+      deletedId: id
+    });
   } catch (err) {
     console.error('DB error (deleteTrip):', err);
     return error('Failed to delete trip.', 500);
   }
-
-  // ✅ Response
-  return json({
-    ok: true,
-    deletedId: id
-  });
 }
 
-export function onRequest() {
-  return methodNotAllowed(['POST']);
+export function onRequest(context: { request: Request; env: Env }) {
+  if (context.request.method !== 'POST') {
+    return methodNotAllowed(['POST']);
+  }
+  return onRequestPost(context);
 }
