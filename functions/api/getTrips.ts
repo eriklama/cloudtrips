@@ -1,4 +1,4 @@
-import { tryGetUser } from '../_lib/auth';
+import { requireUser } from '../_lib/auth';
 import type { Env } from '../_lib/auth';
 import { error, json, methodNotAllowed } from '../_lib/http';
 
@@ -10,17 +10,16 @@ type TripRow = {
 };
 
 export async function onRequestGet(context: { request: Request; env: Env }) {
-  const { request, env } = context;
+  const { env } = context;
 
-  // 🔐 Auth
- const user = await tryGetUser(context);
-
-if (!user) {
-  return json({
-    ok: true,
-    trips: []
-  });
-}
+  // 🔐 STRICT AUTH (no silent fallback!)
+  let user;
+  try {
+    user = await requireUser(context);
+  } catch (err) {
+    console.warn('Auth failed (getTrips):', err);
+    return error('Unauthorized', 401);
+  }
 
   // 📦 Fetch trips for user
   let result;
@@ -71,12 +70,14 @@ if (!user) {
     };
   });
 
-  // ✅ Consistent API response
+  // ✅ Correct response
   return json({
     ok: true,
     trips
   });
 }
+
+/* ---------- METHOD GUARD ---------- */
 
 export function onRequest() {
   return methodNotAllowed(['GET']);
