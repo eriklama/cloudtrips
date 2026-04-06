@@ -1,145 +1,125 @@
-import type { PagesFunction } from '@cloudflare/workers-types';
-import { requireUser } from '../_lib/auth';
-import { json, error, methodNotAllowed } from '../_lib/http';
-
-export interface Env {
-  DB: D1Database;
-  JWT_SECRET: string;
-  PASSWORD_PEPPER?: string;
-}
+import { tryGetUser } from '../_lib/auth';
+import type { Env } from '../_lib/auth';
+import { error, json, methodNotAllowed } from '../_lib/http';
+import {
+  findValidShareByToken,
+  getShareTokenFromRequest,
+  touchShareUsage
+} from '../_lib/share';
 
 type TripRow = {
   id: string;
-  name: string;
   user_id: string;
+  name: string;
   activities_json: string | null;
+  created_at?: string | null;
 };
 
-function parseActivities(value: string | null): any[] {
+function parseActivities(value: string | null): unknown[] {
   if (!value) return [];
-
   try {
     const parsed = JSON.parse(value);
     return Array.isArray(parsed) ? parsed : [];
-  } catch (e) {
-    console.warn('Failed to parse activities_json:', e);
+  } catch {
     return [];
   }
 }
 
-async function getTripForOwner(
-  env: Env,
-  tripId: string,
-  userId: string
-): Promise<TripRow | null> {
-  return await env.DB
-    .prepare(`
-      SELECT id, name, user_id, activities_json
-      FROM trips
-      WHERE id = ? AND user_id = ?
-      LIMIT 1
-    `)
-    .bind(tripId, userId)
-    .first<TripRow>();
-}
+export async function onRequestGet(context: {
+  request: Request;
+  env: Env;
+}) {
+  const { request, env } = context;
+  const url = new URL(request.url);
+  const tripId = (url.searchParams.get('trip') || url.searchParams.get('id') || '').trim();
 
-async function getTripForGuest(
-  env: Env,
-  tripId: string,
-  token: string
-): Promise<TripRow | null> {
-  const row = await env.DB
-    .prepare(`
-      SELECT t.id, t.name, t.user_id, t.activities_json
-      FROM trips t
-      INNER JOIN trip_share_tokens s
-        ON s.trip_id = t.id
-      WHERE t.id = ?
-        AND s.token = ?
-        AND s.revoked_at IS NULL
-        AND (s.expires_at IS NULL OR s.expires_at > CURRENT_TIMESTAMP)
-      LIMIT 1
-    `)
-    .bind(tripId, token)
-    .first<TripRow>();
-
-  if (row) {
-    env.DB
-      .prepare(`
-        UPDATE trip_share_tokens
-        SET last_used_at = CURRENT_TIMESTAMP
-        WHERE token = ?
-      `)
-      .bind(token)
-      .run()
-      .catch(() => {});
+  if (!tripId) {
+    return error('trip id is required.', 400);
   }
 
-  return row;
-}
+  const token = getShareTokenFromRequest(request);
 
-export const onRequestGet: PagesFunction<Env> = async (context) => {
   try {
-    const url = new URL(context.request.url);
-    const tripId = String(url.searchParams.get('id') || '').trim();
-    const token = String(url.searchParams.get('token') || '').trim();
+    // 1) Logged-in owner path
+    const user = await tryGetUser(context);
+    if (user) {
+      const ownedTrip = await env.DB
+        .prepare(`
+          SELECT id, user_id, name, activities_json, created_at
+          FROM trips
+          WHERE id = ? AND user_id = ?
+          LIMIT 1
+        `)
+        .bind(tripId, user.id)
+        .first<TripRow>();
 
-    if (!tripId) {
-      return error('Trip id is required.', 400);
+      if (ownedTrip) {
+        return json({
+          ok: true,
+          trip: {
+            id: ownedTrip.id,
+            name: ownedTrip.name,
+            activities: parseActivities(ownedTrip.activities_json),
+            created_at: ownedTrip.created_at ?? null
+          },
+          readOnly: false,
+          access: 'owner'
+        });
+      }
     }
 
+    // 2) Guest-share path
     if (token) {
-      const trip = await getTripForGuest(context.env, tripId, token);
+      const share = await findValidShareByToken({ env, token });
 
-      if (!trip) {
+      if (!share) {
         return error('Invalid or expired share token.', 401);
       }
+
+      if (share.trip_id !== tripId) {
+        return error('Invalid share token for this trip.', 403);
+      }
+
+      const sharedTrip = await env.DB
+        .prepare(`
+          SELECT id, user_id, name, activities_json, created_at
+          FROM trips
+          WHERE id = ?
+          LIMIT 1
+        `)
+        .bind(tripId)
+        .first<TripRow>();
+
+      if (!sharedTrip) {
+        return error('Trip not found.', 404);
+      }
+
+      await touchShareUsage({
+        env,
+        shareId: share.id
+      });
 
       return json({
         ok: true,
         trip: {
-          id: trip.id,
-          name: trip.name,
-          activities: parseActivities(trip.activities_json)
+          id: sharedTrip.id,
+          name: sharedTrip.name,
+          activities: parseActivities(sharedTrip.activities_json),
+          created_at: sharedTrip.created_at ?? null
         },
         readOnly: true,
-        access: 'guest'
+        access: 'shared',
+        shareExpiresAt: share.expires_at
       });
     }
 
-    let user: { id: string; email?: string };
-    try {
-      user = await requireUser(context);
-    } catch (authError) {
-      console.warn('Auth failed (getTrip):', authError);
-      return error('Unauthorized.', 401);
-    }
-
-    const trip = await getTripForOwner(context.env, tripId, user.id);
-
-    if (!trip) {
-      return error('Trip not found.', 404);
-    }
-
-    return json({
-      ok: true,
-      trip: {
-        id: trip.id,
-        name: trip.name,
-        activities: parseActivities(trip.activities_json)
-      },
-      readOnly: false,
-      access: 'owner'
-    });
-  } catch (err: any) {
+    return error('Unauthorized.', 401);
+  } catch (err) {
     console.error('getTrip error:', err);
-    return error(err?.message || 'Failed to load trip.', 500);
+    return error('Failed to load trip.', 500);
   }
-};
+}
 
-export const onRequest: PagesFunction<Env> = async (context) => {
-  if (context.request.method !== 'GET') {
-    return methodNotAllowed(['GET']);
-  }
-  return onRequestGet(context);
-};
+export function onRequest() {
+  return methodNotAllowed(['GET']);
+}
