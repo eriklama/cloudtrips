@@ -1,50 +1,69 @@
-import { createAuthToken, hashPassword, isStrongEnoughPassword, isValidEmail, normalizeUserEmail } from '../_lib/auth';
+import {
+  createAuthToken,
+  hashPassword,
+  isStrongEnoughPassword,
+  isValidEmail,
+  normalizeUserEmail
+} from '../_lib/auth';
 import type { Env } from '../_lib/auth';
 import { error, json, methodNotAllowed } from '../_lib/http';
 
+type UserRow = {
+  id: string;
+};
+
 export async function onRequestPost(context: { request: Request; env: Env }) {
+  const { request, env } = context;
+
+  // =========================
+  // PARSE BODY
+  // =========================
+  let body: any;
   try {
-    const { request, env } = context;
+    body = await request.json();
+  } catch {
+    return error('Invalid JSON body.', 400);
+  }
 
-    let body: any;
-    try {
-      body = await request.json();
-    } catch {
-      return error('Invalid JSON body.', 400);
-    }
+  const email = normalizeUserEmail(body?.email || '');
+  const password = String(body?.password || '');
 
-    console.log('Signup body:', body);
+  // =========================
+  // VALIDATION
+  // =========================
+  if (!isValidEmail(email)) {
+    return error('Please enter a valid email address.', 400);
+  }
 
-    const email = normalizeUserEmail(body?.email || '');
-    const password = String(body?.password || '');
+  if (!isStrongEnoughPassword(password)) {
+    return error('Password must be at least 8 characters long.', 400);
+  }
 
-    if (!isValidEmail(email)) {
-      return error('Please enter a valid email address.', 400);
-    }
-
-    if (!isStrongEnoughPassword(password)) {
-      return error('Password must be at least 8 characters long.', 400);
-    }
-
-    console.log('Checking existing user...');
-
+  try {
+    // =========================
+    // CHECK EXISTING USER
+    // =========================
     const existing = await env.DB
-      .prepare(`SELECT id FROM users WHERE email = ? LIMIT 1`)
+      .prepare(`
+        SELECT id
+        FROM users
+        WHERE email = ?
+        LIMIT 1
+      `)
       .bind(email)
-      .first();
+      .first<UserRow>();
 
     if (existing) {
       return error('An account with this email already exists.', 409);
     }
 
-    console.log('Creating user...');
-
+    // =========================
+    // CREATE USER
+    // =========================
     const userId = crypto.randomUUID();
 
-    console.log('Hashing password...');
     const passwordHash = await hashPassword(password, env);
 
-    console.log('Inserting user...');
     await env.DB
       .prepare(`
         INSERT INTO users (id, email, password_hash)
@@ -53,9 +72,17 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
       .bind(userId, email, passwordHash)
       .run();
 
-    console.log('Creating token...');
-    const token = await createAuthToken({ id: userId, email }, env);
+    // =========================
+    // CREATE TOKEN
+    // =========================
+    const token = await createAuthToken(
+      { id: userId, email },
+      env
+    );
 
+    // =========================
+    // RESPONSE
+    // =========================
     return json({
       ok: true,
       token,
@@ -66,17 +93,8 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
     });
 
   } catch (err: any) {
-    console.error('❌ SIGNUP ERROR:', err);
-
-    return new Response(
-      JSON.stringify({
-        error: err?.message || String(err)
-      }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      }
-    );
+    console.error('SIGNUP ERROR:', err);
+    return error(err?.message || 'Signup failed.', 500);
   }
 }
 
