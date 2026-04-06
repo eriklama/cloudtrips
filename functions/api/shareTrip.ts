@@ -8,8 +8,6 @@ export interface Env {
   PASSWORD_PEPPER?: string;
 }
 
-/* ---------- TOKEN GENERATION ---------- */
-
 function generateSecureToken(): string {
   const bytes = new Uint8Array(32);
   crypto.getRandomValues(bytes);
@@ -25,28 +23,24 @@ function generateSecureToken(): string {
     .replace(/=+$/g, '');
 }
 
-/* ---------- HANDLER ---------- */
-
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   try {
     const user = await requireUser(context);
     if (!user?.id) {
-      return error('Authentication required', 401);
+      return error('Unauthorized.', 401);
     }
 
     let body: any;
     try {
       body = await context.request.json();
     } catch {
-      return error('Invalid JSON body', 400);
+      return error('Invalid JSON body.', 400);
     }
 
     const tripId = String(body?.tripId || '').trim();
     if (!tripId) {
-      return error('tripId is required', 400);
+      return error('tripId is required.', 400);
     }
-
-    /* ---------- VERIFY OWNERSHIP ---------- */
 
     const trip = await context.env.DB
       .prepare(`
@@ -59,10 +53,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       .first<{ id: string }>();
 
     if (!trip) {
-      return error('Trip not found or access denied', 401);
+      return error('Trip not found.', 404);
     }
-
-    /* ---------- REVOKE OLD TOKENS ---------- */
 
     await context.env.DB
       .prepare(`
@@ -74,11 +66,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       .bind(tripId)
       .run();
 
-    /* ---------- CREATE NEW TOKEN ---------- */
-
     const token = generateSecureToken();
-
-    const expiresAt = null; // optional expiration
 
     await context.env.DB
       .prepare(`
@@ -90,10 +78,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         )
         VALUES (?, ?, ?, ?)
       `)
-      .bind(tripId, token, user.id, expiresAt)
+      .bind(tripId, token, user.id, null)
       .run();
-
-    /* ---------- RESPONSE ---------- */
 
     const shareUrl = `/trip.html?id=${encodeURIComponent(tripId)}&token=${encodeURIComponent(token)}`;
 
@@ -101,14 +87,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       ok: true,
       shareUrl
     });
-
   } catch (err: any) {
     console.error('shareTrip error:', err);
-    return error('Failed to create share link', 500);
+    return error('Failed to create share link.', 500);
   }
 };
-
-/* ---------- METHOD GUARD ---------- */
 
 export const onRequest: PagesFunction<Env> = async (context) => {
   if (context.request.method !== 'POST') {
