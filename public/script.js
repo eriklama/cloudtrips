@@ -433,62 +433,105 @@
   }
 
   /* =========================
-   * API (AUTH VERSION)
-   * ========================= */
+ * API (AUTH VERSION)
+ * ========================= */
 
-  async function apiFetch(url, options = {}) {
-    const authToken = window.localStorage.getItem('cloudtrips_auth_token');
+async function apiFetch(url, options = {}) {
+  const authToken = window.localStorage.getItem('cloudtrips_auth_token');
 
-    const headers = {
-      ...(options.headers || {}),
-      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {})
-    };
+  const headers = {
+    ...(options.headers || {}),
+    ...(authToken ? { Authorization: `Bearer ${authToken}` } : {})
+  };
 
-    const response = await fetch(url, {
-      ...options,
-      headers
-    });
+  const response = await fetch(url, {
+    ...options,
+    headers
+  });
 
-    if (response.status === 401) {
-  console.warn('401 Unauthorized from API:', url);
+  // ✅ Handle unauthorized (DO NOT redirect here)
+  if (response.status === 401) {
+    console.warn('401 Unauthorized from API:', url);
+    throw new Error('Unauthorized');
+  }
 
-  // ❗ DO NOT redirect here — causes infinite loop
-  // Let higher-level logic handle auth
+  const contentType = response.headers.get('content-type') || '';
+  const isJson = contentType.includes('application/json');
 
-  throw new Error('Unauthorized');
-}
-
-    const contentType = response.headers.get('content-type') || '';
-    const isJson = contentType.includes('application/json');
-
-    if (!response.ok) {
-      let message = `Request failed: ${response.status}`;
-
-      try {
-        if (isJson) {
-          const errorPayload = await response.json();
-          message = errorPayload?.error || errorPayload?.message || message;
-        } else {
-          const text = await response.text();
-          if (text) message = text;
-        }
-      } catch {
-        // ignore parse errors
-      }
-
-      throw new Error(message);
-    }
-
-    if (!isJson) {
-      return null;
-    }
+  // ❌ Handle other errors
+  if (!response.ok) {
+    let message = `Request failed: ${response.status}`;
 
     try {
-      return await response.json();
+      if (isJson) {
+        const errorPayload = await response.json();
+        message = errorPayload?.error || errorPayload?.message || message;
+      } else {
+        const text = await response.text();
+        if (text) message = text;
+      }
     } catch {
-      return null;
+      // ignore parsing errors
     }
+
+    throw new Error(message);
   }
+
+  // ✅ No JSON → return null
+  if (!isJson) return null;
+
+  // ✅ Safe JSON parse
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+/* =========================
+ * AUTH
+ * ========================= */
+
+async function requireAuth() {
+  const token = localStorage.getItem('cloudtrips_auth_token');
+
+  if (!token) {
+    throw new Error('No token');
+  }
+
+  let res;
+
+  try {
+    res = await fetch('/api/getTrips', {
+      headers: {
+        Authorization: 'Bearer ' + token
+      }
+    });
+  } catch (err) {
+    console.error('Auth check network error:', err);
+
+    // ❗ Do NOT log user out on network issues
+    return true;
+  }
+
+  // ✅ Only treat 401 as auth failure
+  if (res.status === 401) {
+    throw new Error('Unauthorized');
+  }
+
+  // ⚠️ Other errors → log but allow app to continue
+  if (!res.ok) {
+    console.warn('Auth check failed but not 401:', res.status);
+    return true;
+  }
+
+  // ✅ Auth is valid
+  return true;
+}
+  
+/* =========================
+ * API HELPERS
+ * ========================= */
 
 function apiGet(url) {
   const token = getShareToken();
@@ -500,57 +543,62 @@ function apiGet(url) {
   return apiFetch(finalUrl);
 }
 
-  function apiPost(url, payload) {
-    return apiFetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
-  }
+function apiPost(url, payload) {
+  return apiFetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  });
+}
 
-  function apiDelete(url, payload) {
-    return apiFetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload || {})
-    });
-  }
+function apiDelete(url, payload) {
+  return apiFetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload || {})
+  });
+}
 
- async function fetchTrip(tripId) {
+/* =========================
+ * TRIP API
+ * ========================= */
+
+async function fetchTrip(tripId) {
   const url = `${API.GET_TRIP}?id=${encodeURIComponent(tripId)}`;
   const data = await apiGet(url);
   return normalizeFullTrip(data?.trip || data);
 }
 
-  async function saveTrip(trip) {
-    if (!trip) {
-      throw new Error('Invalid trip object');
-    }
-
-    const payload = {
-      ...(trip.id ? { id: trip.id } : {}),
-      name: trip.name || 'Untitled trip',
-      activities: safeArray(trip.activities).map((activity) => {
-        const normalized = normalizeActivity(activity);
-        return {
-          id: normalized.id || uuid(),
-          type: normalized.type || 'other',
-          location: normalized.location || normalized.name || '',
-          startDate: normalized.startDate || '',
-          endDate: normalized.endDate || '',
-          cost: Number(normalized.cost || 0),
-          distance: Number(normalized.distance || normalized.km || 0),
-          notes: normalized.notes || ''
-        };
-      })
-    };
-
-    return apiPost(API.SAVE_TRIP, payload);
+async function saveTrip(trip) {
+  if (!trip) {
+    throw new Error('Invalid trip object');
   }
+
+  const payload = {
+    ...(trip.id ? { id: trip.id } : {}),
+    name: trip.name || 'Untitled trip',
+    activities: safeArray(trip.activities).map((activity) => {
+      const normalized = normalizeActivity(activity);
+
+      return {
+        id: normalized.id || uuid(),
+        type: normalized.type || 'other',
+        location: normalized.location || normalized.name || '',
+        startDate: normalized.startDate || '',
+        endDate: normalized.endDate || '',
+        cost: Number(normalized.cost || 0),
+        distance: Number(normalized.distance || normalized.km || 0),
+        notes: normalized.notes || ''
+      };
+    })
+  };
+
+  return apiPost(API.SAVE_TRIP, payload);
+}
 
   /* =========================
    * UI PARTIALS
@@ -1580,46 +1628,59 @@ async function copyShareLink() {
     window.open('/print.html', '_blank');
   }
 
-  /* =========================
-   * APP INIT
-   * ========================= */
+ /* =========================
+ * APP INIT
+ * ========================= */
 
-  async function init() {
-    try {
-      const onSharedPage = isGuestView();
-
-      if (!onSharedPage && typeof requireAuth === 'function') {
+async function init() {
   try {
-    const user = await requireAuth();
-    console.log('AUTH USER:', user);
-  } catch (e) {
-    console.warn('AUTH FAILED (IGNORED):', e);
-  }
-}
+    const onSharedPage = isGuestView();
 
-      if (hasEl('trip-list')) {
-        await loadTrips();
-      }
+    // 🔐 AUTH CHECK (ONLY for non-shared pages)
+    if (!onSharedPage && typeof requireAuth === 'function') {
+      try {
+        const user = await requireAuth();
+        console.log('AUTH USER:', user);
+      } catch (e) {
+        console.warn('AUTH FAILED → redirecting to login', e);
 
-      if (hasEl('activities')) {
-        await loadTripPage();
-      }
+        // ❗ Clear broken session (optional but recommended)
+        try {
+          localStorage.removeItem('cloudtrips_auth_token');
+          localStorage.removeItem('cloudtrips_auth_user');
+        } catch {}
 
-      if (hasEl('timeline')) {
-        await loadTimeline();
+        // 🚀 Redirect and STOP app execution
+        window.location.href = '/login.html';
+        return; // ⛔ CRITICAL: prevents further execution
       }
-
-      if (hasEl('cost-table')) {
-        await loadCosts();
-      }
-    } catch (error) {
-      console.error(error);
     }
 
-    refreshIcons();
+    // ✅ Only runs if auth succeeded
+    if (hasEl('trip-list')) {
+      await loadTrips();
+    }
+
+    if (hasEl('activities')) {
+      await loadTripPage();
+    }
+
+    if (hasEl('timeline')) {
+      await loadTimeline();
+    }
+
+    if (hasEl('cost-table')) {
+      await loadCosts();
+    }
+
+  } catch (error) {
+    console.error('INIT ERROR:', error);
   }
 
-  document.addEventListener('DOMContentLoaded', init);
+  refreshIcons();
+}
+
+document.addEventListener('DOMContentLoaded', init);
 
   /* =========================
    * HEADER NAVIGATION
