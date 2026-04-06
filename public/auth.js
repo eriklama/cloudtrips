@@ -1,6 +1,10 @@
 const AUTH_TOKEN_KEY = 'cloudtrips_auth_token';
 const AUTH_USER_KEY = 'cloudtrips_auth_user';
 
+/* =========================
+ * HELPERS
+ * ========================= */
+
 function getAuthToken() {
   return localStorage.getItem(AUTH_TOKEN_KEY) || '';
 }
@@ -28,18 +32,43 @@ function isAuthPage() {
   return path.endsWith('/login.html') || path.endsWith('/signup.html');
 }
 
+/* =========================
+ * 🔥 NEW: GUEST DETECTION
+ * ========================= */
+
+function isGuestView() {
+  const params = new URLSearchParams(window.location.search);
+  return Boolean(params.get('token'));
+}
+
+/* =========================
+ * REDIRECT
+ * ========================= */
+
 function redirectToLogin() {
+  // ✅ DO NOT redirect shared links
+  if (isGuestView()) {
+    console.log('Guest mode → skip login redirect');
+    return;
+  }
+
   if (!isAuthPage()) {
     window.location.href = '/login.html';
   }
 }
 
+/* =========================
+ * FETCH WITH AUTH
+ * ========================= */
+
 async function authFetch(url, options = {}) {
   const token = getAuthToken();
   const headers = new Headers(options.headers || {});
+
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);
   }
+
   if (!headers.has('Content-Type') && options.body) {
     headers.set('Content-Type', 'application/json');
   }
@@ -49,7 +78,8 @@ async function authFetch(url, options = {}) {
     headers
   });
 
-  if (response.status === 401 && !isAuthPage()) {
+  // ✅ DO NOT kill guest sessions on 401
+  if (response.status === 401 && !isAuthPage() && !isGuestView()) {
     clearAuthSession();
     redirectToLogin();
     throw new Error('Unauthorized');
@@ -57,6 +87,10 @@ async function authFetch(url, options = {}) {
 
   return response;
 }
+
+/* =========================
+ * RESPONSE PARSER
+ * ========================= */
 
 async function parseApiResponse(response) {
   const text = await response.text();
@@ -75,11 +109,16 @@ async function parseApiResponse(response) {
       (data && typeof data === 'object' && data.error) ||
       (typeof data === 'string' && data) ||
       `Request failed: ${response.status}`;
+
     throw new Error(message);
   }
 
   return data;
 }
+
+/* =========================
+ * API HELPERS
+ * ========================= */
 
 async function apiGet(url) {
   const res = await authFetch(url, { method: 'GET' });
@@ -102,8 +141,18 @@ async function apiDelete(url, payload) {
   return parseApiResponse(res);
 }
 
+/* =========================
+ * AUTH CHECK
+ * ========================= */
+
 async function requireAuth() {
   if (isAuthPage()) return null;
+
+  // ✅ allow guest access
+  if (isGuestView()) {
+    console.log('Guest access → skipping auth');
+    return null;
+  }
 
   const token = getAuthToken();
   if (!token) {
@@ -122,6 +171,10 @@ async function requireAuth() {
   }
 }
 
+/* =========================
+ * UI
+ * ========================= */
+
 function updateAuthUi(user) {
   const emailEl = document.getElementById('auth-user-email');
   if (emailEl) {
@@ -138,6 +191,10 @@ function bindLogoutButton() {
     window.location.href = '/login.html';
   });
 }
+
+/* =========================
+ * FORMS
+ * ========================= */
 
 async function handleLoginSubmit(event) {
   event.preventDefault();
@@ -191,6 +248,10 @@ async function handleSignupSubmit(event) {
     submitButton.disabled = false;
   }
 }
+
+/* =========================
+ * INIT
+ * ========================= */
 
 document.addEventListener('DOMContentLoaded', async () => {
   bindLogoutButton();
