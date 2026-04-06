@@ -2,30 +2,50 @@ import { requireUser } from '../_lib/auth';
 import type { Env } from '../_lib/auth';
 import { error, json, methodNotAllowed } from '../_lib/http';
 
-function sanitizeActivity(activity: any) {
-  const toNumber = (v: any) => {
-    const n = Number(v);
-    return Number.isFinite(n) ? n : 0;
-  };
+type ActivityInput = {
+  id?: unknown;
+  type?: unknown;
+  startDate?: unknown;
+  endDate?: unknown;
+  cost?: unknown;
+  notes?: unknown;
+  location?: unknown;
+  distance?: unknown;
+  km?: unknown;
+};
 
+function toString(value: unknown, fallback = ''): string {
+  return typeof value === 'string' ? value : String(value ?? fallback);
+}
+
+function toNumber(value: unknown): number {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function sanitizeActivity(activity: ActivityInput) {
   return {
-    id: String(activity?.id || crypto.randomUUID()),
-    type: String(activity?.type || 'other'),
-    startDate: String(activity?.startDate || ''),
-    endDate: String(activity?.endDate || ''),
+    id: toString(activity?.id || crypto.randomUUID()).trim(),
+    type: toString(activity?.type || 'other').trim() || 'other',
+    startDate: toString(activity?.startDate || '').trim(),
+    endDate: toString(activity?.endDate || '').trim(),
     cost: toNumber(activity?.cost),
-    notes: String(activity?.notes || ''),
-    location: String(activity?.location || ''),
-    distance: toNumber(activity?.distance)
+    notes: toString(activity?.notes || '').trim(),
+    location: toString(activity?.location || '').trim(),
+    distance: toNumber(
+      activity?.distance !== undefined ? activity.distance : activity?.km
+    )
   };
 }
 
 export async function onRequestPost(context: { request: Request; env: Env }) {
   const { request, env } = context;
 
-  // 🔐 Auth
-  const user = await requireUser(request, env);
-  if (!user) {
+  let user: { id: string; email?: string };
+  try {
+    user = await requireUser(context);
+  } catch (err) {
+    console.warn('Auth failed (saveTrip):', err);
     return error('Unauthorized.', 401);
   }
 
@@ -48,9 +68,6 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
   const activitiesJson = JSON.stringify(activities);
 
   try {
-    // =========================
-    // UPDATE EXISTING TRIP
-    // =========================
     if (id) {
       const result = await env.DB
         .prepare(`
@@ -61,8 +78,8 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
         .bind(name, activitiesJson, id, user.id)
         .run();
 
-      // ⚠️ No rows updated → not found or not owned
-      if (!result.meta || result.meta.changes === 0) {
+      const changes = Number(result?.meta?.changes || 0);
+      if (changes === 0) {
         return error('Trip not found.', 404);
       }
 
@@ -76,9 +93,6 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
       });
     }
 
-    // =========================
-    // CREATE NEW TRIP
-    // =========================
     const newId = crypto.randomUUID();
 
     await env.DB
@@ -97,13 +111,15 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
         activities
       }
     });
-
   } catch (err) {
     console.error('DB error (saveTrip):', err);
     return error('Failed to save trip.', 500);
   }
 }
 
-export function onRequest() {
-  return methodNotAllowed(['POST']);
+export function onRequest(context: { request: Request; env: Env }) {
+  if (context.request.method !== 'POST') {
+    return methodNotAllowed(['POST']);
+  }
+  return onRequestPost(context);
 }
