@@ -1,101 +1,88 @@
-import type { PagesFunction } from '@cloudflare/workers-types';
 import { requireUser } from '../_lib/auth';
-import { json, error, methodNotAllowed } from '../_lib/http';
+import type { Env } from '../_lib/auth';
+import { error, json, methodNotAllowed } from '../_lib/http';
+import { createTripShare } from '../_lib/share';
 
-export interface Env {
-  DB: D1Database;
-  JWT_SECRET: string;
-  PASSWORD_PEPPER?: string;
-}
+type TripRow = {
+  id: string;
+  user_id: string;
+  name: string;
+};
 
-function generateSecureToken(): string {
-  const bytes = new Uint8Array(32);
-  crypto.getRandomValues(bytes);
+export async function onRequestPost(context: {
+  request: Request;
+  env: Env;
+}) {
+  const { request, env } = context;
 
-  let binary = '';
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i]);
+  const user = await requireUser(request, env);
+  if (!user) {
+    return error('Unauthorized.', 401);
   }
 
-  return btoa(binary)
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/g, '');
-}
-
-export const onRequestPost: PagesFunction<Env> = async (context) => {
+  let body: { tripId?: string; expiresInDays?: number } = {};
   try {
-    const user = await requireUser(context);
-    if (!user?.id) {
-      return error('Unauthorized.', 401);
-    }
+    body = await request.json();
+  } catch {
+    return error('Invalid JSON body.', 400);
+  }
 
-    let body: any;
-    try {
-      body = await context.request.json();
-    } catch {
-      return error('Invalid JSON body.', 400);
-    }
+  const tripId = String(body.tripId || '').trim();
+  if (!tripId) {
+    return error('tripId is required.', 400);
+  }
 
-    const tripId = String(body?.tripId || '').trim();
-    if (!tripId) {
-      return error('tripId is required.', 400);
-    }
+  const trip = await env.DB
+    .prepare(`
+      SELECT id, user_id, name
+      FROM trips
+      WHERE id = ?
+      LIMIT 1
+    `)
+    .bind(tripId)
+    .first<TripRow>();
 
-    const trip = await context.env.DB
-      .prepare(`
-        SELECT id
-        FROM trips
-        WHERE id = ? AND user_id = ?
-        LIMIT 1
-      `)
-      .bind(tripId, user.id)
-      .first<{ id: string }>();
+  if (!trip) {
+    return error('Trip not found.', 404);
+  }
 
-    if (!trip) {
-      return error('Trip not found.', 404);
-    }
+  if (trip.user_id !== user.id) {
+    return error('Forbidden.', 403);
+  }
 
-    await context.env.DB
-      .prepare(`
-        UPDATE trip_share_tokens
-        SET revoked_at = CURRENT_TIMESTAMP
-        WHERE trip_id = ?
-          AND revoked_at IS NULL
-      `)
-      .bind(tripId)
-      .run();
+  let expiresAt: Date | null = null;
+  const requestedDays = Number(body.expiresInDays);
 
-    const token = generateSecureToken();
+  if (Number.isFinite(requestedDays) && requestedDays > 0) {
+    const boundedDays = Math.min(Math.max(Math.floor(requestedDays), 1), 365);
+    expiresAt = new Date();
+    expiresAt.setUTCDate(expiresAt.getUTCDate() + boundedDays);
+  } else {
+    expiresAt = new Date();
+    expiresAt.setUTCDate(expiresAt.getUTCDate() + 30);
+  }
 
-    await context.env.DB
-      .prepare(`
-        INSERT INTO trip_share_tokens (
-          trip_id,
-          token,
-          created_by_user_id,
-          expires_at
-        )
-        VALUES (?, ?, ?, ?)
-      `)
-      .bind(tripId, token, user.id, null)
-      .run();
+  try {
+    const share = await createTripShare({
+      env,
+      tripId,
+      userId: user.id,
+      expiresAt
+    });
 
-    const shareUrl = `/trip.html?id=${encodeURIComponent(tripId)}&token=${encodeURIComponent(token)}`;
+    const shareUrl = `/trip.html?id=${encodeURIComponent(tripId)}&token=${encodeURIComponent(share.token)}`;
 
     return json({
       ok: true,
-      shareUrl
+      shareUrl,
+      expiresAt: share.expiresAt
     });
-  } catch (err: any) {
+  } catch (err) {
     console.error('shareTrip error:', err);
     return error('Failed to create share link.', 500);
   }
-};
+}
 
-export const onRequest: PagesFunction<Env> = async (context) => {
-  if (context.request.method !== 'POST') {
-    return methodNotAllowed(['POST']);
-  }
-  return onRequestPost(context);
-};
+export function onRequest() {
+  return methodNotAllowed(['POST']);
+}
