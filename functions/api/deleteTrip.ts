@@ -1,77 +1,74 @@
 import { requireUser } from '../_lib/auth';
 import type { Env } from '../_lib/auth';
 import { error, json, methodNotAllowed } from '../_lib/http';
+import { revokeSharesForTrip } from '../_lib/share';
 
-export async function onRequestPost(context: { request: Request; env: Env }) {
+type TripRow = {
+  id: string;
+  user_id: string;
+};
+
+export async function onRequestPost(context: {
+  request: Request;
+  env: Env;
+}) {
   const { request, env } = context;
 
-  let user: { id: string; email?: string };
-  try {
-    user = await requireUser(context);
-  } catch (err) {
-    console.warn('Auth failed (deleteTrip):', err);
+  const user = await requireUser(request, env);
+  if (!user) {
     return error('Unauthorized.', 401);
   }
 
-  let body: any = {};
+  let body: { id?: string; tripId?: string } = {};
   try {
     body = await request.json();
   } catch {
-    body = {};
+    return error('Invalid JSON body.', 400);
   }
 
-  const url = new URL(request.url);
-  const id = String(body?.id || url.searchParams.get('trip') || '').trim();
-
-  if (!id) {
+  const tripId = String(body.id || body.tripId || '').trim();
+  if (!tripId) {
     return error('Trip id is required.', 400);
   }
 
+  const trip = await env.DB
+    .prepare(`
+      SELECT id, user_id
+      FROM trips
+      WHERE id = ?
+      LIMIT 1
+    `)
+    .bind(tripId)
+    .first<TripRow>();
+
+  if (!trip) {
+    return error('Trip not found.', 404);
+  }
+
+  if (trip.user_id !== user.id) {
+    return error('Forbidden.', 403);
+  }
+
   try {
-    const existing = await env.DB
-      .prepare(`
-        SELECT id
-        FROM trips
-        WHERE id = ? AND user_id = ?
-        LIMIT 1
-      `)
-      .bind(id, user.id)
-      .first<{ id: string }>();
-
-    if (!existing) {
-      return error('Trip not found.', 404);
-    }
-
-    await env.DB
-      .prepare(`
-        DELETE FROM trip_share_tokens
-        WHERE trip_id = ?
-      `)
-      .bind(id)
-      .run()
-      .catch(() => {});
+    await revokeSharesForTrip({ env, tripId });
 
     await env.DB
       .prepare(`
         DELETE FROM trips
         WHERE id = ? AND user_id = ?
       `)
-      .bind(id, user.id)
+      .bind(tripId, user.id)
       .run();
 
     return json({
-      ok: true,
-      deletedId: id
+      ok: true
     });
   } catch (err) {
-    console.error('DB error (deleteTrip):', err);
+    console.error('deleteTrip error:', err);
     return error('Failed to delete trip.', 500);
   }
 }
 
-export function onRequest(context: { request: Request; env: Env }) {
-  if (context.request.method !== 'POST') {
-    return methodNotAllowed(['POST']);
-  }
-  return onRequestPost(context);
+export function onRequest() {
+  return methodNotAllowed(['POST']);
 }
