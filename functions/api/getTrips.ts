@@ -1,6 +1,6 @@
 import { requireUser } from '../_lib/auth';
 import type { Env } from '../_lib/auth';
-import { error, json, methodNotAllowed } from '../_lib/http';
+import { error, json } from '../_lib/http';
 
 type TripRow = {
   id: string;
@@ -12,7 +12,7 @@ type TripRow = {
 export async function onRequestGet(context: { request: Request; env: Env }) {
   const { env } = context;
 
-  // 🔐 STRICT AUTH (no silent fallback!)
+  // 🔐 STRICT AUTH
   let user;
   try {
     user = await requireUser(context);
@@ -51,7 +51,6 @@ export async function onRequestGet(context: { request: Request; env: Env }) {
           activities = parsed;
         }
       } catch {
-        // ignore corrupted JSON
         activities = [];
       }
     }
@@ -70,15 +69,9 @@ export async function onRequestGet(context: { request: Request; env: Env }) {
     };
   });
 
-  // ✅ Correct response
+  // ✅ Response
   return json({
     ok: true,
     trips
   });
-}
-
-/* ---------- METHOD GUARD ---------- */
-
-export function onRequest() {
-  return methodNotAllowed(['GET']);
 }
