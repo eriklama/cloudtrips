@@ -585,7 +585,8 @@ if (!data) {
 }
 
 return normalizeFullTrip(data?.trip || data);
-
+}
+  
 async function saveTrip(trip) {
   if (!trip) {
     throw new Error('Invalid trip object');
@@ -1766,3 +1767,4 @@ document.addEventListener('DOMContentLoaded', init);
   window.openShareModal = openShareModal;
   window.closeShareModal = closeShareModal;
   window.copyShareLink = copyShareLink;
+})();
