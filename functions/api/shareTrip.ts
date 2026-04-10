@@ -15,7 +15,7 @@ export async function onRequestPost(context: {
 }) {
   const { request, env } = context;
 
-  const user = await requireUser(cntext);
+  const user = await requireUser(context);
   if (!user) {
     return error('Unauthorized.', 401);
   }
