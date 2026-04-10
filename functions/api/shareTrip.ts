@@ -15,7 +15,7 @@ export async function onRequestPost(context: {
 }) {
   const { request, env } = context;
 
-  const user = await requireUser(request, env);
+  const user = await requireUser(cntext);
   if (!user) {
     return error('Unauthorized.', 401);
   }
@@ -83,6 +83,9 @@ export async function onRequestPost(context: {
   }
 }
 
-export function onRequest() {
-  return methodNotAllowed(['POST']);
+export function onRequest(context: { request: Request; env: Env }) {
+  if (context.request.method !== 'POST') {
+    return methodNotAllowed(['POST']);
+  }
+  return onRequestPost(context);
 }
