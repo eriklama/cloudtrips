@@ -8,9 +8,32 @@ type UserRow = {
   password_hash: string;
 };
 
+const MAX_ATTEMPTS = 10;
+const WINDOW_SECONDS = 60 * 15; // 15 minutes
+
+async function checkRateLimit(env: Env, ip: string): Promise<boolean> {
+  const key = `login_attempts:${ip}`;
+  const current = await env.RATE_LIMIT_KV.get(key);
+  const attempts = current ? parseInt(current) : 0;
+
+  if (attempts >= MAX_ATTEMPTS) return false;
+
+  await env.RATE_LIMIT_KV.put(key, String(attempts + 1), {
+    expirationTtl: WINDOW_SECONDS
+  });
+
+  return true;
+}
+
 export async function onRequestPost(context: { request: Request; env: Env }) {
   try {
     const { request, env } = context;
+
+    const ip = request.headers.get('cf-connecting-ip') || 'unknown';
+    const allowed = await checkRateLimit(env, ip);
+    if (!allowed) {
+      return error('Too many login attempts. Please try again in 15 minutes.', 429);
+    }
 
     let body: any;
     try {
