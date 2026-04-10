@@ -791,12 +791,19 @@ async function saveTrip(trip) {
       return;
     }
 
+    // update UI immediately
+    const previousName = trip.name;
+    trip.name = trimmed;
+    renderTripList();
+
     try {
       const fullTrip = await fetchTrip(tripId);
       fullTrip.name = trimmed;
       await saveTrip(fullTrip);
-      await loadTrips();
     } catch (error) {
+      // roll back on failure
+      trip.name = previousName;
+      renderTripList();
       console.error(error);
       alert(`Failed to rename trip.${error?.message ? `\n${error.message}` : ''}`);
     }
