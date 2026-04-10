@@ -804,13 +804,18 @@ async function saveTrip(trip) {
 
   async function deleteTrip(tripId) {
     const trip = state.trips.find((item) => String(item.id) === String(tripId));
-    const confirmed = confirm(`Delete trip "${trip?.name || 'this trip'}"?`);
+    const confirmed = confirm(`Delete trip \"${trip?.name || 'this trip'}\"?`);
     if (!confirmed) return;
+
+    const previousTrips = [...state.trips];
+    state.trips = state.trips.filter((item) => String(item.id) !== String(tripId));
+    renderTripList();
 
     try {
       await apiDelete(API.DELETE_TRIP, { id: tripId });
-      await loadTrips();
     } catch (error) {
+      state.trips = previousTrips;
+      renderTripList();
       console.error(error);
       alert(`Failed to delete trip.${error?.message ? `\n${error.message}` : ''}`);
     }
