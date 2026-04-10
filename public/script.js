@@ -450,7 +450,10 @@ async function apiFetch(url, options = {}) {
   });
 
   // ✅ Handle unauthorized (DO NOT redirect here)
- if (response.status === 401) {
+  const contentType = response.headers.get('content-type') || '';
+  const isJson = contentType.includes('application/json');
+  
+  if (response.status === 401) {
   console.warn('401 Unauthorized from API:', url);
 
   // ✅ Allow shared (guest) access
@@ -462,8 +465,6 @@ async function apiFetch(url, options = {}) {
   throw new Error('Unauthorized');
 }
 
-  const contentType = response.headers.get('content-type') || '';
-  const isJson = contentType.includes('application/json');
 
   // ❌ Handle other errors
   if (!response.ok) {
