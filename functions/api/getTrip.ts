@@ -120,6 +120,9 @@ export async function onRequestGet(context: {
   }
 }
 
-export function onRequest() {
-  return methodNotAllowed(['GET']);
+export function onRequest(context: { request: Request; env: Env }) {
+  if (context.request.method !== 'GET') {
+    return methodNotAllowed(['GET']);
+  }
+  return onRequestGet(context);
 }
