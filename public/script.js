@@ -455,7 +455,8 @@ async function apiFetch(url, options = {}) {
 
   // ✅ Allow shared (guest) access
   if (isGuestView()) {
-    return null;
+    const body = isJson ? await response.json().catch(() => null) : null;
+    throw new Error(body?.error || 'This shared link is invalid or has expired.');
   }
 
   throw new Error('Unauthorized');
