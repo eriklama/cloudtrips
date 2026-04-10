@@ -96,12 +96,12 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
     const newId = crypto.randomUUID();
 
     await env.DB
-      .prepare(`
-        INSERT INTO trips (id, user_id, name, activities_json)
-        VALUES (?, ?, ?, ?)
-      `)
-      .bind(newId, user.id, name, activitiesJson)
-      .run();
+  .prepare(`
+    INSERT INTO trips (id, user_id, name, activities_json, created_at)
+    VALUES (?, ?, ?, ?, datetime('now'))
+  `)
+  .bind(newId, user.id, name, activitiesJson)
+  .run();
 
     return json({
       ok: true,
