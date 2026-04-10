@@ -12,8 +12,31 @@ type UserRow = {
   id: string;
 };
 
+const MAX_ATTEMPTS = 5;
+const WINDOW_SECONDS = 60 * 15; // 15 minutes
+
+async function checkRateLimit(env: Env, ip: string): Promise<boolean> {
+  const key = `signup_attempts:${ip}`;
+  const current = await env.RATE_LIMIT_KV.get(key);
+  const attempts = current ? parseInt(current) : 0;
+
+  if (attempts >= MAX_ATTEMPTS) return false;
+
+  await env.RATE_LIMIT_KV.put(key, String(attempts + 1), {
+    expirationTtl: WINDOW_SECONDS
+  });
+
+  return true;
+}
+
 export async function onRequestPost(context: { request: Request; env: Env }) {
   const { request, env } = context;
+
+  const ip = request.headers.get('cf-connecting-ip') || 'unknown';
+  const allowed = await checkRateLimit(env, ip);
+  if (!allowed) {
+    return error('Too many signup attempts. Please try again in 15 minutes.', 429);
+  }
 
   // =========================
   // PARSE BODY
@@ -61,7 +84,6 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
     // CREATE USER
     // =========================
     const userId = crypto.randomUUID();
-
     const passwordHash = await hashPassword(password, env);
 
     await env.DB
@@ -91,7 +113,6 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
         email
       }
     });
-
   } catch (err: any) {
     console.error('SIGNUP ERROR:', err);
     return error(err?.message || 'Signup failed.', 500);
