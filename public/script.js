@@ -1775,4 +1775,5 @@ document.addEventListener('DOMContentLoaded', init);
   window.openShareModal = openShareModal;
   window.closeShareModal = closeShareModal;
   window.copyShareLink = copyShareLink;
+  window.logout = logout;
 })();
