@@ -513,7 +513,7 @@ async function requireAuth() {
   let res;
 
   try {
-    res = await fetch('/api/getTrips', {
+    res = await fetch('/api/me', {
       headers: {
         Authorization: 'Bearer ' + token
       }
