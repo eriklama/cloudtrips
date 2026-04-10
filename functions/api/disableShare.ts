@@ -42,7 +42,7 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
 
     await env.DB
       .prepare(`
-        UPDATE trip_share_tokens
+        UPDATE trip_shares
         SET revoked_at = CURRENT_TIMESTAMP
         WHERE trip_id = ?
           AND revoked_at IS NULL
