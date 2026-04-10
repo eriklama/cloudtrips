@@ -98,6 +98,9 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
   }
 }
 
-export function onRequest() {
-  return methodNotAllowed(['POST']);
+export function onRequest(context: { request: Request; env: Env }) {
+  if (context.request.method !== 'POST') {
+    return methodNotAllowed(['POST']);
+  }
+  return onRequestPost(context);
 }
