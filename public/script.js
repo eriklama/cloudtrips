@@ -539,6 +539,12 @@ async function requireAuth() {
   // ✅ Auth is valid
   return true;
 }
+
+  function logout() {
+  localStorage.removeItem('cloudtrips_auth_token');
+  localStorage.removeItem('cloudtrips_auth_user');
+  window.location.href = '/login.html';
+}
   
 /* =========================
  * API HELPERS
