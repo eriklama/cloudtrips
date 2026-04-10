@@ -4,6 +4,7 @@ export interface Env {
   DB: D1Database;
   JWT_SECRET: string;
   PASSWORD_PEPPER?: string;
+  RATE_LIMIT_KV: KVNamespace;
 }
 
 export interface AuthUser {
