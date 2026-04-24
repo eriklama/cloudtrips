@@ -106,33 +106,10 @@
 
 </div>
 
-<!-- ✅ AUTH FIRST -->
 <script src="/helpers.js"></script>
 <script src="/auth.js"></script>
 <script src="/api.js"></script>
 <script src="/script.js"></script>
-
-<script>
-  document.addEventListener('DOMContentLoaded', async () => {
-
-    // 🔐 Ensure user is authenticated
-    if (typeof requireAuth === 'function') {
-      const user = await requireAuth();
-      if (!user) return;
-    }
-
-    // 🧭 Render dynamic nav (Trip / Costs)
-    if (typeof renderHeaderNav === 'function') {
-      renderHeaderNav('timeline');
-    }
-
-    // 🎨 Icons
-    if (window.lucide) {
-      window.lucide.createIcons();
-    }
-
-  });
-</script>
 
 </body>
 </html>

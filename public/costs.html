@@ -73,118 +73,95 @@
 <!-- MAIN -->
 <main class="max-w-6xl mx-auto px-4 py-6 sm:py-8 pb-20 overflow-x-hidden">
 
-<!-- HERO -->
-<section class="mb-4 sm:mb-6 flex flex-col gap-3 sm:gap-4 rounded-2xl border border-slate-800 bg-slate-900 p-4 sm:p-6 shadow-soft lg:flex-row lg:items-center lg:justify-between">
+  <!-- HERO -->
+  <section class="mb-4 sm:mb-6 flex flex-col gap-3 sm:gap-4 rounded-2xl border border-slate-800 bg-slate-900 p-4 sm:p-6 shadow-soft lg:flex-row lg:items-center lg:justify-between">
 
-  <div>
-    <div class="mb-2 inline-flex items-center gap-2 rounded-full bg-primary-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary-300">
-      <i data-lucide="badge-euro" class="h-3.5 w-3.5"></i>
-      Trip costs
-    </div>
-
-    <h2 id="costs-hero-title" class="text-xl sm:text-2xl font-semibold tracking-tight">
-      Costs
-    </h2>
-
-    <p class="mt-1 sm:mt-2 text-sm text-slate-400">
-      Track total spend and distance.
-    </p>
-  </div>
-
-</section>
-
-<!-- MAIN GRID -->
-<section class="grid gap-4 sm:gap-6 xl:grid-cols-[0.7fr_1.3fr]">
-
-  <!-- SUMMARY -->
-  <div class="rounded-2xl border border-slate-800 bg-slate-900 p-4 sm:p-5">
-
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 sm:mb-4">
-
-      <div class="text-base sm:text-lg font-semibold">
-        Total
+    <div>
+      <div class="mb-2 inline-flex items-center gap-2 rounded-full bg-primary-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary-300">
+        <i data-lucide="badge-euro" class="h-3.5 w-3.5"></i>
+        Trip costs
       </div>
 
-      <div class="flex flex-wrap gap-2 text-sm sm:text-lg font-semibold">
+      <h2 id="costs-hero-title" class="text-xl sm:text-2xl font-semibold tracking-tight">
+        Costs
+      </h2>
 
-        <div class="bg-slate-800 px-3 py-1.5 rounded-lg whitespace-nowrap">
-          <span id="totalCost">0</span>
+      <p class="mt-1 sm:mt-2 text-sm text-slate-400">
+        Track total spend and distance.
+      </p>
+    </div>
+
+  </section>
+
+  <!-- MAIN GRID -->
+  <section class="grid gap-4 sm:gap-6 xl:grid-cols-[0.7fr_1.3fr]">
+
+    <!-- SUMMARY -->
+    <div class="rounded-2xl border border-slate-800 bg-slate-900 p-4 sm:p-5">
+
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 sm:mb-4">
+
+        <div class="text-base sm:text-lg font-semibold">
+          Total
         </div>
 
-        <div class="bg-slate-800 px-3 py-1.5 rounded-lg whitespace-nowrap">
-          <span id="totalKm">0 km</span>
+        <div class="flex flex-wrap gap-2 text-sm sm:text-lg font-semibold">
+
+          <div class="bg-slate-800 px-3 py-1.5 rounded-lg whitespace-nowrap">
+            <span id="totalCost">0</span>
+          </div>
+
+          <div class="bg-slate-800 px-3 py-1.5 rounded-lg whitespace-nowrap">
+            <span id="totalKm">0 km</span>
+          </div>
+
         </div>
+
+      </div>
+
+      <div id="cost-summary" class="space-y-2 text-sm break-words"></div>
+
+    </div>
+
+    <!-- TABLE -->
+    <div class="rounded-2xl border border-slate-800 bg-slate-900 p-4 sm:p-5">
+
+      <h3 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4">
+        Detailed costs
+      </h3>
+
+      <div class="overflow-x-auto">
+
+        <table class="min-w-full table-fixed border-separate border-spacing-y-2 text-sm">
+
+          <thead class="hidden sm:table-header-group">
+            <tr class="text-left text-xs sm:text-sm text-slate-400">
+              <th class="px-2 py-1">Activity</th>
+              <th class="px-2 py-1">Type</th>
+              <th class="px-2 py-1">Start</th>
+              <th class="px-2 py-1 text-right">Cost</th>
+              <th class="px-2 py-1 text-right">KM</th>
+            </tr>
+          </thead>
+
+          <tbody id="cost-table" class="text-slate-200"></tbody>
+
+        </table>
 
       </div>
 
     </div>
 
-    <div id="cost-summary" class="space-y-2 text-sm break-words"></div>
+  </section>
 
-  </div>
-
-  <!-- TABLE -->
-  <div class="rounded-2xl border border-slate-800 bg-slate-900 p-4 sm:p-5">
-
-    <h3 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4">
-      Detailed costs
-    </h3>
-
-    <div class="overflow-x-auto">
-
-      <table class="min-w-full table-fixed border-separate border-spacing-y-2 text-sm">
-
-        <thead class="hidden sm:table-header-group">
-          <tr class="text-left text-xs sm:text-sm text-slate-400">
-            <th class="px-2 py-1">Activity</th>
-            <th class="px-2 py-1">Type</th>
-            <th class="px-2 py-1">Start</th>
-            <th class="px-2 py-1 text-right">Cost</th>
-            <th class="px-2 py-1 text-right">KM</th>
-          </tr>
-        </thead>
-
-        <!-- JS FILLS THIS -->
-        <tbody id="cost-table" class="text-slate-200"></tbody>
-
-      </table>
-
-    </div>
-
-  </div>
-
-</section>
 </main>
 
 </div>
 
-<!-- ✅ AUTH FIRST -->
 <script src="/helpers.js"></script>
 <script src="/auth.js"></script>
 <script src="/api.js"></script>
 <script src="/script.js"></script>
-
-<script>
-document.addEventListener('DOMContentLoaded', async () => {
-
-  // 🔐 Protect page
-  if (typeof requireAuth === 'function') {
-    const user = await requireAuth();
-    if (!user) return;
-  }
-
-  // 🧭 Navigation
-  if (typeof renderHeaderNav === 'function') {
-    renderHeaderNav('costs');
-  }
-
-  // 🎨 Icons
-  if (window.lucide) {
-    lucide.createIcons();
-  }
-
-});
-</script>
 
 </body>
 </html>
