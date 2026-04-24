@@ -21,6 +21,11 @@ function setText(id, text) {
  * GENERAL HELPERS
  * ========================= */
 
+function getTripIdFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('id');
+}
+
 function safeArray(value) {
   return Array.isArray(value) ? value : [];
 }
