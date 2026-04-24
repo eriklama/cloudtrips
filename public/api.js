@@ -94,7 +94,12 @@ function apiDelete(url, payload) {
   });
 }
 
-async function fetchTrip(tripId) {
+async function fetchTrip(tripId, { forceRefresh = false } = {}) {
+  if (!forceRefresh) {
+    const cached = getTripFromCache(tripId);
+    if (cached) return cached;
+  }
+
   const url = `${API.GET_TRIP}?id=${encodeURIComponent(tripId)}`;
   const data = await apiGet(url);
 
@@ -102,7 +107,9 @@ async function fetchTrip(tripId) {
     throw new Error('Failed to load trip (unauthorized or missing)');
   }
 
-  return normalizeFullTrip(data?.trip || data);
+  const trip = normalizeFullTrip(data?.trip || data);
+  saveTripToCache(trip);
+  return trip;
 }
 
 async function saveTrip(trip) {
@@ -129,5 +136,7 @@ async function saveTrip(trip) {
     })
   };
 
-  return apiPost(API.SAVE_TRIP, payload);
+  const result = await apiPost(API.SAVE_TRIP, payload);
+  saveTripToCache(trip);
+  return result;
 }

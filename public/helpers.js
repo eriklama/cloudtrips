@@ -327,3 +327,32 @@ function applySharedViewUi(pageTitleId, pageHeroTitleId) {
     element.appendChild(badge);
   });
 }
+
+/* =========================
+ * TRIP CACHE
+ * ========================= */
+
+function saveTripToCache(trip) {
+  try {
+    sessionStorage.setItem(`trip_cache_${trip.id}`, JSON.stringify(trip));
+  } catch {
+    // ignore storage errors
+  }
+}
+
+function getTripFromCache(tripId) {
+  try {
+    const cached = sessionStorage.getItem(`trip_cache_${tripId}`);
+    return cached ? JSON.parse(cached) : null;
+  } catch {
+    return null;
+  }
+}
+
+function clearTripCache(tripId) {
+  try {
+    sessionStorage.removeItem(`trip_cache_${tripId}`);
+  } catch {
+    // ignore
+  }
+}

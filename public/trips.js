@@ -90,7 +90,7 @@ async function renameTrip(tripId) {
   renderTripList();
 
   try {
-    const fullTrip = await fetchTrip(tripId);
+    const fullTrip = await fetchTrip(tripId, { forceRefresh: true });
     fullTrip.name = trimmed;
     await saveTrip(fullTrip);
   } catch (error) {
