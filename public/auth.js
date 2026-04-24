@@ -84,6 +84,9 @@ async function parseApiResponse(response) {
 async function requireAuth() {
   if (isAuthPage()) return null;
 
+  // ✅ allow guest/shared access without token
+  if (isGuestView()) return null;
+
   const token = getAuthToken();
   if (!token) {
     redirectToLogin();
