@@ -432,4 +432,4 @@ window.renderHeaderNav = renderHeaderNav;
 window.openShareModal = openShareModal;
 window.closeShareModal = closeShareModal;
 window.copyShareLink = copyShareLink;
-window.logout = logout;
+/* window.logout = logout; */

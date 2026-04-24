@@ -1,251 +1,202 @@
-import { SignJWT, jwtVerify } from 'jose';
+const AUTH_TOKEN_KEY = 'cloudtrips_auth_token';
+const AUTH_USER_KEY = 'cloudtrips_auth_user';
 
-export interface Env {
-  DB: D1Database;
-  JWT_SECRET: string;
-  PASSWORD_PEPPER?: string;
+function getAuthToken() {
+  return localStorage.getItem(AUTH_TOKEN_KEY) || '';
 }
 
-export interface AuthUser {
-  id: string;
-  email: string;
+function setAuthSession(token, user) {
+  localStorage.setItem(AUTH_TOKEN_KEY, token);
+  localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user || null));
 }
 
-const encoder = new TextEncoder();
-
-/* =====================================================
- * JWT HELPERS
- * ===================================================== */
-
-function getJwtKey(secret: string): Uint8Array {
-  return encoder.encode(secret);
+function clearAuthSession() {
+  localStorage.removeItem(AUTH_TOKEN_KEY);
+  localStorage.removeItem(AUTH_USER_KEY);
 }
 
-export function getBearerToken(request: Request): string | null {
-  const auth =
-    request.headers.get('authorization') ||
-    request.headers.get('Authorization') ||
-    '';
-
-  if (!auth.startsWith('Bearer ')) return null;
-  return auth.slice(7).trim() || null;
+function getStoredUser() {
+  try {
+    return JSON.parse(localStorage.getItem(AUTH_USER_KEY) || 'null');
+  } catch {
+    return null;
+  }
 }
 
-/* =====================================================
- * PASSWORD HELPERS
- * ===================================================== */
-
-function base64UrlFromBytes(bytes: Uint8Array): string {
-  let binary = '';
-  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+function isAuthPage() {
+  const path = location.pathname;
+  return path.endsWith('/login.html') || path.endsWith('/signup.html');
 }
 
-function bytesFromBase64Url(input: string): Uint8Array {
-  const base64 =
-    input.replace(/-/g, '+').replace(/_/g, '/') +
-    '==='.slice((input.length + 3) % 4);
+function redirectToLogin() {
+  if (!isAuthPage()) {
+    window.location.href = '/login.html';
+  }
+}
 
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
+async function authFetch(url, options = {}) {
+  const token = getAuthToken();
+  const headers = new Headers(options.headers || {});
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+  if (!headers.has('Content-Type') && options.body) {
+    headers.set('Content-Type', 'application/json');
   }
 
-  return bytes;
+  const response = await fetch(url, {
+    ...options,
+    headers
+  });
+
+  if (response.status === 401 && !isAuthPage()) {
+    clearAuthSession();
+    redirectToLogin();
+    throw new Error('Unauthorized');
+  }
+
+  return response;
 }
 
-function normalizeEmail(email: string): string {
-  return String(email || '').trim().toLowerCase();
-}
+async function parseApiResponse(response) {
+  const text = await response.text();
+  let data = null;
 
-export function isValidEmail(email: string): boolean {
-  const normalized = normalizeEmail(email);
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized);
-}
-
-export function normalizeUserEmail(email: string): string {
-  return normalizeEmail(email);
-}
-
-export function isStrongEnoughPassword(password: string): boolean {
-  return typeof password === 'string' && password.length >= 8;
-}
-
-export async function hashPassword(password: string, env: Env): Promise<string> {
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-  const pepper = env.PASSWORD_PEPPER || '';
-
-  const passwordMaterial = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(password + pepper),
-    'PBKDF2',
-    false,
-    ['deriveBits']
-  );
-
-  const iterations = 100000;
-
-  const derived = await crypto.subtle.deriveBits(
-    {
-      name: 'PBKDF2',
-      salt,
-      iterations,
-      hash: 'SHA-256'
-    },
-    passwordMaterial,
-    256
-  );
-
-  const hashBytes = new Uint8Array(derived);
-
-  return [
-    'pbkdf2_sha256',
-    String(iterations),
-    base64UrlFromBytes(salt),
-    base64UrlFromBytes(hashBytes)
-  ].join('$');
-}
-
-export async function verifyPassword(
-  password: string,
-  stored: string,
-  env: Env
-): Promise<boolean> {
-  try {
-    const [algo, iterationsStr, saltB64, hashB64] = String(stored).split('$');
-
-    if (algo !== 'pbkdf2_sha256') return false;
-
-    const iterations = Number(iterationsStr);
-    if (!iterations || iterations < 100000) return false;
-
-    const salt = bytesFromBase64Url(saltB64);
-    const expectedHash = bytesFromBase64Url(hashB64);
-
-    const pepper = env.PASSWORD_PEPPER || '';
-
-    const passwordMaterial = await crypto.subtle.importKey(
-      'raw',
-      encoder.encode(password + pepper),
-      'PBKDF2',
-      false,
-      ['deriveBits']
-    );
-
-    const derived = await crypto.subtle.deriveBits(
-      {
-        name: 'PBKDF2',
-        salt,
-        iterations,
-        hash: 'SHA-256'
-      },
-      passwordMaterial,
-      256
-    );
-
-    const actualHash = new Uint8Array(derived);
-
-    if (actualHash.length !== expectedHash.length) return false;
-
-    let diff = 0;
-    for (let i = 0; i < actualHash.length; i++) {
-      diff |= actualHash[i] ^ expectedHash[i];
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = text;
     }
-
-    return diff === 0;
-  } catch {
-    return false;
   }
-}
 
-/* =====================================================
- * JWT AUTH
- * ===================================================== */
-
-export async function createAuthToken(
-  user: AuthUser,
-  env: Env
-): Promise<string> {
-  return await new SignJWT({ email: user.email })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setSubject(user.id)
-    .setIssuedAt()
-    .setIssuer('cloudtrips')
-    .setAudience('cloudtrips')
-    .setExpirationTime('7d')
-    .sign(getJwtKey(env.JWT_SECRET));
-}
-
-export async function verifyAuthToken(
-  token: string,
-  env: Env
-): Promise<AuthUser | null> {
-  try {
-    const { payload } = await jwtVerify(token, getJwtKey(env.JWT_SECRET), {
-      issuer: 'cloudtrips',
-      audience: 'cloudtrips'
-    });
-
-    const id = typeof payload.sub === 'string' ? payload.sub : '';
-    const email = typeof payload.email === 'string' ? payload.email : '';
-
-    if (!id || !email) return null;
-
-    return { id, email };
-  } catch (err) {
-    console.warn('JWT verify failed:', err);
-    return null;
+  if (!response.ok) {
+    const message =
+      (data && typeof data === 'object' && data.error) ||
+      (typeof data === 'string' && data) ||
+      `Request failed: ${response.status}`;
+    throw new Error(message);
   }
+
+  return data;
 }
 
-/* =====================================================
- * REQUIRE USER (STRICT)
- * ===================================================== */
+async function requireAuth() {
+  if (isAuthPage()) return null;
 
-export async function requireUser(context: {
-  request: Request;
-  env: Env;
-}): Promise<AuthUser> {
-  const { request, env } = context;
-
-  const token = getBearerToken(request);
+  const token = getAuthToken();
   if (!token) {
-    throw new Error('Missing Authorization token');
+    redirectToLogin();
+    return null;
   }
 
-  const jwtUser = await verifyAuthToken(token, env);
-  if (!jwtUser) {
-    throw new Error('Invalid or expired token');
-  }
-
-  const row = await env.DB
-    .prepare(`SELECT id, email FROM users WHERE id = ? LIMIT 1`)
-    .bind(jwtUser.id)
-    .first<{ id: string; email: string }>();
-
-  if (!row) {
-    throw new Error('User not found');
-  }
-
-  return {
-    id: row.id,
-    email: row.email
-  };
-}
-
-/* =====================================================
- * TRY GET USER (SAFE VERSION) ✅ ADD THIS HERE
- * ===================================================== */
-
-export async function tryGetUser(context: {
-  request: Request;
-  env: Env;
-}): Promise<AuthUser | null> {
   try {
-    return await requireUser(context);
+    const data = await apiGet('/api/me');
+    updateAuthUi(data.user);
+    return data.user;
   } catch {
+    clearAuthSession();
+    redirectToLogin();
     return null;
   }
 }
+
+function updateAuthUi(user) {
+  const emailEl = document.getElementById('auth-user-email');
+  if (emailEl) {
+    emailEl.textContent = user?.email || '';
+  }
+}
+
+function logout() {
+  clearAuthSession();
+  window.location.href = '/login.html';
+}
+
+function bindLogoutButton() {
+  const logoutButton = document.getElementById('logout-button');
+  if (!logoutButton) return;
+
+  logoutButton.addEventListener('click', logout);
+}
+
+async function handleLoginSubmit(event) {
+  event.preventDefault();
+
+  const form = event.currentTarget;
+  const email = form.querySelector('input[name="email"]').value.trim();
+  const password = form.querySelector('input[name="password"]').value;
+  const errorBox = document.getElementById('auth-error');
+  const submitButton = form.querySelector('button[type="submit"]');
+
+  errorBox.textContent = '';
+  submitButton.disabled = true;
+
+  try {
+    const response = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await parseApiResponse(response);
+    setAuthSession(data.token, data.user);
+    window.location.href = '/';
+  } catch (err) {
+    errorBox.textContent = err.message || 'Login failed.';
+  } finally {
+    submitButton.disabled = false;
+  }
+}
+
+async function handleSignupSubmit(event) {
+  event.preventDefault();
+
+  const form = event.currentTarget;
+  const email = form.querySelector('input[name="email"]').value.trim();
+  const password = form.querySelector('input[name="password"]').value;
+  const confirmPassword = form.querySelector('input[name="confirmPassword"]').value;
+  const errorBox = document.getElementById('auth-error');
+  const submitButton = form.querySelector('button[type="submit"]');
+
+  errorBox.textContent = '';
+
+  if (password !== confirmPassword) {
+    errorBox.textContent = 'Passwords do not match.';
+    return;
+  }
+
+  submitButton.disabled = true;
+
+  try {
+    const response = await fetch('/api/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await parseApiResponse(response);
+    setAuthSession(data.token, data.user);
+    window.location.href = '/';
+  } catch (err) {
+    errorBox.textContent = err.message || 'Signup failed.';
+  } finally {
+    submitButton.disabled = false;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  bindLogoutButton();
+
+  const loginForm = document.getElementById('login-form');
+  if (loginForm) {
+    loginForm.addEventListener('submit', handleLoginSubmit);
+    return;
+  }
+
+  const signupForm = document.getElementById('signup-form');
+  if (signupForm) {
+    signupForm.addEventListener('submit', handleSignupSubmit);
+    return;
+  }
+
+  await requireAuth();
+});
