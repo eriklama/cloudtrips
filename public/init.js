@@ -395,7 +395,7 @@ async function init() {
     const hasEl = (id) => Boolean(document.getElementById(id));
 
     if (hasEl('trip-list')) await loadTrips();
-    if (hasEl('activities')) await loadTripPage(); renderHeaderNav('trip'); }
+    if (hasEl('activities')) { await loadTripPage(); renderHeaderNav('trip'); }
     if (hasEl('timeline')) { await loadTimeline(); renderHeaderNav('timeline'); }
     if (hasEl('cost-table')) { await loadCosts(); renderHeaderNav('costs'); }
 
