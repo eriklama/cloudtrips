@@ -1,4 +1,3 @@
-
 (() => {
   'use strict';
 
@@ -7,10 +6,11 @@
    * ========================= */
 
   const API = {
-    GET_TRIPS: '/getTrips',
-    GET_TRIP: '/getTrip',
-    SAVE_TRIP: '/saveTrip',
-    DELETE_TRIP: '/deleteTrip'
+    GET_TRIPS: '/api/getTrips',
+    GET_TRIP: '/api/getTrip',
+    SAVE_TRIP: '/api/saveTrip',
+    DELETE_TRIP: '/api/deleteTrip',
+    SHARE_TRIP: '/api/shareTrip'
   };
 
   const state = {
@@ -33,6 +33,61 @@
     if (element) {
       element.textContent = text;
     }
+  }
+
+  /* =========================
+   * SHARE / GUEST MODE
+   * ========================= */
+
+  function getShareToken() {
+    return new URLSearchParams(window.location.search).get('token') || '';
+  }
+
+  function isGuestView() {
+    return Boolean(getShareToken());
+  }
+
+  function buildTripPageUrl(page, tripId) {
+    const token = getShareToken();
+    const params = new URLSearchParams();
+    params.set('id', tripId);
+
+    if (token) {
+      params.set('token', token);
+    }
+
+    return `/${page}?${params.toString()}`;
+  }
+
+  function applySharedViewUi(pageTitleId, pageHeroTitleId) {
+    if (!isGuestView()) return;
+
+    const form = document.getElementById('activity-form');
+    if (form) {
+      form.style.display = 'none';
+    }
+
+    const addBtn = document.querySelector('button[onclick="addActivity()"]');
+    if (addBtn) {
+      addBtn.style.display = 'none';
+    }
+
+    const titleTargets = [pageTitleId, pageHeroTitleId].filter(Boolean);
+
+    titleTargets.forEach((id) => {
+      const element = document.getElementById(id);
+      if (!element) return;
+
+      const existingBadge = element.querySelector('[data-shared-view-badge]');
+      if (existingBadge) return;
+
+      const badge = document.createElement('span');
+      badge.setAttribute('data-shared-view-badge', 'true');
+      badge.className = 'ml-2 inline-flex items-center rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-300 align-middle';
+      badge.textContent = 'Shared view';
+
+      element.appendChild(badge);
+    });
   }
 
   /* =========================
@@ -354,6 +409,7 @@
     return {
       id: raw.id ?? raw.tripId ?? raw._id ?? '',
       name: raw.name ?? raw.title ?? 'Untitled trip',
+      activitiesCount: Number(raw.activitiesCount ?? normalizedActivities.length ?? 0),
       startDate,
       endDate
     };
@@ -377,120 +433,194 @@
   }
 
   /* =========================
-   * API (AUTH VERSION)
-   * ========================= */
+ * API (AUTH VERSION)
+ * ========================= */
 
-  async function apiFetch(url, options = {}) {
-    const token = window.localStorage.getItem('cloudtrips_auth_token');
+async function apiFetch(url, options = {}) {
+  const authToken = window.localStorage.getItem('cloudtrips_auth_token');
 
-    const headers = {
-      ...(options.headers || {}),
-      ...(token ? { Authorization: `Bearer ${token}` } : {})
-    };
+  const headers = {
+    ...(options.headers || {}),
+    ...(authToken ? { Authorization: `Bearer ${authToken}` } : {})
+  };
 
-    const response = await fetch(url, {
-      ...options,
-      headers
-    });
+  const response = await fetch(url, {
+    ...options,
+    headers
+  });
 
-    if (response.status === 401) {
-      try {
-        window.localStorage.removeItem('cloudtrips_auth_token');
-        window.localStorage.removeItem('cloudtrips_auth_user');
-      } catch {
-        // ignore storage errors
-      }
+  // ✅ Handle unauthorized (DO NOT redirect here)
+  const contentType = response.headers.get('content-type') || '';
+  const isJson = contentType.includes('application/json');
+  
+  if (response.status === 401) {
+  console.warn('401 Unauthorized from API:', url);
 
-      window.location.href = '/login.html';
-      throw new Error('Unauthorized');
-    }
+  // ✅ Allow shared (guest) access
+  if (isGuestView()) {
+    const body = isJson ? await response.json().catch(() => null) : null;
+    throw new Error(body?.error || 'This shared link is invalid or has expired.');
+  }
 
-    const contentType = response.headers.get('content-type') || '';
-    const isJson = contentType.includes('application/json');
+  throw new Error('Unauthorized');
+}
 
-    if (!response.ok) {
-      let message = `Request failed: ${response.status}`;
 
-      try {
-        if (isJson) {
-          const errorPayload = await response.json();
-          message = errorPayload?.error || errorPayload?.message || message;
-        } else {
-          const text = await response.text();
-          if (text) message = text;
-        }
-      } catch {
-        // ignore parse errors
-      }
-
-      throw new Error(message);
-    }
-
-    if (!isJson) {
-      return null;
-    }
+  // ❌ Handle other errors
+  if (!response.ok) {
+    let message = `Request failed: ${response.status}`;
 
     try {
-      return await response.json();
+      if (isJson) {
+        const errorPayload = await response.json();
+        message = errorPayload?.error || errorPayload?.message || message;
+      } else {
+        const text = await response.text();
+        if (text) message = text;
+      }
     } catch {
-      return null;
-    }
-  }
-
-  function apiGet(url) {
-    return apiFetch(url);
-  }
-
-  function apiPost(url, payload) {
-    return apiFetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
-  }
-
-  function apiDelete(url, payload) {
-    return apiFetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload || {})
-    });
-  }
-
-  async function fetchTrip(tripId) {
-    const data = await apiGet(`${API.GET_TRIP}?id=${encodeURIComponent(tripId)}`);
-    return normalizeFullTrip(data);
-  }
-
-  async function saveTrip(trip) {
-    if (!trip || !trip.id) {
-      throw new Error('Invalid trip object');
+      // ignore parsing errors
     }
 
-    const payload = {
-      id: trip.id,
-      name: trip.name || 'Untitled trip',
-      activities: safeArray(trip.activities).map((activity) => {
-        const normalized = normalizeActivity(activity);
-        return {
-          id: normalized.id || uuid(),
-          type: normalized.type || 'other',
-          location: normalized.location || normalized.name || '',
-          startDate: normalized.startDate || '',
-          endDate: normalized.endDate || '',
-          cost: Number(normalized.cost || 0),
-          distance: Number(normalized.distance || normalized.km || 0),
-          notes: normalized.notes || ''
-        };
-      })
-    };
-
-    return apiPost(API.SAVE_TRIP, payload);
+    throw new Error(message);
   }
+
+  // ✅ No JSON → return null
+  if (!isJson) return null;
+
+  // ✅ Safe JSON parse
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+/* =========================
+ * AUTH
+ * ========================= */
+
+async function requireAuth() {
+  const token = localStorage.getItem('cloudtrips_auth_token');
+
+  if (!token) {
+  if (isGuestView()) {
+    return true; // allow shared access
+  }
+  throw new Error('No token');
+}
+
+  let res;
+
+  try {
+    res = await fetch('/api/me', {
+      headers: {
+        Authorization: 'Bearer ' + token
+      }
+    });
+  } catch (err) {
+    console.error('Auth check network error:', err);
+
+    // ❗ Do NOT log user out on network issues
+    return true;
+  }
+
+  // ✅ Only treat 401 as auth failure
+  if (res.status === 401) {
+    throw new Error('Unauthorized');
+  }
+
+  // ⚠️ Other errors → log but allow app to continue
+  if (!res.ok) {
+    console.warn('Auth check failed but not 401:', res.status);
+    return true;
+  }
+
+  // ✅ Auth is valid
+  return true;
+}
+
+  function logout() {
+  localStorage.removeItem('cloudtrips_auth_token');
+  localStorage.removeItem('cloudtrips_auth_user');
+  window.location.href = '/login.html';
+}
+  
+/* =========================
+ * API HELPERS
+ * ========================= */
+
+function apiGet(url) {
+  const token = getShareToken();
+
+  const finalUrl = token
+    ? `${url}${url.includes('?') ? '&' : '?'}token=${encodeURIComponent(token)}`
+    : url;
+
+  return apiFetch(finalUrl);
+}
+
+function apiPost(url, payload) {
+  return apiFetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  });
+}
+
+function apiDelete(url, payload) {
+  return apiFetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload || {})
+  });
+}
+
+/* =========================
+ * TRIP API
+ * ========================= */
+
+async function fetchTrip(tripId) {
+  const url = `${API.GET_TRIP}?id=${encodeURIComponent(tripId)}`;
+  const data = await apiGet(url);
+
+if (!data) {
+  throw new Error('Failed to load trip (unauthorized or missing)');
+}
+
+return normalizeFullTrip(data?.trip || data);
+}
+  
+async function saveTrip(trip) {
+  if (!trip) {
+    throw new Error('Invalid trip object');
+  }
+
+  const payload = {
+    ...(trip.id ? { id: trip.id } : {}),
+    name: trip.name || 'Untitled trip',
+    activities: safeArray(trip.activities).map((activity) => {
+      const normalized = normalizeActivity(activity);
+
+      return {
+        id: normalized.id || uuid(),
+        type: normalized.type || 'other',
+        location: normalized.location || normalized.name || '',
+        startDate: normalized.startDate || '',
+        endDate: normalized.endDate || '',
+        cost: Number(normalized.cost || 0),
+        distance: Number(normalized.distance || normalized.km || 0),
+        notes: normalized.notes || ''
+      };
+    })
+  };
+
+  return apiPost(API.SAVE_TRIP, payload);
+}
 
   /* =========================
    * UI PARTIALS
@@ -623,14 +753,11 @@
       return;
     }
 
-    const newTrip = {
-      id: uuid(),
-      name,
-      activities: []
-    };
-
     try {
-      await apiPost(API.SAVE_TRIP, newTrip);
+      await apiPost(API.SAVE_TRIP, {
+        name,
+        activities: []
+      });
       input.value = '';
       await loadTrips();
     } catch (error) {
@@ -640,7 +767,7 @@
   }
 
   function openTrip(tripId) {
-    window.location.href = `/trip.html?id=${encodeURIComponent(tripId)}`;
+    window.location.href = buildTripPageUrl('trip.html', tripId);
   }
 
   async function renameTrip(tripId) {
@@ -664,12 +791,19 @@
       return;
     }
 
+    // update UI immediately
+    const previousName = trip.name;
+    trip.name = trimmed;
+    renderTripList();
+
     try {
       const fullTrip = await fetchTrip(tripId);
       fullTrip.name = trimmed;
       await saveTrip(fullTrip);
-      await loadTrips();
     } catch (error) {
+      // roll back on failure
+      trip.name = previousName;
+      renderTripList();
       console.error(error);
       alert(`Failed to rename trip.${error?.message ? `\n${error.message}` : ''}`);
     }
@@ -677,13 +811,18 @@
 
   async function deleteTrip(tripId) {
     const trip = state.trips.find((item) => String(item.id) === String(tripId));
-    const confirmed = confirm(`Delete trip "${trip?.name || 'this trip'}"?`);
+    const confirmed = confirm(`Delete trip \"${trip?.name || 'this trip'}\"?`);
     if (!confirmed) return;
+
+    const previousTrips = [...state.trips];
+    state.trips = state.trips.filter((item) => String(item.id) !== String(tripId));
+    renderTripList();
 
     try {
       await apiDelete(API.DELETE_TRIP, { id: tripId });
-      await loadTrips();
     } catch (error) {
+      state.trips = previousTrips;
+      renderTripList();
       console.error(error);
       alert(`Failed to delete trip.${error?.message ? `\n${error.message}` : ''}`);
     }
@@ -704,6 +843,15 @@
       state.currentTrip = await fetchTrip(tripId);
       setText('trip-title', state.currentTrip.name || 'Trip');
       setText('trip-title-hero', state.currentTrip.name || 'Trip');
+      
+      applySharedViewUi('trip-title', 'trip-title-hero');
+
+      if (isGuestView()) {
+  const shareBtn = document.querySelector('button[onclick="openShareModal()"]');
+  if (shareBtn) {
+    shareBtn.style.display = 'none';
+  }
+}
       renderActivities();
     } catch (error) {
       console.error(error);
@@ -784,8 +932,10 @@
 
     if (!activities.length) {
       container.innerHTML = emptyState(
-        'No activities yet',
-        'Add your first activity to build the itinerary.',
+        isGuestView() ? 'No activities available' : 'No activities yet',
+        isGuestView()
+          ? 'This shared trip does not contain any activities yet.'
+          : 'Add your first activity to build the itinerary.',
         'calendar-plus'
       );
       refreshIcons();
@@ -840,16 +990,18 @@
               </div>
             </div>
 
-            <div class="flex gap-2">
-              <button onclick="editActivity('${escapeHtml(activity.id)}')" class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800">
-                <i data-lucide="pencil" class="h-4 w-4"></i>
-                Edit
-              </button>
-              <button onclick="deleteActivity('${escapeHtml(activity.id)}')" class="inline-flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 hover:bg-red-100 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20">
-                <i data-lucide="trash-2" class="h-4 w-4"></i>
-                Delete
-              </button>
-            </div>
+            ${!isGuestView() ? `
+              <div class="flex gap-2">
+                <button onclick="editActivity('${escapeHtml(activity.id)}')" class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800">
+                  <i data-lucide="pencil" class="h-4 w-4"></i>
+                  Edit
+                </button>
+                <button onclick="deleteActivity('${escapeHtml(activity.id)}')" class="inline-flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 hover:bg-red-100 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20">
+                  <i data-lucide="trash-2" class="h-4 w-4"></i>
+                  Delete
+                </button>
+              </div>
+            ` : ''}
           </div>
         </article>
       `;
@@ -859,6 +1011,11 @@
   }
 
   async function saveActivity() {
+    if (isGuestView()) {
+      alert('This trip is shared (view-only).');
+      return;
+    }
+
     if (!state.currentTrip) return;
 
     const data = getActivityFormData();
@@ -911,6 +1068,11 @@
   }
 
   function editActivity(activityId) {
+    if (isGuestView()) {
+      alert('This trip is shared (view-only).');
+      return;
+    }
+
     if (!state.currentTrip) return;
 
     const activity = state.currentTrip.activities.find((item) => String(item.id) === String(activityId));
@@ -932,6 +1094,11 @@
   }
 
   async function deleteActivity(activityId) {
+    if (isGuestView()) {
+      alert('This trip is shared (view-only).');
+      return;
+    }
+
     if (!state.currentTrip) return;
 
     const activity = state.currentTrip.activities.find((item) => String(item.id) === String(activityId));
@@ -1040,6 +1207,7 @@
       state.timelineView = getSavedTimelineView(tripId);
       setText('timeline-title', `${state.currentTrip.name} Timeline`);
       setText('timeline-hero-title', `${state.currentTrip.name} Timeline`);
+      applySharedViewUi('timeline-title', 'timeline-hero-title');
       renderTimelinePage();
     } catch (error) {
       console.error(error);
@@ -1272,6 +1440,7 @@
       state.currentTrip = await fetchTrip(tripId);
       setText('costs-title', `${state.currentTrip.name} Costs`);
       setText('costs-hero-title', `${state.currentTrip.name} Costs`);
+      applySharedViewUi('costs-title', 'costs-hero-title');
       renderCosts();
     } catch (error) {
       console.error(error);
@@ -1388,6 +1557,75 @@
     refreshIcons();
   }
 
+/* =========================
+ * SHARE
+ * ========================= */
+
+async function openShareModal() {
+  if (!state.currentTrip?.id) {
+    alert('Trip not loaded.');
+    return;
+  }
+
+  if (isGuestView()) {
+    alert('Shared viewers cannot create links.');
+    return;
+  }
+
+  const modal = document.getElementById('share-modal');
+  const input = document.getElementById('share-link');
+
+  if (!modal || !input) {
+    alert('Share modal missing.');
+    return;
+  }
+
+  try {
+    input.value = 'Creating link...';
+
+    const data = await apiPost(API.SHARE_TRIP, {
+      tripId: state.currentTrip.id
+    });
+
+    const shareUrl = data?.shareUrl
+      ? `${window.location.origin}${data.shareUrl}`
+      : '';
+
+    if (!shareUrl) throw new Error('No share link returned');
+
+    input.value = shareUrl;
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+
+  } catch (err) {
+    console.error(err);
+    alert('Failed to create share link');
+  }
+}
+
+function closeShareModal() {
+  const modal = document.getElementById('share-modal');
+  if (!modal) return;
+
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+
+async function copyShareLink() {
+  const input = document.getElementById('share-link');
+  if (!input || !input.value) return;
+
+  try {
+    await navigator.clipboard.writeText(input.value);
+    alert('Copied!');
+  } catch {
+    input.select();
+    document.execCommand('copy');
+    alert('Copied!');
+  }
+}
+
   /* =========================
    * NAVIGATION
    * ========================= */
@@ -1395,19 +1633,19 @@
   function goToTrip() {
     const tripId = getTripIdFromUrl();
     if (!tripId) return;
-    window.location.href = `/trip.html?id=${encodeURIComponent(tripId)}`;
+    window.location.href = buildTripPageUrl('trip.html', tripId);
   }
 
   function goToTimeline() {
     const tripId = getTripIdFromUrl();
     if (!tripId) return;
-    window.location.href = `/timeline.html?id=${encodeURIComponent(tripId)}`;
+    window.location.href = buildTripPageUrl('timeline.html', tripId);
   }
 
   function goToCosts() {
     const tripId = getTripIdFromUrl();
     if (!tripId) return;
-    window.location.href = `/costs.html?id=${encodeURIComponent(tripId)}`;
+    window.location.href = buildTripPageUrl('costs.html', tripId);
   }
 
   function goBack() {
@@ -1415,46 +1653,68 @@
   }
 
   function openPrintView() {
-    const tripId = new URLSearchParams(window.location.search).get('id');
-    if (!tripId) return;
-
-    window.open(`/print.html?id=${encodeURIComponent(tripId)}`, '_blank');
-  }
-
-  /* =========================
-   * APP INIT
-   * ========================= */
-
-  async function init() {
-    try {
-      if (typeof requireAuth === 'function') {
-        const user = await requireAuth();
-        if (!user) return;
-      }
-
-      if (hasEl('trip-list')) {
-        await loadTrips();
-      }
-
-      if (hasEl('activities')) {
-        await loadTripPage();
-      }
-
-      if (hasEl('timeline')) {
-        await loadTimeline();
-      }
-
-      if (hasEl('cost-table')) {
-        await loadCosts();
-      }
-    } catch (error) {
-      console.error(error);
+    if (!state.currentTrip) {
+      alert('Trip not loaded');
+      return;
     }
 
-    refreshIcons();
+    sessionStorage.setItem('print_trip', JSON.stringify(state.currentTrip));
+    window.open('/print.html', '_blank');
   }
 
-  document.addEventListener('DOMContentLoaded', init);
+ /* =========================
+ * APP INIT
+ * ========================= */
+
+async function init() {
+  try {
+    const onSharedPage = isGuestView();
+
+    // 🔐 AUTH CHECK (ONLY for non-shared pages)
+    if (!onSharedPage && typeof requireAuth === 'function') {
+      try {
+        const user = await requireAuth();
+        console.log('AUTH USER:', user);
+      } catch (e) {
+        console.warn('AUTH FAILED → redirecting to login', e);
+
+        // ❗ Clear broken session (optional but recommended)
+        try {
+          localStorage.removeItem('cloudtrips_auth_token');
+          localStorage.removeItem('cloudtrips_auth_user');
+        } catch {}
+
+        // 🚀 Redirect and STOP app execution
+        window.location.href = '/login.html';
+        return; // ⛔ CRITICAL: prevents further execution
+      }
+    }
+
+    // ✅ Only runs if auth succeeded
+    if (hasEl('trip-list')) {
+      await loadTrips();
+    }
+
+    if (hasEl('activities')) {
+      await loadTripPage();
+    }
+
+    if (hasEl('timeline')) {
+      await loadTimeline();
+    }
+
+    if (hasEl('cost-table')) {
+      await loadCosts();
+    }
+
+  } catch (error) {
+    console.error('INIT ERROR:', error);
+  }
+
+  refreshIcons();
+}
+
+document.addEventListener('DOMContentLoaded', init);
 
   /* =========================
    * HEADER NAVIGATION
@@ -1524,4 +1784,8 @@
   window.switchTimelineView = switchTimelineView;
   window.openPrintView = openPrintView;
   window.renderHeaderNav = renderHeaderNav;
+  window.openShareModal = openShareModal;
+  window.closeShareModal = closeShareModal;
+  window.copyShareLink = copyShareLink;
+  window.logout = logout;
 })();

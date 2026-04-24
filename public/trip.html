@@ -39,13 +39,18 @@
           Costs
         </button>
 
-        <!-- User -->
+        <!-- ✅ SHARE BUTTON -->
+        <button onclick="openShareModal()"
+          class="inline-flex items-center gap-2 rounded-xl border border-primary-500/30 bg-primary-500/10 px-3 py-2 text-sm text-primary-300 hover:bg-primary-500/20 transition">
+          <i data-lucide="share-2" class="w-4 h-4"></i>
+          Share
+        </button>
+
         <span id="auth-user-email"
           class="hidden sm:inline text-sm text-slate-400 truncate max-w-[160px]">
         </span>
 
-        <!-- Logout -->
-        <button id="logout-button"
+        <button id="logout-button" onclick="logout()"
           class="inline-flex items-center gap-1 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm hover:bg-slate-800 transition">
           <i data-lucide="log-out" class="w-4 h-4"></i>
           Logout
@@ -60,10 +65,17 @@
   <main class="max-w-6xl mx-auto px-4 py-5 pb-24">
 
     <!-- Add Activity -->
-    <div class="mb-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
+    <div id="activity-form" class="mb-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
 
-      <input id="activityType" placeholder="Type"
-        class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white placeholder-slate-400 outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
+      <select id="activityType"
+        class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500">
+        <option value="plane">✈️ Plane</option>
+        <option value="car">🚗 Car</option>
+        <option value="hike">🥾 Hike</option>
+        <option value="city">🏙️ City</option>
+        <option value="accommodation">🏨 Accommodation</option>
+        <option value="other">📍 Other</option>
+      </select>
 
       <input id="activityStart" type="datetime-local"
         class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
@@ -107,13 +119,11 @@
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
 
-  // 🔐 Protect page
   if (typeof requireAuth === 'function') {
     const user = await requireAuth();
     if (!user) return;
   }
 
-  // 🎨 Icons
   if (window.lucide) {
     lucide.createIcons();
   }

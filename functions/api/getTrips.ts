@@ -1,6 +1,6 @@
-import { requireUser } from './_lib/auth';
-import type { Env } from './_lib/auth';
-import { error, json, methodNotAllowed } from './_lib/http';
+import { requireUser } from '../_lib/auth';
+import type { Env } from '../_lib/auth';
+import { error, json, methodNotAllowed } from '../_lib/http';
 
 type TripRow = {
   id: string;
@@ -9,52 +9,76 @@ type TripRow = {
   created_at?: string | null;
 };
 
-export async function onRequestGet(context: { request: Request; env: Env }) {
-  const { request, env } = context;
+function safeParseActivities(value: string | null): any[] {
+  if (!value) return [];
 
-  const user = await requireUser(request, env);
-  if (!user) {
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function onRequestGet(context: { request: Request; env: Env }) {
+  const { env } = context;
+
+  let user: { id: string; email?: string };
+  try {
+    user = await requireUser(context);
+  } catch (err) {
+    console.warn('Auth failed (getTrips):', err);
     return error('Unauthorized.', 401);
   }
 
-  const result = await env.DB
-    .prepare(`
-      SELECT id, name, activities_json, created_at
-      FROM trips
-      WHERE user_id = ?
-      ORDER BY COALESCE(created_at, '') DESC, name ASC
-    `)
-    .bind(user.id)
-    .all<TripRow>();
+  try {
+    const result = await env.DB
+      .prepare(`
+        SELECT id, name, activities_json, created_at
+        FROM trips
+        WHERE user_id = ?
+        ORDER BY COALESCE(created_at, '') DESC, name ASC
+      `)
+      .bind(user.id)
+      .all<TripRow>();
 
-  const rows = Array.isArray(result.results) ? result.results : [];
+    const rows = Array.isArray(result?.results) ? result.results : [];
 
-  const trips = rows.map((row) => {
-    let activities: any[] = [];
-    try {
-      const parsed = JSON.parse(row.activities_json || '[]');
-      activities = Array.isArray(parsed) ? parsed : [];
-    } catch {
-      activities = [];
-    }
+    const trips = rows.map((row) => {
+      const activities = safeParseActivities(row.activities_json);
 
-    const sortedDates = activities
-      .map((a) => a?.startDate || '')
-      .filter(Boolean)
-      .sort();
+      const dated = activities
+        .map((a) => ({
+          startDate: String(a?.startDate || '').trim(),
+          endDate: String(a?.endDate || '').trim()
+        }))
+        .filter((a) => a.startDate || a.endDate);
 
-    return {
-      id: row.id,
-      name: row.name,
-      activitiesCount: activities.length,
-      startDate: sortedDates[0] || '',
-      endDate: sortedDates[sortedDates.length - 1] || ''
-    };
-  });
+      const startDates = dated.map((a) => a.startDate).filter(Boolean).sort();
+      const endDates = dated.map((a) => a.endDate).filter(Boolean).sort();
 
-  return json(trips);
+      return {
+        id: row.id,
+        name: row.name,
+        activitiesCount: activities.length,
+        startDate: startDates[0] || '',
+        endDate: endDates[endDates.length - 1] || startDates[startDates.length - 1] || ''
+      };
+    });
+
+    return json({
+      ok: true,
+      trips
+    });
+  } catch (err) {
+    console.error('DB error (getTrips):', err);
+    return error('Failed to load trips.', 500);
+  }
 }
 
-export function onRequest() {
-  return methodNotAllowed(['GET']);
+export function onRequest(context: { request: Request; env: Env }) {
+  if (context.request.method !== 'GET') {
+    return methodNotAllowed(['GET']);
+  }
+  return onRequestGet(context);
 }

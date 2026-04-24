@@ -10,42 +10,76 @@
 <body class="min-h-full bg-slate-950 text-slate-100 flex items-center justify-center">
 
   <div class="w-full max-w-sm bg-slate-900 p-6 rounded-2xl shadow-lg">
-    <h1 class="text-xl font-semibold mb-4">Login</h1>
 
-    <input id="email" placeholder="Email"
-      class="w-full mb-3 px-3 py-2 bg-slate-800 rounded" />
+    <!-- HEADER -->
+    <h1 class="text-xl font-semibold mb-1">Welcome back</h1>
+    <p class="text-sm text-slate-400 mb-5">
+      Log in to your private trips workspace.
+    </p>
 
-    <input id="password" type="password" placeholder="Password"
-      class="w-full mb-4 px-3 py-2 bg-slate-800 rounded" />
+    <!-- EMAIL -->
+    <label class="text-sm text-slate-300">Email</label>
+    <input id="email" placeholder="you@example.com"
+      class="w-full mt-1 mb-4 px-3 py-2 bg-slate-800 rounded outline-none focus:ring-2 focus:ring-primary-500" />
 
+    <!-- PASSWORD -->
+    <label class="text-sm text-slate-300">Password</label>
+    <input id="password" type="password" placeholder="Your password"
+      class="w-full mt-1 mb-6 px-3 py-2 bg-slate-800 rounded outline-none focus:ring-2 focus:ring-primary-500" />
+
+    <!-- LOGIN BUTTON -->
     <button onclick="login()"
-      class="w-full bg-primary-500 py-2 rounded">
-      Sign in
+      class="w-full bg-primary-500 hover:bg-primary-600 transition py-2 rounded-xl font-medium">
+      Log in
     </button>
+
+    <!-- SIGNUP LINK -->
+    <p class="text-sm text-slate-400 mt-4 text-center">
+      Don’t you have an account?
+      <a href="/signup.html" class="text-primary-400 hover:underline">
+        Create one...
+      </a>
+    </p>
+
   </div>
 
 <script>
 async function login() {
-  const email = document.getElementById('email').value;
+  const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
 
-  const res = await fetch('/login', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ email, password })
-  });
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
 
-  if (!res.ok) {
-    alert('Login failed');
-    return;
+    const data = await res.json();
+
+    console.log('LOGIN RESPONSE:', data);
+
+    if (!res.ok) {
+      alert(data.error || 'Login failed');
+      return;
+    }
+
+    localStorage.setItem('cloudtrips_auth_token', data.token);
+    localStorage.setItem('cloudtrips_auth_user', JSON.stringify(data.user));
+
+    console.log('TOKEN AFTER SAVE:', localStorage.getItem('cloudtrips_auth_token'));
+
+    // ✅ FINAL FIX
+    const redirect =
+      new URLSearchParams(window.location.search).get('redirect') || '/';
+
+    console.log('REDIRECTING NOW');
+    window.location.href = '/';
+
+  } catch (err) {
+    console.error('Login error:', err);
+    alert('Network error');
   }
-
-  const data = await res.json();
-  localStorage.setItem('token', data.token);
-
-  window.location.href = '/';
 }
 </script>
 

@@ -1,11 +1,12 @@
 import { requireUser } from '../_lib/auth';
 import type { Env } from '../_lib/auth';
 import { error, json, methodNotAllowed } from '../_lib/http';
-import { revokeSharesForTrip } from '../_lib/share';
+import { createTripShare } from '../_lib/share';
 
 type TripRow = {
   id: string;
   user_id: string;
+  name: string;
 };
 
 export async function onRequestPost(context: {
@@ -19,21 +20,21 @@ export async function onRequestPost(context: {
     return error('Unauthorized.', 401);
   }
 
-  let body: { id?: string; tripId?: string } = {};
+  let body: { tripId?: string; expiresInDays?: number } = {};
   try {
     body = await request.json();
   } catch {
     return error('Invalid JSON body.', 400);
   }
 
-  const tripId = String(body.id || body.tripId || '').trim();
+  const tripId = String(body.tripId || '').trim();
   if (!tripId) {
-    return error('Trip id is required.', 400);
+    return error('tripId is required.', 400);
   }
 
   const trip = await env.DB
     .prepare(`
-      SELECT id, user_id
+      SELECT id, user_id, name
       FROM trips
       WHERE id = ?
       LIMIT 1
@@ -49,23 +50,36 @@ export async function onRequestPost(context: {
     return error('Forbidden.', 403);
   }
 
-  try {
-    await revokeSharesForTrip({ env, tripId });
+  let expiresAt: Date | null = null;
+  const requestedDays = Number(body.expiresInDays);
 
-    await env.DB
-      .prepare(`
-        DELETE FROM trips
-        WHERE id = ? AND user_id = ?
-      `)
-      .bind(tripId, user.id)
-      .run();
+  if (Number.isFinite(requestedDays) && requestedDays > 0) {
+    const boundedDays = Math.min(Math.max(Math.floor(requestedDays), 1), 365);
+    expiresAt = new Date();
+    expiresAt.setUTCDate(expiresAt.getUTCDate() + boundedDays);
+  } else {
+    expiresAt = new Date();
+    expiresAt.setUTCDate(expiresAt.getUTCDate() + 30);
+  }
+
+  try {
+    const share = await createTripShare({
+      env,
+      tripId,
+      userId: user.id,
+      expiresAt
+    });
+
+    const shareUrl = `/trip.html?id=${encodeURIComponent(tripId)}&token=${encodeURIComponent(share.token)}`;
 
     return json({
-      ok: true
+      ok: true,
+      shareUrl,
+      expiresAt: share.expiresAt
     });
   } catch (err) {
-    console.error('deleteTrip error:', err);
-    return error('Failed to delete trip.', 500);
+    console.error('shareTrip error:', err);
+    return error('Failed to create share link.', 500);
   }
 }
 

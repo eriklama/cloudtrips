@@ -1,21 +1,24 @@
-import { requireUser } from './_lib/auth';
-import type { Env } from './_lib/auth';
-import { error, json, methodNotAllowed } from './_lib/http';
+import { requireUser } from '../_lib/auth';
+import type { Env } from '../_lib/auth';
+import { error, json, methodNotAllowed } from '../_lib/http';
 
 export async function onRequestGet(context: { request: Request; env: Env }) {
-  const { request, env } = context;
+  try {
+    const user = await requireUser(context);
 
-  const user = await requireUser(request, env);
-  if (!user) {
+    return json({
+      ok: true,
+      user
+    });
+  } catch (err) {
+    console.warn('Auth failed (/me):', err);
     return error('Unauthorized.', 401);
   }
-
-  return json({
-    ok: true,
-    user
-  });
 }
 
-export function onRequest() {
-  return methodNotAllowed(['GET']);
+export function onRequest(context: { request: Request; env: Env }) {
+  if (context.request.method !== 'GET') {
+    return methodNotAllowed(['GET']);
+  }
+  return onRequestGet(context);
 }
