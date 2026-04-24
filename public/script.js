@@ -1701,10 +1701,12 @@ async function init() {
 
     if (hasEl('timeline')) {
       await loadTimeline();
+      renderHeaderNav('timeline');
     }
 
     if (hasEl('cost-table')) {
       await loadCosts();
+      renderHeaderNav('costs');
     }
 
   } catch (error) {
