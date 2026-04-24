@@ -16,44 +16,33 @@
   <header class="border-b border-slate-800">
     <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
 
-      <div class="flex items-center gap-2">
-        <button onclick="goBack()"
-          class="inline-flex items-center gap-1 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm hover:bg-slate-800 transition">
-          ← Trips
-        </button>
+      <!-- Title -->
+      <h1 id="trip-title" class="text-xl font-semibold tracking-tight">
+        Trip
+      </h1>
 
-        <h1 id="trip-title" class="text-xl font-semibold tracking-tight">
-          Trip
-        </h1>
-      </div>
-
+      <!-- NAV + AUTH -->
       <div class="flex items-center gap-2">
 
-        <button onclick="goToTimeline()"
-          class="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm hover:bg-slate-800 transition">
-          Timeline
-        </button>
+        <!-- Dynamic nav -->
+        <div id="nav-actions" class="flex gap-2"></div>
 
-        <button onclick="goToCosts()"
-          class="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm hover:bg-slate-800 transition">
-          Costs
-        </button>
-
-        <!-- ✅ SHARE BUTTON -->
+        <!-- Share button -->
         <button onclick="openShareModal()"
           class="inline-flex items-center gap-2 rounded-xl border border-primary-500/30 bg-primary-500/10 px-3 py-2 text-sm text-primary-300 hover:bg-primary-500/20 transition">
           <i data-lucide="share-2" class="w-4 h-4"></i>
           Share
         </button>
 
+        <!-- User -->
         <span id="auth-user-email"
           class="hidden sm:inline text-sm text-slate-400 truncate max-w-[160px]">
         </span>
 
+        <!-- Logout -->
         <button id="logout-button" onclick="logout()"
-          class="inline-flex items-center gap-1 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm hover:bg-slate-800 transition">
+          class="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm font-medium text-slate-200 hover:border-slate-600 hover:bg-slate-800 transition">
           <i data-lucide="log-out" class="w-4 h-4"></i>
-          Logout
         </button>
 
       </div>

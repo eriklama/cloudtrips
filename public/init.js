@@ -364,7 +364,7 @@ function renderHeaderNav(current) {
   if (current !== 'trip') nav.appendChild(createBtn('Trip', 'notebook-pen', goToTrip));
   if (current !== 'timeline') nav.appendChild(createBtn('Timeline', 'list-tree', goToTimeline));
   if (current !== 'costs') nav.appendChild(createBtn('Costs', 'badge-euro', goToCosts));
-  if (current === 'timeline') nav.appendChild(createBtn('Export', 'printer', openPrintView));
+  nav.appendChild(createBtn('Export', 'printer', openPrintView));
 
   refreshIcons();
 }
@@ -395,7 +395,7 @@ async function init() {
     const hasEl = (id) => Boolean(document.getElementById(id));
 
     if (hasEl('trip-list')) await loadTrips();
-    if (hasEl('activities')) await loadTripPage();
+    if (hasEl('activities')) await loadTripPage(); renderHeaderNav('trip'); }
     if (hasEl('timeline')) { await loadTimeline(); renderHeaderNav('timeline'); }
     if (hasEl('cost-table')) { await loadCosts(); renderHeaderNav('costs'); }
 
