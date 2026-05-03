@@ -130,6 +130,7 @@ async function saveTrip(trip) {
         startDate: normalized.startDate || '',
         endDate: normalized.endDate || '',
         cost: Number(normalized.cost || 0),
+        currency: normalized.currency || 'EUR',
         distance: Number(normalized.distance || normalized.km || 0),
         notes: normalized.notes || ''
       };

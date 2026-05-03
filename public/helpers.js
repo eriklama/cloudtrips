@@ -58,11 +58,11 @@ function sortActivities(activities) {
  * FORMATTERS
  * ========================= */
 
-function formatCurrency(value) {
+function formatCurrency(value, currency = 'EUR') {
   const amount = Number(value || 0);
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'EUR'
+    currency: currency || 'EUR'
   }).format(amount);
 }
 
@@ -220,6 +220,7 @@ function normalizeActivity(raw = {}) {
     start: startDate,
     end: endDate,
     cost: Number(raw.cost || 0),
+    currency: String(raw.currency || 'EUR').toUpperCase(),
     distance,
     km: distance,
     notes: raw.notes ?? ''

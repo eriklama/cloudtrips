@@ -48,6 +48,7 @@ function getActivityFormData() {
     startDate: $('activityStart')?.value || '',
     endDate: $('activityEnd')?.value || '',
     cost: Number($('activityCost')?.value || 0),
+    currency: $('activityCurrency')?.value || 'EUR',
     notes: $('activityNotes')?.value.trim() || '',
     km: Number($('activityDistance')?.value || 0),
     distance: Number($('activityDistance')?.value || 0)
@@ -67,6 +68,7 @@ function setActivityFormData(activity) {
   if ($('activityStart')) $('activityStart').value = data.startDate || '';
   if ($('activityEnd')) $('activityEnd').value = data.endDate || '';
   if ($('activityCost')) $('activityCost').value = data.cost || '';
+  if ($('activityCurrency')) $('activityCurrency').value = data.currency || 'EUR';
   if ($('activityNotes')) $('activityNotes').value = data.notes || '';
   if ($('activityDistance')) $('activityDistance').value = data.distance || data.km || '';
 }
@@ -114,6 +116,7 @@ async function saveActivity() {
     start: data.startDate,
     end: data.endDate,
     cost: data.cost,
+    currency: data.currency,
     distance: data.distance,
     km: data.km,
     notes: data.notes

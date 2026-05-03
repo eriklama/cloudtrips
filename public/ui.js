@@ -229,7 +229,7 @@ function renderActivities() {
               <div class="grid grid-cols-2 gap-3">
                 <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
                   <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Cost</div>
-                  <div class="text-sm font-medium">${escapeHtml(formatCurrency(activity.cost))}</div>
+                  <div class="text-sm font-medium">${escapeHtml(formatCurrency(activity.cost, activity.currency))}</div>
                 </div>
 
                 <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
@@ -291,7 +291,7 @@ function renderTimelineActivity(activity) {
       <div class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
         <span>⏱ ${escapeHtml(formatTimeOnly(activity.startDate))} – ${escapeHtml(formatTimeOnly(activity.endDate))}</span>
         ${activity.km ? `<span>🚗 ${escapeHtml(`${activity.km} km`)}</span>` : ''}
-        <span>💶 ${escapeHtml(formatCurrency(activity.cost))}</span>
+        <span>💶 ${escapeHtml(formatCurrency(activity.cost, activity.currency))}</span>
       </div>
 
       ${activity.notes ? `
@@ -328,7 +328,7 @@ function renderCalendarTile(key, dayActivities) {
           <div class="mt-0.5 flex flex-wrap gap-x-2 gap-y-1 text-[11px] text-slate-400">
             <span>${escapeHtml(formatTimeOnly(activity.startDate))}–${escapeHtml(formatTimeOnly(activity.endDate))}</span>
             ${activity.km ? `<span>${escapeHtml(`${activity.km} km`)}</span>` : ''}
-            <span>${escapeHtml(formatCurrency(activity.cost))}</span>
+            <span>${escapeHtml(formatCurrency(activity.cost, activity.currency))}</span>
           </div>
         </div>
       </div>
@@ -381,25 +381,46 @@ function renderCosts() {
   const total = activities.reduce((sum, activity) => sum + Number(activity.cost || 0), 0);
   const totalKm = activities.reduce((sum, activity) => sum + Number(activity.km || 0), 0);
 
-  const byType = activities.reduce((accumulator, activity) => {
-    const key = activity.type || 'other';
-    accumulator[key] = (accumulator[key] || 0) + Number(activity.cost || 0);
-    return accumulator;
+  // Group by currency for totals
+  const byCurrency = activities.reduce((acc, activity) => {
+    const currency = activity.currency || 'EUR';
+    acc[currency] = (acc[currency] || 0) + Number(activity.cost || 0);
+    return acc;
   }, {});
 
-  const typeEntries = Object.entries(byType).sort((a, b) => b[1] - a[1]);
+  // Group by type within each currency for summary
+  const byTypeCurrency = activities.reduce((acc, activity) => {
+    const currency = activity.currency || 'EUR';
+    const type = activity.type || 'other';
+    const key = `${type}__${currency}`;
+    acc[key] = {
+      type,
+      currency,
+      amount: (acc[key]?.amount || 0) + Number(activity.cost || 0)
+    };
+    return acc;
+  }, {});
 
-  totalEl.textContent = formatCurrency(total);
+  const typeEntries = Object.values(byTypeCurrency).sort((a, b) => b.amount - a.amount);
 
+  // Render totals per currency
   const totalKmEl = document.getElementById('totalKm');
   if (totalKmEl) {
     totalKmEl.textContent = totalKm ? `${totalKm} km` : '—';
   }
 
+  const currencyEntries = Object.entries(byCurrency);
+  totalEl.innerHTML = currencyEntries.length
+    ? currencyEntries.map(([currency, amount]) =>
+        `<span class="block">${escapeHtml(formatCurrency(amount, currency))}</span>`
+      ).join('')
+    : formatCurrency(0);
+
   summaryEl.innerHTML = typeEntries.length
-    ? typeEntries.map(([type, amount]) => {
+    ? typeEntries.map(({ type, currency, amount }) => {
         const meta = getTypeMeta(type);
-        const percent = total > 0 ? Math.round((amount / total) * 100) : 0;
+        const currencyTotal = byCurrency[currency] || 0;
+        const percent = currencyTotal > 0 ? Math.round((amount / currencyTotal) * 100) : 0;
 
         return `
           <div class="grid grid-cols-[1fr_60px_100px] items-center rounded-xl border border-slate-200 px-3 py-2 dark:border-slate-800">
@@ -409,6 +430,7 @@ function renderCosts() {
               </span>
               <span class="truncate font-medium capitalize">
                 ${escapeHtml(type)}
+                <span class="ml-1 text-xs text-slate-400">${escapeHtml(currency)}</span>
               </span>
             </div>
 
@@ -417,7 +439,7 @@ function renderCosts() {
             </div>
 
             <div class="text-right text-sm font-medium tabular-nums">
-              ${escapeHtml(formatCurrency(amount))}
+              ${escapeHtml(formatCurrency(amount, currency))}
             </div>
           </div>
         `;
@@ -454,7 +476,7 @@ function renderCosts() {
             </td>
 
             <td data-label="Cost" class="px-3 py-3 text-right font-semibold">
-              ${escapeHtml(formatCurrency(activity.cost))}
+              ${escapeHtml(formatCurrency(activity.cost, activity.currency))}
             </td>
 
             <td data-label="KM" class="rounded-r-2xl px-3 py-3 text-right text-sm text-slate-600 dark:text-slate-300">
