@@ -126,7 +126,8 @@ async function saveTrip(trip) {
       return {
         id: normalized.id || uuid(),
         type: normalized.type || 'other',
-        location: normalized.location || normalized.name || '',
+        name: normalized.name || '',
+        location: normalized.location || '',
         startDate: normalized.startDate || '',
         endDate: normalized.endDate || '',
         cost: Number(normalized.cost || 0),

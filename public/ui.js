@@ -207,7 +207,8 @@ function renderActivities() {
               <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
                 <i data-lucide="${meta.icon}" class="h-5 w-5"></i>
               </span>
-              <h3 class="truncate text-lg font-semibold tracking-tight">${escapeHtml(activity.location || activity.name || 'Untitled activity')}</h3>
+              <h3 class="truncate text-lg font-semibold tracking-tight">${escapeHtml(activity.name || 'Untitled activity')}</h3>
+                ${activity.location ? `<p class="text-sm text-slate-400 mt-0.5">${escapeHtml(activity.location)}</p>` : ''}
               <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${meta.badge}">
                 ${escapeHtml(activity.type)}
               </span>
@@ -280,7 +281,8 @@ function renderTimelineActivity(activity) {
         </span>
 
         <div class="min-w-0 flex-1">
-          <div class="truncate text-sm font-semibold">${escapeHtml(activity.location || activity.name || 'Activity')}</div>
+          <div class="truncate text-sm font-semibold">${escapeHtml(activity.name || 'Activity')}</div>
+            ${activity.location ? `<div class="truncate text-xs text-slate-400">${escapeHtml(activity.location)}</div>` : ''}
         </div>
 
         <span class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium ${meta.badge}">
@@ -321,7 +323,7 @@ function renderCalendarTile(key, dayActivities) {
 
   const previewItems = dayActivities.slice(0, 4).map((activity) => {
     const meta = getTypeMeta(activity.type);
-    const name = activity.location || activity.name || 'Activity';
+    const name = activity.name || 'Activity';
     return `
       <div class="flex items-start gap-2 rounded-xl bg-slate-950/80 px-3 py-2">
         <span class="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary-500/10 text-primary-300">
@@ -329,6 +331,7 @@ function renderCalendarTile(key, dayActivities) {
         </span>
         <div class="min-w-0 flex-1">
           <div class="truncate text-sm font-medium text-slate-100">${escapeHtml(name)}</div>
+            ${activity.location ? `<div class="truncate text-xs text-slate-400">${escapeHtml(activity.location)}</div>` : ''}
           <div class="mt-0.5 flex flex-wrap gap-x-2 gap-y-1 text-[11px] text-slate-400">
             <span>${escapeHtml(formatTimeOnly(activity.startDate))}–${escapeHtml(formatTimeOnly(activity.endDate))}</span>
             ${activity.km ? `<span>${escapeHtml(`${activity.km} km`)}</span>` : ''}
@@ -469,7 +472,10 @@ function renderCosts() {
                 <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
                   <i data-lucide="${meta.icon}" class="h-4 w-4"></i>
                 </span>
-                <span class="font-medium">${escapeHtml(activity.location || activity.name || 'Untitled')}</span>
+                <div>
+                    <div class="font-medium">${escapeHtml(activity.name || 'Untitled')}</div>
+                    ${activity.location ? `<div class="text-xs text-slate-400">${escapeHtml(activity.location)}</div>` : ''}
+                  </div>
               </div>
             </td>
 

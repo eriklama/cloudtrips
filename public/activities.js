@@ -42,7 +42,7 @@ async function loadTripPage() {
 function getActivityFormData() {
   const $ = (id) => document.getElementById(id);
   return {
-    name: $('activityLocation')?.value.trim() || '',
+    name: $('activityName')?.value.trim() || '',
     location: $('activityLocation')?.value.trim() || '',
     type: $('activityType')?.value || 'other',
     startDate: $('activityStart')?.value || '',
@@ -63,7 +63,8 @@ function setActivityFormData(activity) {
     currency: 'EUR', notes: '', km: '', distance: ''
   };
 
-  if ($('activityLocation')) $('activityLocation').value = data.location || data.name || '';
+  if ($('activityName')) $('activityName').value = data.name || '';
+  if ($('activityLocation')) $('activityLocation').value = data.location || '';
   if ($('activityType')) $('activityType').value = data.type || 'other';
   if ($('activityStart')) $('activityStart').value = data.startDate || '';
   if ($('activityEnd')) $('activityEnd').value = data.endDate || '';
@@ -108,7 +109,7 @@ async function saveActivity() {
 
   const activity = normalizeActivity({
     id: state.editingActivityId || uuid(),
-    name: data.location,
+    name: data.name,
     location: data.location,
     type: data.type,
     startDate: data.startDate,

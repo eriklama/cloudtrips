@@ -206,14 +206,12 @@ function refreshIcons() {
 function normalizeActivity(raw = {}) {
   const startDate = raw.startDate ?? raw.start ?? '';
   const endDate = raw.endDate ?? raw.end ?? '';
-  const location = raw.location ?? raw.name ?? '';
-  const name = raw.name ?? raw.location ?? '';
   const distance = Number(raw.distance ?? raw.km ?? 0);
 
   return {
     id: raw.id ?? raw.activityId ?? uuid(),
-    name,
-    location,
+    name: raw.name ?? '',
+    location: raw.location ?? '',
     type: String(raw.type ?? 'other').toLowerCase(),
     startDate,
     endDate,
