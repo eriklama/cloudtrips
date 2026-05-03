@@ -312,7 +312,11 @@ function renderCalendarTile(key, dayActivities) {
   const label = key === 'undated' ? 'No date' : formatDayLabel(dateValue);
   const weekday = key === 'undated' ? '—' : formatWeekdayShort(dateValue);
   const dayNumber = key === 'undated' ? '—' : formatDayNumber(dateValue);
-  const totalCost = dayActivities.reduce((sum, activity) => sum + Number(activity.cost || 0), 0);
+  const costsByCurrency = dayActivities.reduce((acc, activity) => {
+    const currency = activity.currency || 'EUR';
+    acc[currency] = (acc[currency] || 0) + Number(activity.cost || 0);
+    return acc;
+  }, {});
   const totalKm = dayActivities.reduce((sum, activity) => sum + Number(activity.km || 0), 0);
 
   const previewItems = dayActivities.slice(0, 4).map((activity) => {
@@ -346,7 +350,11 @@ function renderCalendarTile(key, dayActivities) {
         </div>
         <div class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-right">
           <div class="text-[11px] uppercase tracking-wide text-slate-500">Summary</div>
-          <div class="mt-1 text-xs text-slate-300">${escapeHtml(formatCurrency(totalCost))}</div>
+          <div class="mt-1 text-xs text-slate-300">
+            ${Object.entries(costsByCurrency).map(([currency, amount]) =>
+              `<span class="block">${escapeHtml(formatCurrency(amount, currency))}</span>`
+            ).join('')}
+          </div>
           <div class="text-xs text-slate-400">${escapeHtml(`${totalKm || 0} km`)}</div>
         </div>
       </div>
