@@ -316,27 +316,33 @@ function goToTrip() {
   window.location.href = buildTripPageUrl('trip.html', tripId);
 }
 
-function confirmNavigateAway() {
+async function confirmNavigateAway() {
   if (!state.editingActivityId) return true;
-  return confirm('You have unsaved changes. Leave anyway?');
+  return await openConfirmModal({
+    title: 'Unsaved changes',
+    message: 'You have unsaved changes. Leave anyway?',
+    confirmText: 'Leave',
+    cancelText: 'Stay',
+    danger: true
+  });
 }
 
-function goToTimeline() {
+async function goToTimeline() {
   const tripId = getTripIdFromUrl();
   if (!tripId) return;
-  if (!confirmNavigateAway()) return;
+  if (!await confirmNavigateAway()) return;
   window.location.href = buildTripPageUrl('timeline.html', tripId);
 }
 
-function goToCosts() {
+async function goToCosts() {
   const tripId = getTripIdFromUrl();
   if (!tripId) return;
-  if (!confirmNavigateAway()) return;
+  if (!await confirmNavigateAway()) return;
   window.location.href = buildTripPageUrl('costs.html', tripId);
 }
 
-function goBack() {
-  if (!confirmNavigateAway()) return;
+async function goBack() {
+  if (!await confirmNavigateAway()) return;
   window.location.href = '/';
 }
 
