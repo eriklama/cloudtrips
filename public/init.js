@@ -246,12 +246,12 @@ async function loadCosts() {
 
 async function openShareModal() {
   if (!state.currentTrip?.id) {
-    alert('Trip not loaded.');
+    showToast('Trip not loaded.', 'error');
     return;
   }
 
   if (isGuestView()) {
-    alert('Shared viewers cannot create links.');
+    showToast('Shared viewers cannot create links.', 'info');
     return;
   }
 
@@ -259,7 +259,7 @@ async function openShareModal() {
   const input = document.getElementById('share-link');
 
   if (!modal || !input) {
-    alert('Share modal missing.');
+    showToast('Share modal missing.', 'error');
     return;
   }
 
@@ -281,7 +281,7 @@ async function openShareModal() {
     modal.classList.add('flex');
   } catch (err) {
     console.error(err);
-    alert('Failed to create share link');
+    showToast('Failed to create share link.', 'error');
   }
 }
 
@@ -298,11 +298,11 @@ async function copyShareLink() {
 
   try {
     await navigator.clipboard.writeText(input.value);
-    alert('Copied!');
+    showToast('Link copied!', 'success');
   } catch {
     input.select();
     document.execCommand('copy');
-    alert('Copied!');
+    showToast('Link copied!', 'success');
   }
 }
 
@@ -342,7 +342,7 @@ function goBack() {
 
 function openPrintView() {
   if (!state.currentTrip) {
-    alert('Trip not loaded');
+    showToast('Trip not loaded.', 'error');
     return;
   }
   sessionStorage.setItem('print_trip', JSON.stringify(state.currentTrip));

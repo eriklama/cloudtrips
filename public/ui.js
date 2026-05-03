@@ -503,3 +503,80 @@ function renderCosts() {
 
   refreshIcons();
 }
+
+/* =========================
+ * TOAST NOTIFICATIONS
+ * ========================= */
+
+function showToast(message, type = 'error') {
+  const colors = {
+    error: 'bg-red-500/10 border-red-500/30 text-red-300',
+    success: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300',
+    info: 'bg-slate-800 border-slate-700 text-slate-200'
+  };
+
+  const toast = document.createElement('div');
+  toast.className = `fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl border text-sm font-medium shadow-lg transition-opacity duration-300 ${colors[type] || colors.info}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+/* =========================
+ * CONFIRM MODAL
+ * ========================= */
+
+function openConfirmModal({
+  title = 'Are you sure?',
+  message = '',
+  confirmText = 'Confirm',
+  cancelText = 'Cancel',
+  danger = false
+} = {}) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4';
+
+    overlay.innerHTML = `
+      <div class="w-full max-w-sm rounded-3xl border border-slate-800 bg-slate-900 p-5 shadow-2xl">
+        <h2 class="mb-2 text-lg font-semibold tracking-tight text-slate-100">
+          ${escapeHtml(title)}
+        </h2>
+        ${message ? `<p class="mb-5 text-sm text-slate-400">${escapeHtml(message)}</p>` : '<div class="mb-5"></div>'}
+        <div class="flex justify-end gap-2">
+          <button id="confirm-modal-cancel" type="button"
+            class="inline-flex items-center justify-center rounded-2xl border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm font-medium text-slate-200 hover:bg-slate-800">
+            ${escapeHtml(cancelText)}
+          </button>
+          <button id="confirm-modal-ok" type="button"
+            class="inline-flex items-center justify-center rounded-2xl px-4 py-2.5 text-sm font-medium text-white ${danger ? 'bg-red-600 hover:bg-red-700' : 'bg-primary-600 hover:bg-primary-700'}">
+            ${escapeHtml(confirmText)}
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const okBtn = overlay.querySelector('#confirm-modal-ok');
+    const cancelBtn = overlay.querySelector('#confirm-modal-cancel');
+
+    function close(result) {
+      overlay.remove();
+      resolve(result);
+    }
+
+    okBtn.addEventListener('click', () => close(true));
+    cancelBtn.addEventListener('click', () => close(false));
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(false); });
+
+    document.addEventListener('keydown', function handler(e) {
+      if (e.key === 'Escape') { close(false); document.removeEventListener('keydown', handler); }
+      if (e.key === 'Enter') { close(true); document.removeEventListener('keydown', handler); }
+    });
+  });
+}

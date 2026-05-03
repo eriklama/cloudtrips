@@ -7,7 +7,7 @@
 async function loadTripPage() {
   const tripId = getTripIdFromUrl();
   if (!tripId) {
-    alert('Trip ID is missing.');
+    showToast('Trip ID is missing.', 'error');
     return;
   }
 
@@ -60,7 +60,7 @@ function setActivityFormData(activity) {
   const data = activity || {
     name: '', location: '', type: 'other',
     startDate: '', endDate: '', cost: '',
-    notes: '', km: '', distance: ''
+    currency: 'EUR', notes: '', km: '', distance: ''
   };
 
   if ($('activityLocation')) $('activityLocation').value = data.location || data.name || '';
@@ -94,7 +94,7 @@ function cancelEditActivity() {
 
 async function saveActivity() {
   if (isGuestView()) {
-    alert('This trip is shared (view-only).');
+    showToast('This trip is shared (view-only).', 'info');
     return;
   }
 
@@ -102,7 +102,7 @@ async function saveActivity() {
 
   const data = getActivityFormData();
   if (!data.location) {
-    alert('Activity location/name is required.');
+    showToast('Activity location/name is required.', 'info');
     return;
   }
 
@@ -139,9 +139,10 @@ async function saveActivity() {
     await saveTrip(state.currentTrip);
     resetActivityForm();
     renderActivities();
+    showToast('Activity saved.', 'success');
   } catch (error) {
     console.error(error);
-    alert(`Failed to save activity.${error?.message ? `\n${error.message}` : ''}`);
+    showToast(error?.message || 'Failed to save activity.', 'error');
   }
 }
 
@@ -151,7 +152,7 @@ function addActivity() {
 
 function editActivity(activityId) {
   if (isGuestView()) {
-    alert('This trip is shared (view-only).');
+    showToast('This trip is shared (view-only).', 'info');
     return;
   }
 
@@ -179,7 +180,7 @@ function editActivity(activityId) {
 
 async function deleteActivity(activityId) {
   if (isGuestView()) {
-    alert('This trip is shared (view-only).');
+    showToast('This trip is shared (view-only).', 'info');
     return;
   }
 
@@ -188,7 +189,14 @@ async function deleteActivity(activityId) {
   const activity = state.currentTrip.activities.find(
     (item) => String(item.id) === String(activityId)
   );
-  const confirmed = confirm(`Delete activity "${activity?.location || activity?.name || 'this activity'}"?`);
+
+  const confirmed = await openConfirmModal({
+    title: 'Delete activity',
+    message: `"${activity?.location || activity?.name || 'this activity'}" will be permanently deleted.`,
+    confirmText: 'Delete',
+    cancelText: 'Cancel',
+    danger: true
+  });
   if (!confirmed) return;
 
   state.currentTrip.activities = state.currentTrip.activities.filter(
@@ -199,8 +207,9 @@ async function deleteActivity(activityId) {
     await saveTrip(state.currentTrip);
     if (state.editingActivityId === activityId) resetActivityForm();
     renderActivities();
+    showToast('Activity deleted.', 'success');
   } catch (error) {
     console.error(error);
-    alert(`Failed to delete activity.${error?.message ? `\n${error.message}` : ''}`);
+    showToast(error?.message || 'Failed to delete activity.', 'error');
   }
 }

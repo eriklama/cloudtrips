@@ -42,7 +42,7 @@ async function addTrip() {
 
   const name = input.value.trim();
   if (!name) {
-    alert('Please enter a trip name.');
+    showToast('Please enter a trip name.', 'info');
     input.focus();
     return;
   }
@@ -56,7 +56,7 @@ async function addTrip() {
     await loadTrips();
   } catch (error) {
     console.error(error);
-    alert(`Failed to create trip.${error?.message ? `\n${error.message}` : ''}`);
+    showToast(error?.message || 'Failed to create trip.', 'error');
   }
 }
 
@@ -81,7 +81,7 @@ async function renameTrip(tripId) {
 
   const trimmed = newName.trim();
   if (!trimmed) {
-    alert('Trip name cannot be empty.');
+    showToast('Trip name cannot be empty.', 'info');
     return;
   }
 
@@ -97,13 +97,20 @@ async function renameTrip(tripId) {
     trip.name = previousName;
     renderTripList();
     console.error(error);
-    alert(`Failed to rename trip.${error?.message ? `\n${error.message}` : ''}`);
+    showToast(error?.message || 'Failed to rename trip.', 'error');
   }
 }
 
 async function deleteTrip(tripId) {
   const trip = state.trips.find((item) => String(item.id) === String(tripId));
-  const confirmed = confirm(`Delete trip "${trip?.name || 'this trip'}"?`);
+
+  const confirmed = await openConfirmModal({
+    title: 'Delete trip',
+    message: `"${trip?.name || 'this trip'}" will be permanently deleted.`,
+    confirmText: 'Delete',
+    cancelText: 'Cancel',
+    danger: true
+  });
   if (!confirmed) return;
 
   const previousTrips = [...state.trips];
@@ -116,6 +123,6 @@ async function deleteTrip(tripId) {
     state.trips = previousTrips;
     renderTripList();
     console.error(error);
-    alert(`Failed to delete trip.${error?.message ? `\n${error.message}` : ''}`);
+    showToast(error?.message || 'Failed to delete trip.', 'error');
   }
 }
