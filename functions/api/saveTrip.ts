@@ -5,9 +5,11 @@ import { error, json, methodNotAllowed } from '../_lib/http';
 type ActivityInput = {
   id?: unknown;
   type?: unknown;
+  name?: unknown;
   startDate?: unknown;
   endDate?: unknown;
   cost?: unknown;
+  currency?: unknown;
   notes?: unknown;
   location?: unknown;
   distance?: unknown;
@@ -27,9 +29,11 @@ function sanitizeActivity(activity: ActivityInput) {
   return {
     id: toString(activity?.id || crypto.randomUUID()).trim(),
     type: toString(activity?.type || 'other').trim() || 'other',
+    name: toString(activity?.name || '').trim(),
     startDate: toString(activity?.startDate || '').trim(),
     endDate: toString(activity?.endDate || '').trim(),
     cost: toNumber(activity?.cost),
+    currency: toString(activity?.currency || 'EUR').trim().toUpperCase() || 'EUR',
     notes: toString(activity?.notes || '').trim(),
     location: toString(activity?.location || '').trim(),
     distance: toNumber(
