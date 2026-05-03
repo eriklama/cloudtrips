@@ -21,6 +21,8 @@ async function loadTripPage() {
     if (isGuestView()) {
       const shareBtn = document.querySelector('button[onclick="openShareModal()"]');
       if (shareBtn) shareBtn.style.display = 'none';
+      const logoutBtn = document.getElementById('logout-button');
+      if (logoutBtn) logoutBtn.style.display = 'none';
     }
 
     renderActivities();

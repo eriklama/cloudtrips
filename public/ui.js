@@ -434,12 +434,12 @@ function renderCosts() {
         const percent = currencyTotal > 0 ? Math.round((amount / currencyTotal) * 100) : 0;
 
         return `
-          <div class="grid grid-cols-[1fr_60px_100px] items-center rounded-xl border border-slate-200 px-3 py-2 dark:border-slate-800">
+          <div class="grid grid-cols-[1fr_50px_90px] items-center rounded-xl border border-slate-200 px-3 py-2 dark:border-slate-800">
             <div class="flex min-w-0 items-center gap-2">
               <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
                 <i data-lucide="${meta.icon}" class="h-4 w-4"></i>
               </span>
-              <span class="truncate font-medium capitalize">
+              <span class="font-medium capitalize">
                 ${escapeHtml(type)}
                 <span class="ml-1 text-xs text-slate-400">${escapeHtml(currency)}</span>
               </span>

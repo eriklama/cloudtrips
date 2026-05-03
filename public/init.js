@@ -53,6 +53,10 @@ async function loadTimeline() {
     setText('timeline-title', `${state.currentTrip.name} Timeline`);
     setText('timeline-hero-title', `${state.currentTrip.name} Timeline`);
     applySharedViewUi('timeline-title', 'timeline-hero-title');
+    if (isGuestView()) {
+      const logoutBtn = document.getElementById('logout-button');
+      if (logoutBtn) logoutBtn.style.display = 'none';
+    }
     renderTimelinePage();
   } catch (error) {
     console.error(error);
@@ -229,6 +233,10 @@ async function loadCosts() {
     setText('costs-title', `${state.currentTrip.name} Costs`);
     setText('costs-hero-title', `${state.currentTrip.name} Costs`);
     applySharedViewUi('costs-title', 'costs-hero-title');
+    if (isGuestView()) {
+      const logoutBtn = document.getElementById('logout-button');
+      if (logoutBtn) logoutBtn.style.display = 'none';
+    }
     renderCosts();
   } catch (error) {
     console.error(error);
