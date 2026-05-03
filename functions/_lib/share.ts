@@ -13,6 +13,7 @@ export interface ShareRecord {
   expires_at: string | null;
   revoked_at: string | null;
   last_used_at: string | null;
+  mode: string | null;
 }
 
 function toBase64Url(bytes: Uint8Array): string {
@@ -70,8 +71,9 @@ export async function createTripShare(params: {
   tripId: string;
   userId: string;
   expiresAt?: Date | null;
+  mode?: 'full' | 'public';
 }): Promise<{ token: string; expiresAt: string | null }> {
-  const { env, tripId, userId, expiresAt = getDefaultShareExpiry(30) } = params;
+  const { env, tripId, userId, expiresAt = getDefaultShareExpiry(30), mode = 'full' } = params;
 
   const token = generateShareToken();
   const tokenHash = await sha256Hex(token);
@@ -85,11 +87,12 @@ export async function createTripShare(params: {
         trip_id,
         token_hash,
         created_by_user_id,
-        expires_at
+        expires_at,
+        mode
       )
-      VALUES (?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?)
     `)
-    .bind(id, tripId, tokenHash, userId, expiresAtIso)
+    .bind(id, tripId, tokenHash, userId, expiresAtIso, mode)
     .run();
 
   return {
@@ -116,7 +119,8 @@ export async function findValidShareByToken(params: {
         created_at,
         expires_at,
         revoked_at,
-        last_used_at
+        last_used_at,
+        mode
       FROM trip_shares
       WHERE token_hash = ?
       LIMIT 1

@@ -1,0 +1,1 @@
+ALTER TABLE trip_shares ADD COLUMN mode TEXT NOT NULL DEFAULT 'full';

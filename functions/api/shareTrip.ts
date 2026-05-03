@@ -20,7 +20,7 @@ export async function onRequestPost(context: {
     return error('Unauthorized.', 401);
   }
 
-  let body: { tripId?: string; expiresInDays?: number } = {};
+  let body: { tripId?: string; expiresInDays?: number; mode?: string } = {};
   try {
     body = await request.json();
   } catch {
@@ -31,6 +31,8 @@ export async function onRequestPost(context: {
   if (!tripId) {
     return error('tripId is required.', 400);
   }
+
+  const mode = body.mode === 'public' ? 'public' : 'full';
 
   const trip = await env.DB
     .prepare(`
@@ -67,7 +69,8 @@ export async function onRequestPost(context: {
       env,
       tripId,
       userId: user.id,
-      expiresAt
+      expiresAt,
+      mode: mode as 'full' | 'public'
     });
 
     const shareUrl = `/trip.html?id=${encodeURIComponent(tripId)}&token=${encodeURIComponent(share.token)}`;

@@ -586,3 +586,57 @@ function openConfirmModal({
     });
   });
 }
+
+/* =========================
+ * SHARE MODE MODAL
+ * ========================= */
+
+function openShareModeModal() {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4';
+
+    overlay.innerHTML = `
+      <div class="w-full max-w-sm rounded-3xl border border-slate-800 bg-slate-900 p-5 shadow-2xl">
+        <h2 class="mb-1 text-lg font-semibold tracking-tight text-slate-100">Share this trip</h2>
+        <p class="mb-5 text-sm text-slate-400">Choose what the recipient can see.</p>
+
+        <div class="space-y-3 mb-5">
+          <button id="share-mode-full"
+            class="w-full text-left rounded-2xl border border-slate-700 bg-slate-800 px-4 py-3 hover:border-primary-500/50 hover:bg-slate-800/80 transition">
+            <div class="font-medium text-slate-100 text-sm">Full version</div>
+            <div class="text-xs text-slate-400 mt-0.5">Includes activities, costs and distances</div>
+          </button>
+
+          <button id="share-mode-public"
+            class="w-full text-left rounded-2xl border border-slate-700 bg-slate-800 px-4 py-3 hover:border-primary-500/50 hover:bg-slate-800/80 transition">
+            <div class="font-medium text-slate-100 text-sm">Public version</div>
+            <div class="text-xs text-slate-400 mt-0.5">Activities and dates only — costs hidden</div>
+          </button>
+        </div>
+
+        <div class="flex justify-end">
+          <button id="share-mode-cancel"
+            class="inline-flex items-center justify-center rounded-2xl border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm font-medium text-slate-200 hover:bg-slate-800">
+            Cancel
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    function close(result) {
+      overlay.remove();
+      resolve(result);
+    }
+
+    overlay.querySelector('#share-mode-full').addEventListener('click', () => close('full'));
+    overlay.querySelector('#share-mode-public').addEventListener('click', () => close('public'));
+    overlay.querySelector('#share-mode-cancel').addEventListener('click', () => close(null));
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(null); });
+    document.addEventListener('keydown', function handler(e) {
+      if (e.key === 'Escape') { close(null); document.removeEventListener('keydown', handler); }
+    });
+  });
+}

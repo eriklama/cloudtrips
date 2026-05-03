@@ -263,6 +263,10 @@ async function openShareModal() {
     return;
   }
 
+  // Step 1 — ask which mode
+  const mode = await openShareModeModal();
+  if (!mode) return;
+
   const modal = document.getElementById('share-modal');
   const input = document.getElementById('share-link');
 
@@ -273,9 +277,12 @@ async function openShareModal() {
 
   try {
     input.value = 'Creating link...';
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
 
     const data = await apiPost(API.SHARE_TRIP, {
-      tripId: state.currentTrip.id
+      tripId: state.currentTrip.id,
+      mode
     });
 
     const shareUrl = data?.shareUrl
@@ -285,10 +292,10 @@ async function openShareModal() {
     if (!shareUrl) throw new Error('No share link returned');
 
     input.value = shareUrl;
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
   } catch (err) {
     console.error(err);
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
     showToast('Failed to create share link.', 'error');
   }
 }

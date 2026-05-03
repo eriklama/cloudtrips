@@ -25,6 +25,14 @@ function parseActivities(value: string | null): unknown[] {
   }
 }
 
+function stripCosts(activities: unknown[]): unknown[] {
+  return activities.map((a: any) => ({
+    ...a,
+    cost: 0,
+    currency: undefined
+  }));
+}
+
 export async function onRequestGet(context: {
   request: Request;
   env: Env;
@@ -94,21 +102,25 @@ export async function onRequestGet(context: {
         return error('Trip not found.', 404);
       }
 
-      await touchShareUsage({
-        env,
-        shareId: share.id
-      });
+      await touchShareUsage({ env, shareId: share.id });
+
+      const isPublic = share.mode === 'public';
+      let activities = parseActivities(sharedTrip.activities_json);
+      if (isPublic) {
+        activities = stripCosts(activities);
+      }
 
       return json({
         ok: true,
         trip: {
           id: sharedTrip.id,
           name: sharedTrip.name,
-          activities: parseActivities(sharedTrip.activities_json),
+          activities,
           created_at: sharedTrip.created_at ?? null
         },
         readOnly: true,
         access: 'shared',
+        shareMode: share.mode ?? 'full',
         shareExpiresAt: share.expires_at
       });
     }
