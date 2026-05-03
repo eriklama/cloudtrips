@@ -1,5 +1,3 @@
-print.html
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,61 +10,138 @@ print.html
       margin: 18mm 14mm;
     }
 
+    * { box-sizing: border-box; }
+
     body {
       font-family: system-ui, -apple-system, sans-serif;
       color: #111;
       font-size: 12px;
       line-height: 1.5;
+      background: #fff;
     }
 
+    /* HEADER */
     .header {
-      border-bottom: 2px solid #000;
-      padding-bottom: 6px;
-      margin-bottom: 10px;
-    }
-
-    h1 { font-size: 22px; margin: 0; }
-    .subtitle { font-size: 12px; color: #555; }
-
-    .summary {
-      margin: 10px 0 14px;
-      padding: 6px 8px;
-      border: 1px solid #ddd;
+      border-bottom: 2px solid #111;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
       display: flex;
       justify-content: space-between;
+      align-items: flex-end;
     }
 
-    .day { margin-bottom: 14px; page-break-inside: avoid; }
+    h1 { font-size: 22px; margin: 0 0 2px; }
+    .subtitle { font-size: 11px; color: #555; }
+    .print-date { font-size: 10px; color: #888; text-align: right; }
+
+    /* SUMMARY BAR */
+    .summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .summary-pill {
+      padding: 4px 10px;
+      border: 1px solid #ddd;
+      border-radius: 99px;
+      font-size: 11px;
+      color: #333;
+    }
+
+    /* COST BREAKDOWN */
+    .cost-breakdown {
+      margin-bottom: 16px;
+      border: 1px solid #eee;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .cost-breakdown-title {
+      background: #f5f5f5;
+      padding: 4px 10px;
+      font-weight: 600;
+      font-size: 11px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .cost-breakdown-row {
+      display: grid;
+      grid-template-columns: 1fr 60px 100px;
+      padding: 3px 10px;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 11px;
+    }
+
+    .cost-breakdown-row:last-child { border-bottom: none; }
+    .cost-breakdown-row .right { text-align: right; }
+    .cost-breakdown-row .muted { color: #888; text-align: right; }
+
+    /* DAY SECTIONS */
+    .day {
+      margin-bottom: 16px;
+      page-break-inside: avoid;
+    }
 
     .day-header {
       display: flex;
       justify-content: space-between;
-      border-bottom: 1px solid #bbb;
-      padding-bottom: 2px;
-      margin-bottom: 5px;
-      font-weight: 600;
+      align-items: baseline;
+      border-bottom: 1.5px solid #222;
+      padding-bottom: 3px;
+      margin-bottom: 6px;
     }
 
+    .day-header-left { font-weight: 700; font-size: 13px; }
+    .day-header-right { font-size: 10px; color: #555; }
+
+    /* ACTIVITY ROWS */
     .row {
       display: grid;
-      grid-template-columns: 70px 1fr 90px;
-      gap: 10px;
+      grid-template-columns: 65px 18px 1fr 100px;
+      gap: 6px;
       padding: 4px 0;
       border-bottom: 1px solid #eee;
+      align-items: start;
     }
 
-    .time { font-variant-numeric: tabular-nums; }
+    .row:last-of-type { border-bottom: none; }
 
-    .notes { font-size: 11px; color: #666; }
+    .time {
+      font-variant-numeric: tabular-nums;
+      color: #444;
+      font-size: 11px;
+      padding-top: 1px;
+    }
 
-    .right { text-align: right; }
-    .km { font-size: 11px; color: #666; }
+    .icon { font-size: 13px; line-height: 1.4; }
 
-    .totals {
+    .activity-name { font-weight: 600; }
+    .activity-notes { font-size: 10px; color: #666; margin-top: 1px; }
+
+    .cost-col { text-align: right; font-size: 11px; }
+    .cost-amount { font-weight: 600; }
+    .cost-km { color: #777; }
+
+    /* DAY TOTALS */
+    .day-totals {
       text-align: right;
       font-size: 11px;
-      margin-top: 4px;
       color: #444;
+      margin-top: 4px;
+      padding-top: 3px;
+      border-top: 1px solid #ddd;
+    }
+
+    /* UNDATED */
+    .undated-header {
+      font-weight: 700;
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 4px;
+      padding-bottom: 3px;
+      border-bottom: 1px dashed #ccc;
     }
 
     .error {
@@ -74,110 +149,226 @@ print.html
       color: red;
       font-family: monospace;
     }
+
+    @media print {
+      .no-print { display: none; }
+    }
   </style>
 </head>
 
 <body>
 
 <div class="header">
-  <h1 id="title">Trip</h1>
-  <div id="subtitle" class="subtitle"></div>
+  <div>
+    <h1 id="title">Trip</h1>
+    <div id="subtitle" class="subtitle"></div>
+  </div>
+  <div class="print-date" id="print-date"></div>
 </div>
 
 <div id="summary" class="summary"></div>
+<div id="cost-breakdown"></div>
 <div id="content">Loading...</div>
 
 <script>
+const TYPE_META = {
+  plane:         { icon: '✈️', label: 'Plane' },
+  car:           { icon: '🚗', label: 'Car' },
+  hike:          { icon: '🥾', label: 'Hike' },
+  city:          { icon: '🏙️', label: 'City' },
+  accommodation: { icon: '🏨', label: 'Stay' },
+  other:         { icon: '📍', label: 'Other' }
+};
+
 function getTypeMeta(type) {
-  const map = {
-    plane: { icon: '✈️', label: 'Plane' },
-    car: { icon: '🚗', label: 'Car' },
-    hike: { icon: '🥾', label: 'Hike' },
-    city: { icon: '🏙️', label: 'City' },
-    accommodation: { icon: '🏨', label: 'Stay' },
-    other: { icon: '📍', label: 'Other' }
-  };
-  return map[type] || map.other;
+  return TYPE_META[String(type || 'other').toLowerCase()] || TYPE_META.other;
 }
 
 function formatTime(v) {
-  if (!v) return '';
+  if (!v) return '—';
   const d = new Date(v);
-  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  if (isNaN(d)) return '—';
+  return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatDate(v) {
+  if (!v) return 'No date';
+  const d = new Date(v);
+  if (isNaN(d)) return 'No date';
+  return d.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function formatCurrency(amount, currency = 'EUR') {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency || 'EUR'
+  }).format(Number(amount) || 0);
+}
+
+function groupByCurrency(activities) {
+  return activities.reduce((acc, a) => {
+    const c = a.currency || 'EUR';
+    acc[c] = (acc[c] || 0) + (Number(a.cost) || 0);
+    return acc;
+  }, {});
 }
 
 function load() {
   try {
     const raw = sessionStorage.getItem('print_trip');
-    if (!raw) throw new Error('No data in sessionStorage');
+    if (!raw) throw new Error('No trip data found. Please use the Export button from the trip page.');
 
     const trip = JSON.parse(raw);
-
+    document.title = `${trip.name || 'Trip'} — Itinerary`;
     document.getElementById('title').textContent = trip.name || 'Trip';
+    document.getElementById('print-date').textContent = `Printed ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}`;
 
     const activities = (trip.activities || [])
       .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
 
-    // subtitle
-    if (activities.length) {
-      const first = new Date(activities[0].startDate);
-      const last = new Date(activities[activities.length - 1].startDate);
-      document.getElementById('subtitle').textContent =
-        `${first.toDateString()} — ${last.toDateString()}`;
+    // Subtitle — trip date range
+    const dated = activities.filter(a => a.startDate);
+    if (dated.length) {
+      const first = new Date(dated[0].startDate);
+      const last = new Date(dated[dated.length - 1].startDate);
+      const sameDay = first.toDateString() === last.toDateString();
+      document.getElementById('subtitle').textContent = sameDay
+        ? formatDate(dated[0].startDate)
+        : `${formatDate(dated[0].startDate)} — ${formatDate(dated[dated.length - 1].startDate)}`;
     }
 
-    // totals
-    let totalCost = 0;
-    let totalKm = 0;
+    // Summary pills
+    const totalKm = activities.reduce((sum, a) => sum + (Number(a.distance) || Number(a.km) || 0), 0);
+    const costsByCurrency = groupByCurrency(activities);
+    const summaryEl = document.getElementById('summary');
 
-    activities.forEach(a => {
-      totalCost += Number(a.cost) || 0;
-      totalKm += Number(a.distance) || 0;
-    });
-
-    document.getElementById('summary').innerHTML = `
-      <div>Total cost: €${totalCost}</div>
-      <div>Total distance: ${totalKm} km</div>
+    summaryEl.innerHTML = `
+      <span class="summary-pill">${activities.length} activities</span>
+      ${Object.entries(costsByCurrency).map(([c, amt]) =>
+        `<span class="summary-pill">${formatCurrency(amt, c)}</span>`
+      ).join('')}
+      ${totalKm ? `<span class="summary-pill">${totalKm} km</span>` : ''}
     `;
 
-    // group by day
+    // Cost breakdown by type + currency
+    const byTypeCurrency = activities.reduce((acc, a) => {
+      const currency = a.currency || 'EUR';
+      const type = a.type || 'other';
+      const key = `${type}__${currency}`;
+      acc[key] = {
+        type,
+        currency,
+        amount: (acc[key]?.amount || 0) + (Number(a.cost) || 0)
+      };
+      return acc;
+    }, {});
+
+    const typeEntries = Object.values(byTypeCurrency)
+      .filter(e => e.amount > 0)
+      .sort((a, b) => b.amount - a.amount);
+
+    if (typeEntries.length) {
+      const breakdownEl = document.getElementById('cost-breakdown');
+      breakdownEl.innerHTML = `
+        <div class="cost-breakdown">
+          <div class="cost-breakdown-title">Cost breakdown</div>
+          ${typeEntries.map(({ type, currency, amount }) => {
+            const meta = getTypeMeta(type);
+            const currencyTotal = costsByCurrency[currency] || 0;
+            const percent = currencyTotal > 0 ? Math.round((amount / currencyTotal) * 100) : 0;
+            return `
+              <div class="cost-breakdown-row">
+                <div>${meta.icon} ${meta.label} <span style="color:#888;font-size:10px">${currency}</span></div>
+                <div class="muted">${percent}%</div>
+                <div class="right">${formatCurrency(amount, currency)}</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    // Group by day
     const groups = {};
+    const undated = [];
+
     activities.forEach(a => {
-      const key = new Date(a.startDate).toISOString().slice(0,10);
+      if (!a.startDate) {
+        undated.push(a);
+        return;
+      }
+      const d = new Date(a.startDate);
+      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
       (groups[key] ||= []).push(a);
     });
 
     const container = document.getElementById('content');
     container.innerHTML = '';
 
+    // Render each day
     Object.keys(groups).sort().forEach(day => {
       const list = groups[day];
-      const date = new Date(day);
-
-      let dayCost = 0;
-      let dayKm = 0;
+      const dayCostsByCurrency = groupByCurrency(list);
+      const dayKm = list.reduce((sum, a) => sum + (Number(a.distance) || Number(a.km) || 0), 0);
 
       const rows = list.map(a => {
         const meta = getTypeMeta(a.type);
-
         const cost = Number(a.cost) || 0;
-        const km = Number(a.distance) || 0;
-
-        dayCost += cost;
-        dayKm += km;
+        const km = Number(a.distance) || Number(a.km) || 0;
+        const currency = a.currency || 'EUR';
 
         return `
           <div class="row">
-            <div class="time">${formatTime(a.startDate)}</div>
-
+            <div class="time">${formatTime(a.startDate)}${a.endDate ? `–${formatTime(a.endDate)}` : ''}</div>
+            <div class="icon">${meta.icon}</div>
             <div>
-              <div><strong>${meta.icon} ${meta.label}</strong> — ${a.location || ''}</div>
-              ${a.notes ? `<div class="notes">${a.notes}</div>` : ''}
+              <div class="activity-name">${a.location || a.name || '—'}</div>
+              ${a.notes ? `<div class="activity-notes">${a.notes}</div>` : ''}
             </div>
+            <div class="cost-col">
+              ${cost ? `<div class="cost-amount">${formatCurrency(cost, currency)}</div>` : ''}
+              ${km ? `<div class="cost-km">${km} km</div>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
 
-            <div class="right">
-              ${cost ? `€${cost}` : ''}
-              ${km ? `<div class="km">${km} km</div>` : ''}
+      const dayTotals = [
+        ...Object.entries(dayCostsByCurrency).map(([c, amt]) => formatCurrency(amt, c)),
+        ...(dayKm ? [`${dayKm} km`] : [])
+      ].join(' · ');
+
+      const section = document.createElement('div');
+      section.className = 'day';
+      section.innerHTML = `
+        <div class="day-header">
+          <div class="day-header-left">${formatDate(list[0].startDate)}</div>
+          <div class="day-header-right">${list.length} activit${list.length === 1 ? 'y' : 'ies'}${dayTotals ? ' · ' + dayTotals : ''}</div>
+        </div>
+        ${rows}
+      `;
+      container.appendChild(section);
+    });
+
+    // Undated activities
+    if (undated.length) {
+      const rows = undated.map(a => {
+        const meta = getTypeMeta(a.type);
+        const cost = Number(a.cost) || 0;
+        const km = Number(a.distance) || Number(a.km) || 0;
+        const currency = a.currency || 'EUR';
+
+        return `
+          <div class="row">
+            <div class="time">—</div>
+            <div class="icon">${meta.icon}</div>
+            <div>
+              <div class="activity-name">${a.location || a.name || '—'}</div>
+              ${a.notes ? `<div class="activity-notes">${a.notes}</div>` : ''}
+            </div>
+            <div class="cost-col">
+              ${cost ? `<div class="cost-amount">${formatCurrency(cost, currency)}</div>` : ''}
+              ${km ? `<div class="cost-km">${km} km</div>` : ''}
             </div>
           </div>
         `;
@@ -185,23 +376,14 @@ function load() {
 
       const section = document.createElement('div');
       section.className = 'day';
-
       section.innerHTML = `
-        <div class="day-header">
-          <div>${date.toDateString()}</div>
-          <div>${list.length} activities</div>
-        </div>
+        <div class="undated-header">No date</div>
         ${rows}
-        <div class="totals">
-          ${dayCost ? `€${dayCost}` : ''}
-          ${dayKm ? ` • ${dayKm} km` : ''}
-        </div>
       `;
-
       container.appendChild(section);
-    });
+    }
 
-    setTimeout(() => window.print(), 300);
+    setTimeout(() => window.print(), 400);
 
   } catch (err) {
     document.getElementById('content').innerHTML =
