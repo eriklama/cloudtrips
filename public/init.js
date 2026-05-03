@@ -316,19 +316,27 @@ function goToTrip() {
   window.location.href = buildTripPageUrl('trip.html', tripId);
 }
 
+function confirmNavigateAway() {
+  if (!state.editingActivityId) return true;
+  return confirm('You have unsaved changes. Leave anyway?');
+}
+
 function goToTimeline() {
   const tripId = getTripIdFromUrl();
   if (!tripId) return;
+  if (!confirmNavigateAway()) return;
   window.location.href = buildTripPageUrl('timeline.html', tripId);
 }
 
 function goToCosts() {
   const tripId = getTripIdFromUrl();
   if (!tripId) return;
+  if (!confirmNavigateAway()) return;
   window.location.href = buildTripPageUrl('costs.html', tripId);
 }
 
 function goBack() {
+  if (!confirmNavigateAway()) return;
   window.location.href = '/';
 }
 
