@@ -7,6 +7,21 @@
 
   <link href="/output.css" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* iOS Safari input fix */
+    input[type="date"],
+    input[type="time"],
+    input[type="number"],
+    input[type="text"],
+    select,
+    textarea {
+      font-size: 16px;
+      -webkit-appearance: none;
+      appearance: none;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+  </style>
 </head>
 
 <body class="min-h-full bg-slate-950 text-slate-100">
@@ -56,72 +71,69 @@
     <!-- Add Activity Form -->
     <div id="activity-form" class="mb-6 space-y-2">
 
-      <!-- Row 1: Type / Cost + Currency -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        <select id="activityType"
-          class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500">
-          <option value="plane">✈️ Plane</option>
-          <option value="car">🚗 Car</option>
-          <option value="hike">🥾 Hike</option>
-          <option value="city">🏙️ City</option>
-          <option value="accommodation">🏨 Accommodation</option>
-          <option value="other">📍 Other</option>
+      <!-- Row 1: Type -->
+      <select id="activityType"
+        class="w-full min-w-0 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500">
+        <option value="plane">✈️ Plane</option>
+        <option value="car">🚗 Car</option>
+        <option value="hike">🥾 Hike</option>
+        <option value="city">🏙️ City</option>
+        <option value="accommodation">🏨 Accommodation</option>
+        <option value="other">📍 Other</option>
+      </select>
+
+      <!-- Row 2: Cost + Currency -->
+      <div class="grid grid-cols-2 gap-2 min-w-0">
+        <input id="activityCost" type="number" placeholder="Cost"
+          class="w-full min-w-0 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
+        <select id="activityCurrency"
+          class="w-full min-w-0 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500">
+          <option value="EUR">EUR €</option>
+          <option value="USD">USD $</option>
+          <option value="GBP">GBP £</option>
+          <option value="CZK">CZK Kč</option>
+          <option value="CHF">CHF Fr</option>
+          <option value="PLN">PLN zł</option>
+          <option value="HUF">HUF Ft</option>
+          <option value="SEK">SEK kr</option>
+          <option value="NOK">NOK kr</option>
+          <option value="DKK">DKK kr</option>
         </select>
-
-        <div class="grid grid-cols-2 gap-2">
-          <input id="activityCost" type="number" placeholder="Cost"
-            class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
-          <select id="activityCurrency"
-            class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500">
-            <option value="EUR">EUR €</option>
-            <option value="USD">USD $</option>
-            <option value="GBP">GBP £</option>
-            <option value="CZK">CZK Kč</option>
-            <option value="CHF">CHF Fr</option>
-            <option value="PLN">PLN zł</option>
-            <option value="HUF">HUF Ft</option>
-            <option value="SEK">SEK kr</option>
-            <option value="NOK">NOK kr</option>
-            <option value="DKK">DKK kr</option>
-          </select>
-        </div>
       </div>
 
-      <!-- Row 2: Start date + time -->
-      <div class="grid grid-cols-2 gap-2">
+      <!-- Row 3: Start date + time -->
+      <div class="grid grid-cols-2 gap-2 min-w-0">
         <input id="activityStartDate" type="date"
-          class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
+          class="w-full min-w-0 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
         <input id="activityStartTime" type="time"
-          class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
+          class="w-full min-w-0 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
       </div>
 
-      <!-- Row 3: End date + time -->
-      <div class="grid grid-cols-2 gap-2">
+      <!-- Row 4: End date + time -->
+      <div class="grid grid-cols-2 gap-2 min-w-0">
         <input id="activityEndDate" type="date"
-          class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
+          class="w-full min-w-0 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
         <input id="activityEndTime" type="time"
-          class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
+          class="w-full min-w-0 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
       </div>
 
-      <!-- Row 4: Name + Location -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      <!-- Row 5: Name + Location -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 min-w-0">
         <input id="activityName" placeholder="Name"
-          class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
+          class="w-full min-w-0 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
         <input id="activityLocation" placeholder="Location"
-          class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
+          class="w-full min-w-0 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
       </div>
 
-      <!-- Row 5: Distance (half width) -->
-      <div class="grid grid-cols-2 gap-2">
-        <input id="activityDistance" type="number" placeholder="km"
-          class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
-      </div>
+      <!-- Row 6: Distance -->
+      <input id="activityDistance" type="number" placeholder="km"
+        class="w-full min-w-0 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
 
-      <!-- Row 6: Notes -->
+      <!-- Row 7: Notes -->
       <textarea id="activityNotes" placeholder="Notes"
-        class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"></textarea>
+        class="w-full min-w-0 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"></textarea>
 
-      <!-- Row 7: Submit -->
+      <!-- Row 8: Submit -->
       <button onclick="addActivity()"
         class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-500 active:scale-[0.98] transition">
         <i data-lucide="plus" class="w-4 h-4"></i>
