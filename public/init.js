@@ -380,20 +380,87 @@ function renderHeaderNav(current) {
 
   nav.innerHTML = '';
 
-  function createBtn(label, icon, onClick) {
+  // Build nav items list
+  const items = [];
+  items.push({ label: 'Home', icon: 'home', onClick: () => { window.location.href = '/'; } });
+  if (current !== 'trip') items.push({ label: 'Trip', icon: 'notebook-pen', onClick: goToTrip });
+  if (current !== 'timeline') items.push({ label: 'Timeline', icon: 'list-tree', onClick: goToTimeline });
+  if (current !== 'costs') items.push({ label: 'Costs', icon: 'badge-euro', onClick: goToCosts });
+  items.push({ label: 'Export', icon: 'printer', onClick: openPrintView });
+
+  const btnClass = 'inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm font-medium text-slate-200 hover:border-slate-600 hover:bg-slate-800 transition';
+
+  // ── DESKTOP: regular button row (hidden on mobile) ──
+  const desktopRow = document.createElement('div');
+  desktopRow.className = 'hidden sm:flex gap-2';
+
+  items.forEach(({ label, icon, onClick }) => {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm font-medium text-slate-200 hover:border-slate-600 hover:bg-slate-800 transition';
+    btn.className = btnClass;
     btn.onclick = onClick;
     btn.innerHTML = `<i data-lucide="${icon}" class="h-4 w-4"></i>${label}`;
-    return btn;
+    desktopRow.appendChild(btn);
+  });
+
+  // ── MOBILE: hamburger + dropdown (hidden on desktop) ──
+  const mobileWrapper = document.createElement('div');
+  mobileWrapper.className = 'relative sm:hidden';
+
+  const hamburger = document.createElement('button');
+  hamburger.type = 'button';
+  hamburger.className = btnClass + ' px-2.5';
+  hamburger.innerHTML = '<i data-lucide="menu" class="h-5 w-5"></i>';
+  hamburger.setAttribute('aria-label', 'Navigation menu');
+
+  const dropdown = document.createElement('div');
+  dropdown.className = 'hidden absolute right-0 top-full mt-2 w-48 rounded-2xl border border-slate-700 bg-slate-900 shadow-xl z-50 overflow-hidden';
+
+  items.forEach(({ label, icon, onClick }) => {
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-slate-200 hover:bg-slate-800 transition';
+    item.innerHTML = `<i data-lucide="${icon}" class="h-4 w-4 text-slate-400"></i>${label}`;
+    item.onclick = () => {
+      closeDropdown();
+      onClick();
+    };
+    dropdown.appendChild(item);
+  });
+
+  function openDropdown() {
+    dropdown.classList.remove('hidden');
+    hamburger.innerHTML = '<i data-lucide="x" class="h-5 w-5"></i>';
+    refreshIcons();
+    // close on outside click
+    setTimeout(() => {
+      document.addEventListener('click', outsideClickHandler);
+    }, 0);
   }
 
-  nav.appendChild(createBtn('Home', 'home', () => { window.location.href = '/'; }));
-  if (current !== 'trip') nav.appendChild(createBtn('Trip', 'notebook-pen', goToTrip));
-  if (current !== 'timeline') nav.appendChild(createBtn('Timeline', 'list-tree', goToTimeline));
-  if (current !== 'costs') nav.appendChild(createBtn('Costs', 'badge-euro', goToCosts));
-  nav.appendChild(createBtn('Export', 'printer', openPrintView));
+  function closeDropdown() {
+    dropdown.classList.add('hidden');
+    hamburger.innerHTML = '<i data-lucide="menu" class="h-5 w-5"></i>';
+    refreshIcons();
+    document.removeEventListener('click', outsideClickHandler);
+  }
+
+  function outsideClickHandler(e) {
+    if (!mobileWrapper.contains(e.target)) {
+      closeDropdown();
+    }
+  }
+
+  hamburger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dropdown.classList.contains('hidden') ? openDropdown() : closeDropdown();
+  });
+
+  mobileWrapper.appendChild(hamburger);
+  mobileWrapper.appendChild(dropdown);
+
+  nav.appendChild(desktopRow);
+  nav.appendChild(mobileWrapper);
 
   refreshIcons();
 }
