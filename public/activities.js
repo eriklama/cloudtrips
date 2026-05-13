@@ -43,12 +43,20 @@ async function loadTripPage() {
 
 function getActivityFormData() {
   const $ = (id) => document.getElementById(id);
+
+  function combineDateTime(dateId, timeId) {
+    const date = $(dateId)?.value || '';
+    const time = $(timeId)?.value || '';
+    if (!date) return '';
+    return time ? `${date}T${time}` : `${date}T00:00`;
+  }
+
   return {
     name: $('activityName')?.value.trim() || '',
     location: $('activityLocation')?.value.trim() || '',
     type: $('activityType')?.value || 'other',
-    startDate: $('activityStart')?.value || '',
-    endDate: $('activityEnd')?.value || '',
+    startDate: combineDateTime('activityStartDate', 'activityStartTime'),
+    endDate: combineDateTime('activityEndDate', 'activityEndTime'),
     cost: Number($('activityCost')?.value || 0),
     currency: $('activityCurrency')?.value || 'EUR',
     notes: $('activityNotes')?.value.trim() || '',
@@ -65,11 +73,23 @@ function setActivityFormData(activity) {
     currency: 'EUR', notes: '', km: '', distance: ''
   };
 
+  function splitDate(iso) {
+    if (!iso) return '';
+    return iso.includes('T') ? iso.split('T')[0] : iso;
+  }
+
+  function splitTime(iso) {
+    if (!iso) return '';
+    return iso.includes('T') ? iso.split('T')[1].slice(0, 5) : '';
+  }
+
   if ($('activityName')) $('activityName').value = data.name || '';
   if ($('activityLocation')) $('activityLocation').value = data.location || '';
   if ($('activityType')) $('activityType').value = data.type || 'other';
-  if ($('activityStart')) $('activityStart').value = data.startDate || '';
-  if ($('activityEnd')) $('activityEnd').value = data.endDate || '';
+  if ($('activityStartDate')) $('activityStartDate').value = splitDate(data.startDate);
+  if ($('activityStartTime')) $('activityStartTime').value = splitTime(data.startDate);
+  if ($('activityEndDate')) $('activityEndDate').value = splitDate(data.endDate);
+  if ($('activityEndTime')) $('activityEndTime').value = splitTime(data.endDate);
   if ($('activityCost')) $('activityCost').value = data.cost || '';
   if ($('activityCurrency')) $('activityCurrency').value = data.currency || 'EUR';
   if ($('activityNotes')) $('activityNotes').value = data.notes || '';
@@ -104,8 +124,8 @@ async function saveActivity() {
   if (!state.currentTrip) return;
 
   const data = getActivityFormData();
-  if (!data.location) {
-    showToast('Activity location/name is required.', 'info');
+  if (!data.location && !data.name) {
+    showToast('Activity name or location is required.', 'info');
     return;
   }
 
@@ -195,7 +215,7 @@ async function deleteActivity(activityId) {
 
   const confirmed = await openConfirmModal({
     title: 'Delete activity',
-    message: `"${activity?.location || activity?.name || 'this activity'}" will be permanently deleted.`,
+    message: `"${activity?.name || activity?.location || 'this activity'}" will be permanently deleted.`,
     confirmText: 'Delete',
     cancelText: 'Cancel',
     danger: true
