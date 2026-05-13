@@ -8,20 +8,29 @@
   <link href="/output.css" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
-    /* iOS Safari input fix */
-    input[type="date"],
-    input[type="time"],
-    input[type="number"],
-    input[type="text"],
-    select,
-    textarea {
-      font-size: 16px;
-      -webkit-appearance: none;
-      appearance: none;
-      max-width: 100%;
-      box-sizing: border-box;
-    }
-  </style>
+  /* iOS Safari input fix */
+  input[type="date"],
+  input[type="time"],
+  input[type="number"],
+  input[type="text"],
+  select,
+  textarea {
+    font-size: 16px;
+    -webkit-appearance: none;
+    appearance: none;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Restore height for date/time on iOS */
+  input[type="date"],
+  input[type="time"] {
+    min-height: 42px;
+    line-height: 1.5;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+</style>
 </head>
 
 <body class="min-h-full bg-slate-950 text-slate-100">
