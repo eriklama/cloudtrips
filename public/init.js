@@ -663,4 +663,5 @@ window.revokeShare = revokeShare;
 window.openManageSharesModal = openManageSharesModal;
 window.moveActivity = moveActivity;
 window.saveTripNotes = saveTripNotes;
+window.filterTrips = filterTrips;
 /* window.logout = logout; */
