@@ -64,6 +64,7 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
 
   const id = String(body?.id || '').trim();
   const name = String(body?.name || '').trim();
+  const notes = String(body?.notes || '').trim();
 
   if (!name) {
     return error('Trip name is required.', 400);
@@ -78,10 +79,10 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
       const result = await env.DB
         .prepare(`
           UPDATE trips
-          SET name = ?, activities_json = ?
+          SET name = ?, notes = ?, activities_json = ?
           WHERE id = ? AND user_id = ?
         `)
-        .bind(name, activitiesJson, id, user.id)
+        .bind(name, notes, activitiesJson, id, user.id)
         .run();
 
       const changes = Number(result?.meta?.changes || 0);
@@ -91,31 +92,23 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
 
       return json({
         ok: true,
-        trip: {
-          id,
-          name,
-          activities
-        }
+        trip: { id, name, notes, activities }
       });
     }
 
     const newId = crypto.randomUUID();
 
     await env.DB
-  .prepare(`
-    INSERT INTO trips (id, user_id, name, activities_json, created_at)
-    VALUES (?, ?, ?, ?, datetime('now'))
-  `)
-  .bind(newId, user.id, name, activitiesJson)
-  .run();
+      .prepare(`
+        INSERT INTO trips (id, user_id, name, notes, activities_json, created_at)
+        VALUES (?, ?, ?, ?, ?, datetime('now'))
+      `)
+      .bind(newId, user.id, name, notes, activitiesJson)
+      .run();
 
     return json({
       ok: true,
-      trip: {
-        id: newId,
-        name,
-        activities
-      }
+      trip: { id: newId, name, notes, activities }
     });
   } catch (err) {
     console.error('DB error (saveTrip):', err);

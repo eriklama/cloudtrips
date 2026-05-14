@@ -16,6 +16,10 @@ async function loadTripPage() {
     setText('trip-title', state.currentTrip.name || 'Trip');
     setText('trip-title-hero', state.currentTrip.name || 'Trip');
 
+    // Populate notes
+    const notesEl = document.getElementById('trip-notes');
+    if (notesEl) notesEl.value = state.currentTrip.notes || '';
+
     applySharedViewUi('trip-title', 'trip-title-hero');
 
     if (isGuestView()) {
@@ -23,6 +27,8 @@ async function loadTripPage() {
       if (shareBtn) shareBtn.style.display = 'none';
       const logoutBtn = document.getElementById('logout-button');
       if (logoutBtn) logoutBtn.style.display = 'none';
+      const notesSection = document.getElementById('trip-notes-section');
+      if (notesSection) notesSection.style.display = 'none';
     }
 
     renderActivities();
@@ -113,6 +119,22 @@ function resetActivityForm() {
 
 function cancelEditActivity() {
   resetActivityForm();
+}
+
+let _notesSaveTimeout = null;
+function saveTripNotes() {
+  const notesEl = document.getElementById('trip-notes');
+  if (!notesEl || !state.currentTrip) return;
+  state.currentTrip.notes = notesEl.value;
+  clearTimeout(_notesSaveTimeout);
+  _notesSaveTimeout = setTimeout(async () => {
+    try {
+      await saveTrip(state.currentTrip);
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to save notes.', 'error');
+    }
+  }, 1000);
 }
 
 async function saveActivity() {

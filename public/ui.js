@@ -153,6 +153,10 @@ function renderTripList() {
           </span>
         </div>
 
+        ${trip.notes ? `
+    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">${escapeHtml(trip.notes)}</p>
+  ` : ''}
+
         <div class="flex gap-2">
           <button onclick="openTrip('${escapeHtml(trip.id)}')" class="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-700">
             <i data-lucide="arrow-right" class="h-4 w-4"></i>

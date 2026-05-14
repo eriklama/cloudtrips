@@ -82,6 +82,15 @@
         Trip
       </h1>
 
+      <!-- Trip notes -->
+<div id="trip-notes-section" class="mt-3">
+  <textarea id="trip-notes"
+    placeholder="Trip notes, packing list, visa info..."
+    rows="2"
+    class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 resize-none placeholder:text-slate-400"
+    oninput="saveTripNotes()"></textarea>
+</div>
+
       <!-- NAV + AUTH -->
       <div class="flex items-center gap-2">
 

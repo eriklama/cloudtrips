@@ -5,13 +5,13 @@ import { error, json, methodNotAllowed } from '../_lib/http';
 type TripRow = {
   id: string;
   name: string;
+  notes: string | null;
   activities_json: string | null;
   created_at?: string | null;
 };
 
 function safeParseActivities(value: string | null): any[] {
   if (!value) return [];
-
   try {
     const parsed = JSON.parse(value);
     return Array.isArray(parsed) ? parsed : [];
@@ -34,7 +34,7 @@ export async function onRequestGet(context: { request: Request; env: Env }) {
   try {
     const result = await env.DB
       .prepare(`
-        SELECT id, name, activities_json, created_at
+        SELECT id, name, notes, activities_json, created_at
         FROM trips
         WHERE user_id = ?
         ORDER BY COALESCE(created_at, '') DESC, name ASC
@@ -60,16 +60,14 @@ export async function onRequestGet(context: { request: Request; env: Env }) {
       return {
         id: row.id,
         name: row.name,
+        notes: row.notes ?? '',
         activitiesCount: activities.length,
         startDate: startDates[0] || '',
         endDate: endDates[endDates.length - 1] || startDates[startDates.length - 1] || ''
       };
     });
 
-    return json({
-      ok: true,
-      trips
-    });
+    return json({ ok: true, trips });
   } catch (err) {
     console.error('DB error (getTrips):', err);
     return error('Failed to load trips.', 500);

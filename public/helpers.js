@@ -232,9 +232,10 @@ function normalizeActivity(raw = {}) {
 }
 
 function normalizeFullTrip(raw) {
-  return {
+   return {
     id: raw.id ?? raw.tripId ?? raw._id ?? '',
     name: raw.name ?? raw.title ?? 'Untitled trip',
+    notes: raw.notes ?? '',
     activities: sortActivities(safeArray(raw.activities).map(normalizeActivity))
   };
 }
@@ -256,7 +257,8 @@ function normalizeTripSummary(raw) {
   return {
     id: raw.id ?? raw.tripId ?? raw._id ?? '',
     name: raw.name ?? raw.title ?? 'Untitled trip',
-    activitiesCount: Number(raw.activitiesCount ?? normalizedActivities.length ?? 0),
+    notes: raw.notes ?? '',
+    activitiesCount: ...,
     startDate,
     endDate
   };

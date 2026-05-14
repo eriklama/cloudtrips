@@ -120,6 +120,7 @@ async function saveTrip(trip) {
   const payload = {
     ...(trip.id ? { id: trip.id } : {}),
     name: trip.name || 'Untitled trip',
+    notes: trip.notes || '',
     activities: safeArray(trip.activities).map((activity) => {
       const normalized = normalizeActivity(activity);
 

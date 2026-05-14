@@ -11,6 +11,7 @@ type TripRow = {
   id: string;
   user_id: string;
   name: string;
+  notes: string | null;
   activities_json: string | null;
   created_at?: string | null;
 };
@@ -53,7 +54,7 @@ export async function onRequestGet(context: {
     if (user) {
       const ownedTrip = await env.DB
         .prepare(`
-          SELECT id, user_id, name, activities_json, created_at
+          SELECT id, user_id, name, notes, activities_json, created_at
           FROM trips
           WHERE id = ? AND user_id = ?
           LIMIT 1
@@ -67,6 +68,7 @@ export async function onRequestGet(context: {
           trip: {
             id: ownedTrip.id,
             name: ownedTrip.name,
+            notes: ownedTrip.notes ?? '',
             activities: parseActivities(ownedTrip.activities_json),
             created_at: ownedTrip.created_at ?? null
           },
@@ -90,7 +92,7 @@ export async function onRequestGet(context: {
 
       const sharedTrip = await env.DB
         .prepare(`
-          SELECT id, user_id, name, activities_json, created_at
+          SELECT id, user_id, name, notes, activities_json, created_at
           FROM trips
           WHERE id = ?
           LIMIT 1
@@ -115,6 +117,7 @@ export async function onRequestGet(context: {
         trip: {
           id: sharedTrip.id,
           name: sharedTrip.name,
+          notes: sharedTrip.notes ?? '',
           activities,
           created_at: sharedTrip.created_at ?? null
         },
