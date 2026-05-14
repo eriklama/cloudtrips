@@ -11,11 +11,11 @@
 function emptyState(title, message, icon) {
   return `
     <div class="rounded-3xl border border-dashed border-slate-300 bg-white p-8 text-center shadow-soft dark:border-slate-700 dark:bg-slate-900">
-      <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+      <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-500 dark:text-slate-500 dark:bg-slate-800 dark:text-slate-400">
         <i data-lucide="${icon}" class="h-6 w-6"></i>
       </div>
       <h3 class="text-lg font-semibold tracking-tight">${escapeHtml(title)}</h3>
-      <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">${escapeHtml(message)}</p>
+      <p class="mt-2 text-sm text-slate-500 dark:text-slate-500 dark:text-slate-400">${escapeHtml(message)}</p>
     </div>
   `;
 }
@@ -24,7 +24,7 @@ function loadingCardGrid() {
   return `
     <div class="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-soft dark:border-slate-800 dark:bg-slate-900 md:col-span-2 xl:col-span-3">
       <div class="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-primary-600 dark:border-slate-700 dark:border-t-primary-400"></div>
-      <p class="text-sm text-slate-500 dark:text-slate-400">Loading trips…</p>
+      <p class="text-sm text-slate-500 dark:text-slate-500 dark:text-slate-400">Loading trips…</p>
     </div>
   `;
 }
@@ -33,7 +33,7 @@ function loadingTimeline() {
   return `
     <div class="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-soft dark:border-slate-800 dark:bg-slate-900">
       <div class="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-primary-600 dark:border-slate-700 dark:border-t-primary-400"></div>
-      <p class="text-sm text-slate-500 dark:text-slate-400">Loading timeline…</p>
+      <p class="text-sm text-slate-500 dark:text-slate-500 dark:text-slate-400">Loading timeline…</p>
     </div>
   `;
 }
@@ -52,7 +52,7 @@ function openTextModal({
 } = {}) {
   return new Promise((resolve) => {
     const overlay = document.createElement('div');
-    overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4';
+    overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-white dark:bg-slate-950/60 p-4';
 
     overlay.innerHTML = `
       <div class="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-800 dark:bg-slate-900">
@@ -65,7 +65,7 @@ function openTextModal({
           type="${escapeHtml(inputType)}"
           value="${escapeHtml(value)}"
           placeholder="${escapeHtml(placeholder)}"
-          class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-primary-500 focus:ring-4 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-primary-500/20"
+          class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition placeholder:text-slate-500 dark:text-slate-500 dark:text-slate-400 focus:border-primary-500 focus:ring-4 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:text-slate-500 dark:focus:ring-primary-500/20"
         />
 
         <div class="mt-5 flex justify-end gap-2">
@@ -146,7 +146,7 @@ function renderTripList() {
           </div>
         </div>
 
-        <div class="mb-5 flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
+        <div class="mb-5 flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-500 dark:text-slate-400">
           <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 dark:bg-slate-800">
             <i data-lucide="calendar-days" class="h-3.5 w-3.5"></i>
             ${escapeHtml(dateLabel)}
@@ -208,7 +208,7 @@ function renderActivities() {
                 <i data-lucide="${meta.icon}" class="h-5 w-5"></i>
               </span>
               <h3 class="truncate text-lg font-semibold tracking-tight">${escapeHtml(activity.name || 'Untitled activity')}</h3>
-                ${activity.location ? `<p class="text-sm text-slate-400 mt-0.5">${escapeHtml(activity.location)}</p>` : ''}
+                ${activity.location ? `<p class="text-sm text-slate-500 dark:text-slate-500 dark:text-slate-400 mt-0.5">${escapeHtml(activity.location)}</p>` : ''}
               <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${meta.badge}">
                 ${escapeHtml(activity.type)}
               </span>
@@ -217,30 +217,30 @@ function renderActivities() {
             <div class="space-y-3">
               <div class="grid grid-cols-2 gap-3">
                 <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
-                  <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Start</div>
+                  <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-500 dark:text-slate-400">Start</div>
                   <div class="text-sm font-medium">${escapeHtml(formatDateTime(activity.startDate))}</div>
                 </div>
 
                 <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
-                  <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">End</div>
+                  <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-500 dark:text-slate-400">End</div>
                   <div class="text-sm font-medium">${escapeHtml(formatDateTime(activity.endDate))}</div>
                 </div>
               </div>
 
               <div class="grid grid-cols-2 gap-3">
                 <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
-                  <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Cost</div>
+                  <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-500 dark:text-slate-400">Cost</div>
                   <div class="text-sm font-medium">${escapeHtml(formatCurrency(activity.cost, activity.currency))}</div>
                 </div>
 
                 <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
-                  <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Distance</div>
+                  <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-500 dark:text-slate-400">Distance</div>
                   <div class="text-sm font-medium">${activity.km ? escapeHtml(`${activity.km} km`) : '—'}</div>
                 </div>
               </div>
 
               <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
-                <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Notes</div>
+                <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-500 dark:text-slate-400">Notes</div>
                 <div class="text-sm font-medium whitespace-pre-wrap break-words">${escapeHtml(activity.notes || '—')}</div>
               </div>
             </div>
@@ -282,7 +282,7 @@ function renderTimelineActivity(activity) {
 
         <div class="min-w-0 flex-1">
           <div class="truncate text-sm font-semibold">${escapeHtml(activity.name || 'Activity')}</div>
-            ${activity.location ? `<div class="truncate text-xs text-slate-400">${escapeHtml(activity.location)}</div>` : ''}
+            ${activity.location ? `<div class="truncate text-xs text-slate-500 dark:text-slate-500 dark:text-slate-400">${escapeHtml(activity.location)}</div>` : ''}
         </div>
 
         <span class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium ${meta.badge}">
@@ -290,7 +290,7 @@ function renderTimelineActivity(activity) {
         </span>
       </div>
 
-      <div class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+      <div class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-500 dark:text-slate-400">
         <span>⏱ ${escapeHtml(formatTimeOnly(activity.startDate))} – ${escapeHtml(formatTimeOnly(activity.endDate))}</span>
         ${activity.km ? `<span>🚗 ${escapeHtml(`${activity.km} km`)}</span>` : ''}
         <span>💶 ${escapeHtml(formatCurrency(activity.cost, activity.currency))}</span>
@@ -325,14 +325,14 @@ function renderCalendarTile(key, dayActivities) {
     const meta = getTypeMeta(activity.type);
     const name = activity.name || 'Activity';
     return `
-      <div class="flex items-start gap-2 rounded-xl bg-slate-950/80 px-3 py-2">
+      <div class="flex items-start gap-2 rounded-xl bg-white dark:bg-slate-950/80 px-3 py-2">
         <span class="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary-500/10 text-primary-300">
           <i data-lucide="${meta.icon}" class="h-3.5 w-3.5"></i>
         </span>
         <div class="min-w-0 flex-1">
-          <div class="truncate text-sm font-medium text-slate-100">${escapeHtml(name)}</div>
-            ${activity.location ? `<div class="truncate text-xs text-slate-400">${escapeHtml(activity.location)}</div>` : ''}
-          <div class="mt-0.5 flex flex-wrap gap-x-2 gap-y-1 text-[11px] text-slate-400">
+          <div class="truncate text-sm font-medium text-slate-900 dark:text-slate-100">${escapeHtml(name)}</div>
+            ${activity.location ? `<div class="truncate text-xs text-slate-500 dark:text-slate-500 dark:text-slate-400">${escapeHtml(activity.location)}</div>` : ''}
+          <div class="mt-0.5 flex flex-wrap gap-x-2 gap-y-1 text-[11px] text-slate-500 dark:text-slate-500 dark:text-slate-400">
             <span>${escapeHtml(formatTimeOnly(activity.startDate))}–${escapeHtml(formatTimeOnly(activity.endDate))}</span>
             ${activity.km ? `<span>${escapeHtml(`${activity.km} km`)}</span>` : ''}
             <span>${escapeHtml(formatCurrency(activity.cost, activity.currency))}</span>
@@ -345,31 +345,31 @@ function renderCalendarTile(key, dayActivities) {
   const extraCount = Math.max(dayActivities.length - 4, 0);
 
   return `
-    <article class="flex min-h-[220px] flex-col rounded-2xl border border-slate-800 bg-slate-800/60 p-4 transition hover:border-primary-500/60 hover:bg-slate-800">
+    <article class="flex min-h-[220px] flex-col rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-200 dark:bg-slate-800/60 p-4 transition hover:border-primary-500/60 hover:bg-slate-100 dark:hover:bg-slate-800">
       <div class="mb-3 flex items-start justify-between gap-3">
         <div>
-          <div class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">${escapeHtml(weekday)}</div>
-          <div class="mt-1 text-3xl font-semibold leading-none text-slate-100">${escapeHtml(dayNumber)}</div>
+          <div class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-500 dark:text-slate-400">${escapeHtml(weekday)}</div>
+          <div class="mt-1 text-3xl font-semibold leading-none text-slate-900 dark:text-slate-100">${escapeHtml(dayNumber)}</div>
         </div>
-        <div class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-right">
-          <div class="text-[11px] uppercase tracking-wide text-slate-500">Summary</div>
-          <div class="mt-1 text-xs text-slate-300">
+        <div class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-right">
+          <div class="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-500">Summary</div>
+          <div class="mt-1 text-xs text-slate-600 dark:text-slate-300">
             ${Object.entries(costsByCurrency).map(([currency, amount]) =>
               `<span class="block">${escapeHtml(formatCurrency(amount, currency))}</span>`
             ).join('')}
           </div>
-          <div class="text-xs text-slate-400">${escapeHtml(`${totalKm || 0} km`)}</div>
+          <div class="text-xs text-slate-500 dark:text-slate-500 dark:text-slate-400">${escapeHtml(`${totalKm || 0} km`)}</div>
         </div>
       </div>
 
-      <div class="mb-3 text-xs text-slate-400">${escapeHtml(label)}</div>
+      <div class="mb-3 text-xs text-slate-500 dark:text-slate-500 dark:text-slate-400">${escapeHtml(label)}</div>
 
       <div class="space-y-2">
         ${previewItems}
       </div>
 
       ${extraCount ? `
-        <div class="mt-3 rounded-xl border border-dashed border-slate-700 px-3 py-2 text-xs text-slate-400">
+        <div class="mt-3 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 px-3 py-2 text-xs text-slate-500 dark:text-slate-500 dark:text-slate-400">
           +${extraCount} more item${extraCount === 1 ? '' : 's'} on this day
         </div>
       ` : ''}
@@ -441,11 +441,11 @@ function renderCosts() {
               </span>
               <span class="font-medium capitalize">
                 ${escapeHtml(type)}
-                <span class="ml-1 text-xs text-slate-400">${escapeHtml(currency)}</span>
+                <span class="ml-1 text-xs text-slate-500 dark:text-slate-500 dark:text-slate-400">${escapeHtml(currency)}</span>
               </span>
             </div>
 
-            <div class="text-right text-sm tabular-nums text-slate-400">
+            <div class="text-right text-sm tabular-nums text-slate-500 dark:text-slate-500 dark:text-slate-400">
               ${percent}%
             </div>
 
@@ -474,7 +474,7 @@ function renderCosts() {
                 </span>
                 <div>
                     <div class="font-medium">${escapeHtml(activity.name || 'Untitled')}</div>
-                    ${activity.location ? `<div class="text-xs text-slate-400">${escapeHtml(activity.location)}</div>` : ''}
+                    ${activity.location ? `<div class="text-xs text-slate-500 dark:text-slate-500 dark:text-slate-400">${escapeHtml(activity.location)}</div>` : ''}
                   </div>
               </div>
             </td>
@@ -501,7 +501,7 @@ function renderCosts() {
       }).join('')
     : `
         <tr>
-          <td colspan="5" class="px-3 py-8 text-center text-slate-500 dark:text-slate-400">
+          <td colspan="5" class="px-3 py-8 text-center text-slate-500 dark:text-slate-500 dark:text-slate-400">
             No activities yet.
           </td>
         </tr>
@@ -518,7 +518,7 @@ function showToast(message, type = 'error') {
   const colors = {
     error: 'bg-red-500/10 border-red-500/30 text-red-300',
     success: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300',
-    info: 'bg-slate-800 border-slate-700 text-slate-200'
+    info: 'bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200'
   };
 
   const toast = document.createElement('div');
@@ -545,17 +545,17 @@ function openConfirmModal({
 } = {}) {
   return new Promise((resolve) => {
     const overlay = document.createElement('div');
-    overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4';
+    overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-white dark:bg-slate-950/60 p-4';
 
     overlay.innerHTML = `
-      <div class="w-full max-w-sm rounded-3xl border border-slate-800 bg-slate-900 p-5 shadow-2xl">
-        <h2 class="mb-2 text-lg font-semibold tracking-tight text-slate-100">
+      <div class="w-full max-w-sm rounded-3xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-5 shadow-2xl">
+        <h2 class="mb-2 text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">
           ${escapeHtml(title)}
         </h2>
-        ${message ? `<p class="mb-5 text-sm text-slate-400">${escapeHtml(message)}</p>` : '<div class="mb-5"></div>'}
+        ${message ? `<p class="mb-5 text-sm text-slate-500 dark:text-slate-500 dark:text-slate-400">${escapeHtml(message)}</p>` : '<div class="mb-5"></div>'}
         <div class="flex justify-end gap-2">
           <button id="confirm-modal-cancel" type="button"
-            class="inline-flex items-center justify-center rounded-2xl border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm font-medium text-slate-200 hover:bg-slate-800">
+            class="inline-flex items-center justify-center rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">
             ${escapeHtml(cancelText)}
           </button>
           <button id="confirm-modal-ok" type="button"
@@ -594,30 +594,30 @@ function openConfirmModal({
 function openShareModeModal() {
   return new Promise((resolve) => {
     const overlay = document.createElement('div');
-    overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4';
+    overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-white dark:bg-slate-950/60 p-4';
 
     overlay.innerHTML = `
-      <div class="w-full max-w-sm rounded-3xl border border-slate-800 bg-slate-900 p-5 shadow-2xl">
-        <h2 class="mb-1 text-lg font-semibold tracking-tight text-slate-100">Share this trip</h2>
-        <p class="mb-5 text-sm text-slate-400">Choose what the recipient can see.</p>
+      <div class="w-full max-w-sm rounded-3xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-5 shadow-2xl">
+        <h2 class="mb-1 text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">Share this trip</h2>
+        <p class="mb-5 text-sm text-slate-500 dark:text-slate-500 dark:text-slate-400">Choose what the recipient can see.</p>
 
         <div class="space-y-3 mb-5">
           <button id="share-mode-full"
-            class="w-full text-left rounded-2xl border border-slate-700 bg-slate-800 px-4 py-3 hover:border-primary-500/50 hover:bg-slate-800/80 transition">
-            <div class="font-medium text-slate-100 text-sm">Full version</div>
-            <div class="text-xs text-slate-400 mt-0.5">Includes activities, costs and distances</div>
+            class="w-full text-left rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-200 dark:bg-slate-800 px-4 py-3 hover:border-primary-500/50 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition">
+            <div class="font-medium text-slate-900 dark:text-slate-100 text-sm">Full version</div>
+            <div class="text-xs text-slate-500 dark:text-slate-500 dark:text-slate-400 mt-0.5">Includes activities, costs and distances</div>
           </button>
 
           <button id="share-mode-public"
-            class="w-full text-left rounded-2xl border border-slate-700 bg-slate-800 px-4 py-3 hover:border-primary-500/50 hover:bg-slate-800/80 transition">
-            <div class="font-medium text-slate-100 text-sm">Public version</div>
-            <div class="text-xs text-slate-400 mt-0.5">Activities and dates only — costs hidden</div>
+            class="w-full text-left rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-200 dark:bg-slate-800 px-4 py-3 hover:border-primary-500/50 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition">
+            <div class="font-medium text-slate-900 dark:text-slate-100 text-sm">Public version</div>
+            <div class="text-xs text-slate-500 dark:text-slate-500 dark:text-slate-400 mt-0.5">Activities and dates only — costs hidden</div>
           </button>
         </div>
 
         <div class="flex justify-end">
           <button id="share-mode-cancel"
-            class="inline-flex items-center justify-center rounded-2xl border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm font-medium text-slate-200 hover:bg-slate-800">
+            class="inline-flex items-center justify-center rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">
             Cancel
           </button>
         </div>

@@ -82,13 +82,13 @@ function renderTimelinePage() {
   if (timelineButton) {
     timelineButton.className = state.timelineView === 'timeline'
       ? 'inline-flex items-center justify-center gap-2 rounded-xl border border-primary-500 bg-primary-500 px-3 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-primary-600'
-      : 'inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-slate-800';
+      : 'inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800';
   }
 
   if (calendarButton) {
     calendarButton.className = state.timelineView === 'calendar'
       ? 'inline-flex items-center justify-center gap-2 rounded-xl border border-primary-500 bg-primary-500 px-3 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-primary-600'
-      : 'inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-slate-800';
+      : 'inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800';
   }
 
   if (tripId) {
@@ -132,21 +132,21 @@ function renderTimeline() {
     const totalKm = dayActivities.reduce((sum, activity) => sum + Number(activity.km || 0), 0);
 
     return `
-      <section class="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-soft">
+      <section class="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 shadow-soft">
         <button
           type="button"
           onclick="toggleTimelineDay('${escapeHtml(key)}')"
-          class="flex w-full items-center justify-between gap-3 bg-slate-800/70 px-4 py-3 text-left transition hover:bg-slate-800"
+          class="flex w-full items-center justify-between gap-3 bg-slate-200 dark:bg-slate-800/70 px-4 py-3 text-left transition hover:bg-slate-100 dark:hover:bg-slate-800"
         >
           <div class="min-w-0">
-            <div class="text-sm font-semibold tracking-tight text-slate-100">${escapeHtml(label)}</div>
-            <div class="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-400">
+            <div class="text-sm font-semibold tracking-tight text-slate-900 dark:text-slate-100">${escapeHtml(label)}</div>
+            <div class="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-500 dark:text-slate-400">
               <span>${dayActivities.length} item${dayActivities.length === 1 ? '' : 's'}</span>
               <span>${escapeHtml(formatCurrency(totalCost))}</span>
               ${totalKm ? `<span>${escapeHtml(`${totalKm} km`)}</span>` : ''}
             </div>
           </div>
-          <span class="shrink-0 text-sm text-slate-300">
+          <span class="shrink-0 text-sm text-slate-600 dark:text-slate-300">
             ${isCollapsed ? '▶' : '▼'}
           </span>
         </button>
@@ -195,11 +195,11 @@ function renderCalendarView() {
       : formatMonthLabel(entries[0]?.[1]?.[0]?.startDate);
 
     return `
-      <section class="rounded-2xl border border-slate-800 bg-slate-900 p-4 sm:p-5 shadow-soft">
+      <section class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-4 sm:p-5 shadow-soft">
         <div class="mb-4 flex items-center justify-between gap-3">
           <div>
-            <h3 class="text-base font-semibold tracking-tight text-slate-100">${escapeHtml(monthLabel)}</h3>
-            <p class="mt-1 text-xs text-slate-400">${entries.length} day${entries.length === 1 ? '' : 's'}</p>
+            <h3 class="text-base font-semibold tracking-tight text-slate-900 dark:text-slate-100">${escapeHtml(monthLabel)}</h3>
+            <p class="mt-1 text-xs text-slate-500 dark:text-slate-500 dark:text-slate-400">${entries.length} day${entries.length === 1 ? '' : 's'}</p>
           </div>
         </div>
 
@@ -224,7 +224,7 @@ async function loadCosts() {
 
   table.innerHTML = `
     <tr>
-      <td colspan="5" class="px-3 py-8 text-center text-slate-500 dark:text-slate-400">Loading costs…</td>
+      <td colspan="5" class="px-3 py-8 text-center text-slate-500 dark:text-slate-500 dark:text-slate-400">Loading costs…</td>
     </tr>
   `;
 
@@ -388,7 +388,7 @@ function renderHeaderNav(current) {
   if (current !== 'costs') items.push({ label: 'Costs', icon: 'badge-euro', onClick: goToCosts });
   items.push({ label: 'Export', icon: 'printer', onClick: openPrintView });
 
-  const btnClass = 'inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm font-medium text-slate-200 hover:border-slate-600 hover:bg-slate-800 transition';
+  const btnClass = 'inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:border-slate-400 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition';
 
   // ── DESKTOP: regular button row (hidden on mobile) ──
   const desktopRow = document.createElement('div');
@@ -426,13 +426,13 @@ function renderHeaderNav(current) {
   hamburger.setAttribute('aria-label', 'Navigation menu');
 
   const dropdown = document.createElement('div');
-  dropdown.className = 'hidden absolute right-0 top-full mt-2 w-48 rounded-2xl border border-slate-700 bg-slate-900 shadow-xl z-50 overflow-hidden';
+  dropdown.className = 'hidden absolute right-0 top-full mt-2 w-48 rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 shadow-xl z-50 overflow-hidden';
 
   items.forEach(({ label, icon, onClick }) => {
     const item = document.createElement('button');
     item.type = 'button';
-    item.className = 'flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-slate-200 hover:bg-slate-800 transition';
-    item.innerHTML = `<i data-lucide="${icon}" class="h-4 w-4 text-slate-400"></i>${label}`;
+    item.className = 'flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition';
+    item.innerHTML = `<i data-lucide="${icon}" class="h-4 w-4 text-slate-500 dark:text-slate-500 dark:text-slate-400"></i>${label}`;
     item.onclick = () => {
       closeDropdown();
       onClick();
@@ -443,11 +443,11 @@ function renderHeaderNav(current) {
   // Theme toggle — mobile dropdown
   const themeItem = document.createElement('button');
   themeItem.type = 'button';
-  themeItem.className = 'flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-slate-200 hover:bg-slate-800 transition';
+  themeItem.className = 'flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition';
   themeItem.setAttribute('data-theme-toggle', '');
   themeItem.innerHTML = getTheme() === 'dark'
-    ? '<i data-lucide="sun" class="h-4 w-4 text-slate-400"></i>Light mode'
-    : '<i data-lucide="moon" class="h-4 w-4 text-slate-400"></i>Dark mode';
+    ? '<i data-lucide="sun" class="h-4 w-4 text-slate-500 dark:text-slate-500 dark:text-slate-400"></i>Light mode'
+    : '<i data-lucide="moon" class="h-4 w-4 text-slate-500 dark:text-slate-500 dark:text-slate-400"></i>Dark mode';
   themeItem.onclick = () => { closeDropdown(); toggleTheme(); };
   dropdown.appendChild(themeItem);
 

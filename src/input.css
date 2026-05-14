@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  /* Light mode input text fix — text-white inputs need override */
+  input, select, textarea {
+    color: inherit;
+  }
+}
+
 @layer components {
 
   /* Base button */
@@ -16,7 +23,7 @@
 
   /* Secondary (navigation / neutral) */
   .btn-secondary {
-    @apply border border-slate-700 bg-slate-950 text-slate-200 hover:bg-slate-800;
+    @apply border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800;
   }
 
   /* Danger (delete etc.) */

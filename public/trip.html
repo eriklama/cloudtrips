@@ -51,11 +51,11 @@
   </style>
 </head>
 
-<body class="min-h-full bg-slate-950 text-slate-100">
+<body class="min-h-full bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100">
 <div class="min-h-screen bg-gradient-to-br from-slate-950 via-slate-950 to-slate-900">
 
   <!-- HEADER -->
-  <header class="border-b border-slate-800">
+  <header class="border-b border-slate-200 dark:border-slate-800">
     <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
 
       <!-- Title -->
@@ -78,12 +78,12 @@
 
         <!-- User -->
         <span id="auth-user-email"
-          class="hidden sm:inline text-sm text-slate-400 truncate max-w-[160px]">
+          class="hidden sm:inline text-sm text-slate-500 dark:text-slate-500 dark:text-slate-400 truncate max-w-[160px]">
         </span>
 
         <!-- Logout -->
         <button id="logout-button" onclick="logout()"
-          class="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm font-medium text-slate-200 hover:border-slate-600 hover:bg-slate-800 transition">
+          class="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:border-slate-400 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
           <i data-lucide="log-out" class="w-4 h-4"></i>
         </button>
 
@@ -102,7 +102,7 @@
       <div>
         <div class="field-label">Type</div>
         <select id="activityType"
-          class="w-full min-w-0 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500">
+          class="w-full min-w-0 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500">
           <option value="plane">✈️ Plane</option>
           <option value="car">🚗 Car</option>
           <option value="hike">🥾 Hike</option>
@@ -117,9 +117,9 @@
         <div class="field-label">Cost</div>
         <div class="grid grid-cols-2 gap-2 min-w-0">
           <input id="activityCost" type="number" placeholder="Amount"
-            class="w-full min-w-0 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
+            class="w-full min-w-0 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
           <select id="activityCurrency"
-            class="w-full min-w-0 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500">
+            class="w-full min-w-0 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500">
             <option value="EUR">EUR €</option>
             <option value="USD">USD $</option>
             <option value="GBP">GBP £</option>
@@ -139,9 +139,9 @@
         <div class="field-label">Start</div>
         <div class="grid grid-cols-2 gap-2 min-w-0">
           <input id="activityStartDate" type="date"
-            class="w-full min-w-0 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
+            class="w-full min-w-0 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
           <input id="activityStartTime" type="time"
-            class="w-full min-w-0 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
+            class="w-full min-w-0 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
         </div>
       </div>
 
@@ -150,9 +150,9 @@
         <div class="field-label">End</div>
         <div class="grid grid-cols-2 gap-2 min-w-0">
           <input id="activityEndDate" type="date"
-            class="w-full min-w-0 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
+            class="w-full min-w-0 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
           <input id="activityEndTime" type="time"
-            class="w-full min-w-0 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
+            class="w-full min-w-0 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
         </div>
       </div>
 
@@ -161,9 +161,9 @@
         <div class="field-label">Activity</div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 min-w-0">
           <input id="activityName" placeholder="Name"
-            class="w-full min-w-0 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
+            class="w-full min-w-0 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
           <input id="activityLocation" placeholder="Location"
-            class="w-full min-w-0 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
+            class="w-full min-w-0 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
         </div>
       </div>
 
@@ -171,14 +171,14 @@
       <div>
         <div class="field-label">Distance</div>
         <input id="activityDistance" type="number" placeholder="km"
-          class="w-full min-w-0 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
+          class="w-full min-w-0 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
       </div>
 
       <!-- Row 7: Notes -->
       <div>
         <div class="field-label">Notes</div>
         <textarea id="activityNotes" placeholder="Additional notes..."
-          class="w-full min-w-0 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"></textarea>
+          class="w-full min-w-0 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"></textarea>
       </div>
 
       <!-- Row 8: Submit -->
@@ -198,7 +198,7 @@
 </div>
 
 <!-- Share Modal -->
-<div id="share-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-slate-950/60 p-4">
+<div id="share-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-white dark:bg-slate-950/60 p-4">
   <div class="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-800 dark:bg-slate-900">
     <h2 class="mb-4 text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">Share Trip</h2>
     <input id="share-link" type="text" readonly
