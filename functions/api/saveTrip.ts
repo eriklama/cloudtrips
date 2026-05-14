@@ -39,7 +39,7 @@ function sanitizeActivity(activity: ActivityInput) {
     location: toString(activity?.location || '').trim(),
     distance: toNumber(
       activity?.distance !== undefined ? activity.distance : activity?.km
-    )
+    ),
     sortOrder: toNumber(activity?.sortOrder)
   };
 }
