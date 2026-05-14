@@ -388,7 +388,7 @@ function renderHeaderNav(current) {
   if (current !== 'costs') items.push({ label: 'Costs', icon: 'badge-euro', onClick: goToCosts });
   items.push({ label: 'Export', icon: 'printer', onClick: openPrintView });
 
-  const btnClass = 'inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:border-slate-400 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition';
+  const btnClass = 'inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 transition';
 
   // ── DESKTOP: regular button row (hidden on mobile) ──
   const desktopRow = document.createElement('div');

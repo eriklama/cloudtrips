@@ -369,11 +369,17 @@ function setTheme(theme) {
   document.documentElement.classList.toggle('dark', theme === 'dark');
   // Update all theme toggle buttons on the page
   document.querySelectorAll('[data-theme-toggle]').forEach(btn => {
-    btn.innerHTML = theme === 'dark'
-      ? '<i data-lucide="sun" class="h-4 w-4"></i>'
-      : '<i data-lucide="moon" class="h-4 w-4"></i>';
-    if (window.lucide) window.lucide.createIcons();
+    const icon = theme === 'dark' ? 'sun' : 'moon';
+    const isTextBtn = btn.textContent.trim().length > 2; // has label text
+    if (isTextBtn) {
+      btn.innerHTML = theme === 'dark'
+        ? '<i data-lucide="sun" class="h-4 w-4 text-slate-400"></i>Light mode'
+        : '<i data-lucide="moon" class="h-4 w-4 text-slate-400"></i>Dark mode';
+    } else {
+      btn.innerHTML = `<i data-lucide="${icon}" class="h-4 w-4"></i>`;
+    }
   });
+  if (window.lucide) window.lucide.createIcons();
 }
 
 function toggleTheme() {
