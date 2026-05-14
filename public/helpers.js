@@ -355,3 +355,27 @@ function clearTripCache(tripId) {
     // ignore
   }
 }
+
+/* =========================
+ * THEME
+ * ========================= */
+
+function getTheme() {
+  return localStorage.getItem('cloudtrips_theme') || 'dark';
+}
+
+function setTheme(theme) {
+  localStorage.setItem('cloudtrips_theme', theme);
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+  // Update all theme toggle buttons on the page
+  document.querySelectorAll('[data-theme-toggle]').forEach(btn => {
+    btn.innerHTML = theme === 'dark'
+      ? '<i data-lucide="sun" class="h-4 w-4"></i>'
+      : '<i data-lucide="moon" class="h-4 w-4"></i>';
+    if (window.lucide) window.lucide.createIcons();
+  });
+}
+
+function toggleTheme() {
+  setTheme(getTheme() === 'dark' ? 'light' : 'dark');
+}

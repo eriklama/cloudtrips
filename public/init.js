@@ -403,6 +403,18 @@ function renderHeaderNav(current) {
     desktopRow.appendChild(btn);
   });
 
+  // Theme toggle — desktop
+  const themeBtn = document.createElement('button');
+  themeBtn.type = 'button';
+  themeBtn.className = btnClass + ' px-2.5';
+  themeBtn.setAttribute('data-theme-toggle', '');
+  themeBtn.setAttribute('aria-label', 'Toggle theme');
+  themeBtn.innerHTML = getTheme() === 'dark'
+    ? '<i data-lucide="sun" class="h-4 w-4"></i>'
+    : '<i data-lucide="moon" class="h-4 w-4"></i>';
+  themeBtn.onclick = toggleTheme;
+  desktopRow.appendChild(themeBtn);
+
   // ── MOBILE: hamburger + dropdown (hidden on desktop) ──
   const mobileWrapper = document.createElement('div');
   mobileWrapper.className = 'relative sm:hidden';
@@ -428,11 +440,21 @@ function renderHeaderNav(current) {
     dropdown.appendChild(item);
   });
 
+  // Theme toggle — mobile dropdown
+  const themeItem = document.createElement('button');
+  themeItem.type = 'button';
+  themeItem.className = 'flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-slate-200 hover:bg-slate-800 transition';
+  themeItem.setAttribute('data-theme-toggle', '');
+  themeItem.innerHTML = getTheme() === 'dark'
+    ? '<i data-lucide="sun" class="h-4 w-4 text-slate-400"></i>Light mode'
+    : '<i data-lucide="moon" class="h-4 w-4 text-slate-400"></i>Dark mode';
+  themeItem.onclick = () => { closeDropdown(); toggleTheme(); };
+  dropdown.appendChild(themeItem);
+
   function openDropdown() {
     dropdown.classList.remove('hidden');
     hamburger.innerHTML = '<i data-lucide="x" class="h-5 w-5"></i>';
     refreshIcons();
-    // close on outside click
     setTimeout(() => {
       document.addEventListener('click', outsideClickHandler);
     }, 0);
