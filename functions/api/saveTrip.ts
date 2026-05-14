@@ -14,6 +14,7 @@ type ActivityInput = {
   location?: unknown;
   distance?: unknown;
   km?: unknown;
+  sortOrder?: unknown;
 };
 
 function toString(value: unknown, fallback = ''): string {
@@ -39,6 +40,7 @@ function sanitizeActivity(activity: ActivityInput) {
     distance: toNumber(
       activity?.distance !== undefined ? activity.distance : activity?.km
     )
+    sortOrder: toNumber(activity?.sortOrder)
   };
 }
 

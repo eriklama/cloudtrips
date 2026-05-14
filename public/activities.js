@@ -236,3 +236,33 @@ async function deleteActivity(activityId) {
     showToast(error?.message || 'Failed to delete activity.', 'error');
   }
 }
+
+function moveActivity(activityId, direction) {
+  if (!state.currentTrip) return;
+
+  const activities = state.currentTrip.activities;
+  const index = activities.findIndex(a => String(a.id) === String(activityId));
+  if (index === -1) return;
+
+  const newIndex = direction === 'up' ? index - 1 : index + 1;
+  if (newIndex < 0 || newIndex >= activities.length) return;
+
+  // Assign sortOrder to all activities if not set
+  activities.forEach((a, i) => {
+    if (a.sortOrder === undefined) a.sortOrder = i;
+  });
+
+  // Swap sortOrder values
+  const temp = activities[index].sortOrder;
+  activities[index].sortOrder = activities[newIndex].sortOrder;
+  activities[newIndex].sortOrder = temp;
+
+  // Re-sort and save
+  state.currentTrip.activities = sortActivities(activities);
+  renderActivities();
+
+  saveTrip(state.currentTrip).catch(err => {
+    console.error(err);
+    showToast('Failed to save order.', 'error');
+  });
+}

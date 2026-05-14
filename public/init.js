@@ -661,4 +661,5 @@ window.closeShareModal = closeShareModal;
 window.copyShareLink = copyShareLink;
 window.revokeShare = revokeShare;
 window.openManageSharesModal = openManageSharesModal;
+window.moveActivity = moveActivity;
 /* window.logout = logout; */

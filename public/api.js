@@ -133,7 +133,8 @@ async function saveTrip(trip) {
         cost: Number(normalized.cost || 0),
         currency: normalized.currency || 'EUR',
         distance: Number(normalized.distance || normalized.km || 0),
-        notes: normalized.notes || ''
+        notes: normalized.notes || '',
+        sortOrder: normalized.sortOrder !== undefined ? normalized.sortOrder : 0
       };
     })
   };

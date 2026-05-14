@@ -248,6 +248,16 @@ function renderActivities() {
 
           ${!isGuestView() ? `
             <div class="flex gap-2">
+              <div class="flex flex-col gap-1">
+                <button onclick="moveActivity('${escapeHtml(activity.id)}', 'up')"
+                  class="inline-flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+                  <i data-lucide="chevron-up" class="h-3.5 w-3.5"></i>
+                </button>
+                <button onclick="moveActivity('${escapeHtml(activity.id)}', 'down')"
+                  class="inline-flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+                  <i data-lucide="chevron-down" class="h-3.5 w-3.5"></i>
+                </button>
+              </div>
               <button onclick="editActivity('${escapeHtml(activity.id)}')" class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800">
                 <i data-lucide="pencil" class="h-4 w-4"></i>
                 Edit
