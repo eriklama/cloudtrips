@@ -17,6 +17,11 @@
       Log in to your private trips workspace.
     </p>
 
+    <!-- SUCCESS MESSAGE (after password reset) -->
+    <div id="reset-success" class="hidden mb-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 px-4 py-3 text-sm text-emerald-300">
+      Password updated successfully. You can now log in.
+    </div>
+
     <!-- EMAIL -->
     <label class="text-sm text-slate-300">Email</label>
     <input id="email" placeholder="you@example.com"
@@ -25,7 +30,17 @@
     <!-- PASSWORD -->
     <label class="text-sm text-slate-300">Password</label>
     <input id="password" type="password" placeholder="Your password"
-      class="w-full mt-1 mb-6 px-3 py-2 bg-slate-800 rounded outline-none focus:ring-2 focus:ring-primary-500" />
+      class="w-full mt-1 mb-2 px-3 py-2 bg-slate-800 rounded outline-none focus:ring-2 focus:ring-primary-500" />
+
+    <!-- FORGOT PASSWORD -->
+    <div class="mb-5 text-right">
+      <a href="/forgot.html" class="text-sm text-slate-400 hover:text-primary-400 transition">
+        Forgot password?
+      </a>
+    </div>
+
+    <!-- ERROR -->
+    <div id="auth-error" class="min-h-[1.25rem] mb-3 text-sm text-rose-400"></div>
 
     <!-- LOGIN BUTTON -->
     <button onclick="login()"
@@ -35,7 +50,7 @@
 
     <!-- SIGNUP LINK -->
     <p class="text-sm text-slate-400 mt-4 text-center">
-      Don’t you have an account?
+      Don't you have an account?
       <a href="/signup.html" class="text-primary-400 hover:underline">
         Create one...
       </a>
@@ -44,9 +59,17 @@
   </div>
 
 <script>
+// Show success message after password reset
+if (new URLSearchParams(window.location.search).get('reset') === '1') {
+  document.getElementById('reset-success').classList.remove('hidden');
+}
+
 async function login() {
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
+  const errorBox = document.getElementById('auth-error');
+
+  errorBox.textContent = '';
 
   try {
     const res = await fetch('/api/login', {
@@ -57,30 +80,26 @@ async function login() {
 
     const data = await res.json();
 
-    console.log('LOGIN RESPONSE:', data);
-
     if (!res.ok) {
-      alert(data.error || 'Login failed');
+      errorBox.textContent = data.error || 'Login failed';
       return;
     }
 
     localStorage.setItem('cloudtrips_auth_token', data.token);
     localStorage.setItem('cloudtrips_auth_user', JSON.stringify(data.user));
 
-    console.log('TOKEN AFTER SAVE:', localStorage.getItem('cloudtrips_auth_token'));
-
-    // ✅ FINAL FIX
-    const redirect =
-      new URLSearchParams(window.location.search).get('redirect') || '/';
-
-    console.log('REDIRECTING NOW');
     window.location.href = '/';
 
   } catch (err) {
     console.error('Login error:', err);
-    alert('Network error');
+    errorBox.textContent = 'Network error. Please try again.';
   }
 }
+
+// Allow Enter key to submit
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') login();
+});
 </script>
 
 </body>
