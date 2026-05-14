@@ -8,6 +8,8 @@
     SAVE_TRIP: '/api/saveTrip',
     DELETE_TRIP: '/api/deleteTrip',
     SHARE_TRIP: '/api/shareTrip'
+    GET_SHARES: '/api/getShares',
+    REVOKE_SHARE: '/api/revokeShare',
   };
 
   const state = {
