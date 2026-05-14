@@ -24,7 +24,23 @@ async function loadTrips() {
       return;
     }
 
-    renderTripList();
+renderTripList();
+
+    // Populate year filter
+    const years = [...new Set(
+      state.trips
+        .map(t => t.startDate ? new Date(t.startDate).getFullYear() : null)
+        .filter(Boolean)
+        .sort((a, b) => b - a)
+    )];
+
+    const yearSelect = document.getElementById('tripYearFilter');
+    if (yearSelect) {
+      const current = yearSelect.value;
+      yearSelect.innerHTML = '<option value="">All years</option>' +
+        years.map(y => `<option value="${y}" ${String(y) === current ? 'selected' : ''}>${y}</option>`).join('');
+    }
+
   } catch (error) {
     console.error(error);
     container.innerHTML = emptyState(
@@ -34,21 +50,6 @@ async function loadTrips() {
     );
     refreshIcons();
   }
-}
-
-// Populate year filter
-const years = [...new Set(
-  state.trips
-    .map(t => t.startDate ? new Date(t.startDate).getFullYear() : null)
-    .filter(Boolean)
-    .sort((a, b) => b - a)
-)];
-
-const yearSelect = document.getElementById('tripYearFilter');
-if (yearSelect) {
-  const current = yearSelect.value;
-  yearSelect.innerHTML = '<option value="">All years</option>' +
-    years.map(y => `<option value="${y}" ${String(y) === current ? 'selected' : ''}>${y}</option>`).join('');
 }
 
 async function addTrip() {
