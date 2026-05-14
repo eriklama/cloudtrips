@@ -232,7 +232,7 @@ function normalizeActivity(raw = {}) {
 }
 
 function normalizeFullTrip(raw) {
-   return {
+  return {
     id: raw.id ?? raw.tripId ?? raw._id ?? '',
     name: raw.name ?? raw.title ?? 'Untitled trip',
     notes: raw.notes ?? '',
@@ -258,7 +258,7 @@ function normalizeTripSummary(raw) {
     id: raw.id ?? raw.tripId ?? raw._id ?? '',
     name: raw.name ?? raw.title ?? 'Untitled trip',
     notes: raw.notes ?? '',
-    activitiesCount: ...,
+    activitiesCount: Number(raw.activitiesCount ?? normalizedActivities.length ?? 0),
     startDate,
     endDate
   };
