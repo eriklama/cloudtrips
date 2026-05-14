@@ -1,6 +1,12 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full dark">
+<html lang="en" class="h-full">
 <head>
+  <script>
+    (function() {
+      const theme = localStorage.getItem('cloudtrips_theme') || 'dark';
+      document.documentElement.classList.toggle('dark', theme === 'dark');
+    })();
+  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Trip</title>
@@ -45,8 +51,21 @@
       font-weight: 500;
       text-transform: uppercase;
       letter-spacing: 0.06em;
-      color: rgb(100 116 139); /* slate-400 */
+      color: rgb(100 116 139);
       margin-bottom: 4px;
+    }
+
+    /* Ensure input text visible in both modes */
+    input,
+    select,
+    textarea {
+      color: rgb(15 23 42);
+    }
+
+    .dark input,
+    .dark select,
+    .dark textarea {
+      color: rgb(241 245 249);
     }
   </style>
 </head>
@@ -78,7 +97,7 @@
 
         <!-- User -->
         <span id="auth-user-email"
-          class="hidden sm:inline text-sm text-slate-500 dark:text-slate-500 dark:text-slate-400 truncate max-w-[160px]">
+          class="hidden sm:inline text-sm text-slate-500 dark:text-slate-400 truncate max-w-[160px]">
         </span>
 
         <!-- Logout -->
@@ -102,7 +121,7 @@
       <div>
         <div class="field-label">Type</div>
         <select id="activityType"
-          class="w-full min-w-0 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500">
+          class="w-full min-w-0 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500">
           <option value="plane">✈️ Plane</option>
           <option value="car">🚗 Car</option>
           <option value="hike">🥾 Hike</option>
@@ -119,7 +138,7 @@
           <input id="activityCost" type="number" placeholder="Amount"
             class="w-full min-w-0 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500" />
           <select id="activityCurrency"
-            class="w-full min-w-0 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500">
+            class="w-full min-w-0 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500">
             <option value="EUR">EUR €</option>
             <option value="USD">USD $</option>
             <option value="GBP">GBP £</option>
