@@ -5,6 +5,7 @@ export interface Env {
   JWT_SECRET: string;
   PASSWORD_PEPPER?: string;
   RATE_LIMIT_KV: KVNamespace;
+  BREVO_API_KEY: string;
 }
 
 export interface AuthUser {

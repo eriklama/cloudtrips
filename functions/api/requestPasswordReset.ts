@@ -74,18 +74,18 @@ export async function onRequestPost(context: {
 
   const resetUrl = `https://cloudtrips.pages.dev/reset.html?token=${encodeURIComponent(token)}`;
 
-  // Send email via Resend
-  const emailRes = await fetch('https://api.resend.com/emails', {
+  // Send email via Brevo
+  const emailRes = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${env.RESEND_API_KEY}`
+      'api-key': env.BREVO_API_KEY
     },
     body: JSON.stringify({
-      from: 'CloudTrips <onboarding@resend.dev>',
-      to: [user.email],
+      sender: { name: 'CloudTrips', email: 'meerschweine@gmail.com' },
+      to: [{ email: user.email }],
       subject: 'Reset your CloudTrips password',
-      html: `
+      htmlContent: `
         <div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;">
           <h1 style="font-size:22px;font-weight:700;margin-bottom:8px;color:#0f172a;">Reset your password</h1>
           <p style="color:#475569;margin-bottom:24px;">
@@ -108,7 +108,7 @@ export async function onRequestPost(context: {
   });
 
   if (!emailRes.ok) {
-    console.error('Resend error:', await emailRes.text());
+    console.error('Brevo error:', await emailRes.text());
     return error('Failed to send reset email.', 500);
   }
 
