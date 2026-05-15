@@ -269,15 +269,13 @@ function moveActivity(activityId, direction) {
   const newIndex = direction === 'up' ? index - 1 : index + 1;
   if (newIndex < 0 || newIndex >= activities.length) return;
 
-  // Assign sortOrder to all activities if not set
-  activities.forEach((a, i) => {
-    if (a.sortOrder === undefined) a.sortOrder = i;
-  });
+  // Normalize sortOrder across all activities based on current positions,
+  // ensuring values are contiguous and unique before swapping.
+  activities.forEach((a, i) => { a.sortOrder = i; });
 
   // Swap sortOrder values
-  const temp = activities[index].sortOrder;
-  activities[index].sortOrder = activities[newIndex].sortOrder;
-  activities[newIndex].sortOrder = temp;
+  activities[index].sortOrder = newIndex;
+  activities[newIndex].sortOrder = index;
 
   // Re-sort and save
   state.currentTrip.activities = sortActivities(activities);
