@@ -15,13 +15,6 @@ function clearAuthSession() {
   localStorage.removeItem(AUTH_USER_KEY);
 }
 
-function getStoredUser() {
-  try {
-    return JSON.parse(localStorage.getItem(AUTH_USER_KEY) || 'null');
-  } catch {
-    return null;
-  }
-}
 
 function isAuthPage() {
   const path = location.pathname;
