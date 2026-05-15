@@ -369,11 +369,11 @@ function renderCalendarTile(key, dayActivities) {
         <div class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-right">
           <div class="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-500">Summary</div>
           <div class="mt-1 text-xs text-slate-600 dark:text-slate-300">
-            ${Object.entries(costsByCurrency).map(([currency, amount]) =>
+            ${Object.entries(costsByCurrency).filter(([, amount]) => amount > 0).map(([currency, amount]) =>
               `<span class="block">${escapeHtml(formatCurrency(amount, currency))}</span>`
             ).join('')}
           </div>
-          <div class="text-xs text-slate-500 dark:text-slate-500 dark:text-slate-400">${escapeHtml(`${totalKm || 0} km`)}</div>
+          ${totalKm ? `<div class="text-xs text-slate-500 dark:text-slate-500 dark:text-slate-400">${escapeHtml(`${totalKm} km`)}</div>` : ''}
         </div>
       </div>
 
