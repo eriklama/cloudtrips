@@ -34,53 +34,6 @@ function redirectToLogin() {
   }
 }
 
-async function authFetch(url, options = {}) {
-  const token = getAuthToken();
-  const headers = new Headers(options.headers || {});
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`);
-  }
-  if (!headers.has('Content-Type') && options.body) {
-    headers.set('Content-Type', 'application/json');
-  }
-
-  const response = await fetch(url, {
-    ...options,
-    headers
-  });
-
-  if (response.status === 401 && !isAuthPage()) {
-    clearAuthSession();
-    redirectToLogin();
-    throw new Error('Unauthorized');
-  }
-
-  return response;
-}
-
-async function parseApiResponse(response) {
-  const text = await response.text();
-  let data = null;
-
-  if (text) {
-    try {
-      data = JSON.parse(text);
-    } catch {
-      data = text;
-    }
-  }
-
-  if (!response.ok) {
-    const message =
-      (data && typeof data === 'object' && data.error) ||
-      (typeof data === 'string' && data) ||
-      `Request failed: ${response.status}`;
-    throw new Error(message);
-  }
-
-  return data;
-}
-
 async function requireAuth() {
   if (isAuthPage()) return null;
 
@@ -136,12 +89,11 @@ async function handleLoginSubmit(event) {
   submitButton.disabled = true;
 
   try {
-    const response = await fetch('/api/login', {
+    const data = await apiFetch('/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
     });
-    const data = await parseApiResponse(response);
     setAuthSession(data.token, data.user);
     window.location.href = '/';
   } catch (err) {
@@ -171,12 +123,11 @@ async function handleSignupSubmit(event) {
   submitButton.disabled = true;
 
   try {
-    const response = await fetch('/api/signup', {
+    const data = await apiFetch('/api/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
     });
-    const data = await parseApiResponse(response);
     setAuthSession(data.token, data.user);
     window.location.href = '/';
   } catch (err) {
