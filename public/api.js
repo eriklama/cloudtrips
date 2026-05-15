@@ -1,21 +1,11 @@
 /* =========================
  * api.js
  * Handles all HTTP communication with the backend.
- * Depends on: auth.js (for getShareToken, isGuestView)
+ * Depends on: auth.js (for getAuthToken, getShareToken, isGuestView)
  * ========================= */
 
-/*
-const API = {
-  GET_TRIPS: '/api/getTrips',
-  GET_TRIP: '/api/getTrip',
-  SAVE_TRIP: '/api/saveTrip',
-  DELETE_TRIP: '/api/deleteTrip',
-  SHARE_TRIP: '/api/shareTrip'
-};
-*/
-
 async function apiFetch(url, options = {}) {
-  const authToken = window.localStorage.getItem('cloudtrips_auth_token');
+  const authToken = getAuthToken();
 
   const headers = {
     ...(options.headers || {}),
