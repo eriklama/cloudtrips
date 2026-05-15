@@ -15,6 +15,7 @@ const API = {
 
 const state = {
   trips: [],
+  tripsLoaded: false,
   currentTrip: null,
   editingActivityId: null,
   timelineCollapsedDays: new Set(),

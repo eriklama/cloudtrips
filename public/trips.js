@@ -13,6 +13,7 @@ async function loadTrips() {
   try {
     const data = await apiGet(API.GET_TRIPS);
     state.trips = safeArray(normalizeTripsResponse(data)).map(normalizeTripSummary);
+    state.tripsLoaded = true;
 
     if (!state.trips.length) {
       container.innerHTML = emptyState(
@@ -24,7 +25,14 @@ async function loadTrips() {
       return;
     }
 
-renderTripList();
+    // Apply any search/filter the user typed while loading, otherwise render all
+    const searchEl = document.getElementById('tripSearch');
+    const yearEl = document.getElementById('tripYearFilter');
+    if (searchEl?.value.trim() || yearEl?.value) {
+      filterTrips();
+    } else {
+      renderTripList();
+    }
 
     // Populate year filter
     const years = [...new Set(
@@ -144,6 +152,9 @@ async function deleteTrip(tripId) {
 }
 
 function filterTrips() {
+  // Trips not yet loaded — let loadTrips() render when ready
+  if (!state.trips.length && !state.tripsLoaded) return;
+
   const search = (document.getElementById('tripSearch')?.value || '').toLowerCase().trim();
   const year = document.getElementById('tripYearFilter')?.value || '';
 
