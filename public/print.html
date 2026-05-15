@@ -216,9 +216,59 @@ function groupByCurrency(activities) {
 function load() {
   try {
     const raw = sessionStorage.getItem('print_trip');
-    if (!raw) throw new Error('No trip data found. Please use the Export button from the trip page.');
+    if (!raw) {
+      // Fallback: try fetching via ?id= param (e.g. direct load or refresh)
+      const tripId = new URLSearchParams(window.location.search).get('id');
+      if (tripId) {
+        fetchAndRender(tripId);
+        return;
+      }
+      throw new Error('No trip data found. Please use the Export button from the trip page.');
+    }
 
     const trip = JSON.parse(raw);
+    render(trip);
+    setTimeout(() => window.print(), 400);
+
+  } catch (err) {
+    showError(err.message);
+  }
+}
+
+async function fetchAndRender(tripId) {
+  try {
+    const token = new URLSearchParams(window.location.search).get('token') || '';
+    const authToken = localStorage.getItem('cloudtrips_auth_token') || '';
+    const headers = {};
+    if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+
+    const url = token
+      ? `/api/getTrip?id=${encodeURIComponent(tripId)}&token=${encodeURIComponent(token)}`
+      : `/api/getTrip?id=${encodeURIComponent(tripId)}`;
+
+    const response = await fetch(url, { headers });
+    if (!response.ok) throw new Error('Could not load trip. Please use the Export button from the trip page.');
+
+    const data = await response.json();
+    const trip = data?.trip || data;
+    render(trip);
+    setTimeout(() => window.print(), 400);
+  } catch (err) {
+    showError(err.message);
+  }
+}
+
+function showError(message) {
+  const tripId = new URLSearchParams(window.location.search).get('id');
+  const backUrl = tripId ? `/trip.html?id=${encodeURIComponent(tripId)}` : '/';
+  document.getElementById('content').innerHTML = `
+    <div class="error">
+      ${message}<br><br>
+      <a href="${backUrl}" style="color:#555;font-size:11px;">← Go back to trip</a>
+    </div>
+  `;
+}
+function render(trip) {
     document.title = `${trip.name || 'Trip'} — Itinerary`;
     document.getElementById('title').textContent = trip.name || 'Trip';
     document.getElementById('print-date').textContent = `Printed ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}`;
@@ -384,13 +434,6 @@ function load() {
       `;
       container.appendChild(section);
     }
-
-    setTimeout(() => window.print(), 400);
-
-  } catch (err) {
-    document.getElementById('content').innerHTML =
-      `<div class="error">${err.message}</div>`;
-  }
 }
 
 load();
