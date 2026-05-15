@@ -128,7 +128,11 @@ function renderTimeline() {
   container.innerHTML = groupEntries.map(([key, dayActivities]) => {
     const label = key === 'undated' ? 'No date' : formatDayLabel(dayActivities[0]?.startDate);
     const isCollapsed = state.timelineCollapsedDays.has(key);
-    const totalCost = dayActivities.reduce((sum, activity) => sum + Number(activity.cost || 0), 0);
+    const costsByCurrency = dayActivities.reduce((acc, activity) => {
+      const currency = activity.currency || 'EUR';
+      acc[currency] = (acc[currency] || 0) + Number(activity.cost || 0);
+      return acc;
+    }, {});
     const totalKm = dayActivities.reduce((sum, activity) => sum + Number(activity.km || 0), 0);
 
     return `
@@ -142,7 +146,9 @@ function renderTimeline() {
             <div class="text-sm font-semibold tracking-tight text-slate-900 dark:text-slate-100">${escapeHtml(label)}</div>
             <div class="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-500 dark:text-slate-400">
               <span>${dayActivities.length} item${dayActivities.length === 1 ? '' : 's'}</span>
-              <span>${escapeHtml(formatCurrency(totalCost))}</span>
+              ${Object.entries(costsByCurrency).map(([currency, amount]) =>
+                `<span>${escapeHtml(formatCurrency(amount, currency))}</span>`
+              ).join('')}
               ${totalKm ? `<span>${escapeHtml(`${totalKm} km`)}</span>` : ''}
             </div>
           </div>
