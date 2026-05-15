@@ -519,6 +519,7 @@ function renderCosts() {
             No activities yet.
           </td>
         </tr>
+      `;
 
   refreshIcons();
 }
