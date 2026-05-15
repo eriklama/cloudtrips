@@ -344,9 +344,14 @@ async function openManageSharesModal() {
     <div class="w-full max-w-md rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xl">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">Active share links</h2>
-        <button id="manage-shares-close" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
+        <div class="flex items-center gap-2">
+          <button id="revoke-all-btn" class="hidden inline-flex items-center gap-1 rounded-xl border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-500/20 transition">
+            Revoke all
+          </button>
+          <button id="manage-shares-close" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
       </div>
       <div id="shares-list" class="space-y-2 text-sm">
         <div class="text-slate-400 dark:text-slate-500 text-center py-4">Loading...</div>
@@ -369,6 +374,14 @@ async function openManageSharesModal() {
       list.innerHTML = '<div class="text-slate-400 dark:text-slate-500 text-center py-4">No active share links.</div>';
       return;
     }
+
+    if (data.shares.length > 1) {
+      overlay.querySelector('#revoke-all-btn').classList.remove('hidden');
+    }
+
+    overlay.querySelector('#revoke-all-btn').addEventListener('click', () => {
+      disableAllShares(state.currentTrip.id, overlay);
+    });
 
     list.innerHTML = data.shares.map(share => {
       const mode = share.mode === 'public' ? 'Public' : 'Full';
@@ -433,6 +446,25 @@ async function revokeShare(shareId) {
     showToast('Share link revoked.', 'success');
   } catch (err) {
     showToast(err?.message || 'Failed to revoke link.', 'error');
+  }
+}
+
+async function disableAllShares(tripId, modalOverlay) {
+  const confirmed = await openConfirmModal({
+    title: 'Revoke all share links',
+    message: 'All active share links for this trip will stop working immediately.',
+    confirmText: 'Revoke all',
+    cancelText: 'Cancel',
+    danger: true
+  });
+  if (!confirmed) return;
+
+  try {
+    await apiPost(API.DISABLE_SHARE, { tripId });
+    modalOverlay.remove();
+    showToast('All share links revoked.', 'success');
+  } catch (err) {
+    showToast(err?.message || 'Failed to revoke all links.', 'error');
   }
 }
 
@@ -666,6 +698,7 @@ window.openShareModal = openShareModal;
 window.closeShareModal = closeShareModal;
 window.copyShareLink = copyShareLink;
 window.revokeShare = revokeShare;
+window.disableAllShares = disableAllShares;
 window.openManageSharesModal = openManageSharesModal;
 window.moveActivity = moveActivity;
 window.saveTripNotes = saveTripNotes;
