@@ -480,16 +480,16 @@ function renderCosts() {
         const meta = getTypeMeta(activity.type);
 
         return `
-          <tr class="rounded-2xl bg-slate-50 dark:bg-slate-950/60">
+          <tr class="rounded-2xl bg-white dark:bg-slate-950/60">
             <td data-label="Activity" class="rounded-l-2xl px-3 py-3">
               <div class="flex items-center gap-3">
                 <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
                   <i data-lucide="${meta.icon}" class="h-4 w-4"></i>
                 </span>
                 <div>
-                    <div class="font-medium">${escapeHtml(activity.name || 'Untitled')}</div>
-                    ${activity.location ? `<div class="text-xs text-slate-500 dark:text-slate-500 dark:text-slate-400">${escapeHtml(activity.location)}</div>` : ''}
-                  </div>
+                  <div class="font-medium text-slate-900 dark:text-slate-100">${escapeHtml(activity.name || 'Untitled')}</div>
+                  ${activity.location ? `<div class="text-xs text-slate-500 dark:text-slate-400">${escapeHtml(activity.location)}</div>` : ''}
+                </div>
               </div>
             </td>
 
@@ -503,7 +503,7 @@ function renderCosts() {
               ${escapeHtml(formatDateTime(activity.startDate))}
             </td>
 
-            <td data-label="Cost" class="px-3 py-3 text-right font-semibold">
+            <td data-label="Cost" class="px-3 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">
               ${escapeHtml(formatCurrency(activity.cost, activity.currency))}
             </td>
 
@@ -515,11 +515,10 @@ function renderCosts() {
       }).join('')
     : `
         <tr>
-          <td colspan="5" class="px-3 py-8 text-center text-slate-500 dark:text-slate-500 dark:text-slate-400">
+          <td colspan="5" class="px-3 py-8 text-center text-slate-500 dark:text-slate-400">
             No activities yet.
           </td>
         </tr>
-      `;
 
   refreshIcons();
 }
