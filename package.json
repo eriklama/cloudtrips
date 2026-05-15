@@ -9,7 +9,7 @@
     "deploy": "wrangler pages deploy public"
   },
   "dependencies": {
-    "jose": "^6.1.0"
+    "jose": "^6.2.3"
   },
   "devDependencies": {
     "tailwindcss": "^3.4.17",

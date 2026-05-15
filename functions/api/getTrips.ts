@@ -2,23 +2,15 @@ import { requireUser } from '../_lib/auth';
 import type { Env } from '../_lib/auth';
 import { error, json, methodNotAllowed } from '../_lib/http';
 
-type TripRow = {
+type TripSummaryRow = {
   id: string;
   name: string;
   notes: string | null;
-  activities_json: string | null;
-  created_at?: string | null;
+  created_at: string | null;
+  activities_count: number;
+  start_date: string | null;
+  end_date: string | null;
 };
-
-function safeParseActivities(value: string | null): any[] {
-  if (!value) return [];
-  try {
-    const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
 
 export async function onRequestGet(context: { request: Request; env: Env }) {
   const { env } = context;
@@ -34,38 +26,39 @@ export async function onRequestGet(context: { request: Request; env: Env }) {
   try {
     const result = await env.DB
       .prepare(`
-        SELECT id, name, notes, activities_json, created_at
-        FROM trips
-        WHERE user_id = ?
-        ORDER BY COALESCE(created_at, '') DESC, name ASC
+        SELECT
+          t.id,
+          t.name,
+          t.notes,
+          t.created_at,
+          COUNT(a.id)                          AS activities_count,
+          MIN(NULLIF(a.start_date, ''))         AS start_date,
+          MAX(
+            CASE
+              WHEN a.end_date != '' THEN a.end_date
+              ELSE a.start_date
+            END
+          )                                    AS end_date
+        FROM trips t
+        LEFT JOIN activities a
+          ON a.trip_id = t.id
+        WHERE t.user_id = ?
+        GROUP BY t.id
+        ORDER BY COALESCE(t.created_at, '') DESC, t.name ASC
       `)
       .bind(user.id)
-      .all<TripRow>();
+      .all<TripSummaryRow>();
 
     const rows = Array.isArray(result?.results) ? result.results : [];
 
-    const trips = rows.map((row) => {
-      const activities = safeParseActivities(row.activities_json);
-
-      const dated = activities
-        .map((a) => ({
-          startDate: String(a?.startDate || '').trim(),
-          endDate: String(a?.endDate || '').trim()
-        }))
-        .filter((a) => a.startDate || a.endDate);
-
-      const startDates = dated.map((a) => a.startDate).filter(Boolean).sort();
-      const endDates = dated.map((a) => a.endDate).filter(Boolean).sort();
-
-      return {
-        id: row.id,
-        name: row.name,
-        notes: row.notes ?? '',
-        activitiesCount: activities.length,
-        startDate: startDates[0] || '',
-        endDate: endDates[endDates.length - 1] || startDates[startDates.length - 1] || ''
-      };
-    });
+    const trips = rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      notes: row.notes ?? '',
+      activitiesCount: Number(row.activities_count ?? 0),
+      startDate: row.start_date ?? '',
+      endDate: row.end_date ?? ''
+    }));
 
     return json({ ok: true, trips });
   } catch (err) {

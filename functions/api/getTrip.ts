@@ -12,26 +12,59 @@ type TripRow = {
   user_id: string;
   name: string;
   notes: string | null;
-  activities_json: string | null;
   created_at?: string | null;
 };
 
-function parseActivities(value: string | null): unknown[] {
-  if (!value) return [];
-  try {
-    const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
+type ActivityRow = {
+  id: string;
+  type: string;
+  name: string;
+  location: string;
+  start_date: string;
+  end_date: string;
+  cost: number;
+  currency: string;
+  distance: number;
+  notes: string;
+  sort_order: number;
+};
+
+function rowToActivity(row: ActivityRow) {
+  return {
+    id: row.id,
+    type: row.type,
+    name: row.name,
+    location: row.location,
+    startDate: row.start_date,
+    endDate: row.end_date,
+    start: row.start_date,
+    end: row.end_date,
+    cost: row.cost,
+    currency: row.currency,
+    distance: row.distance,
+    km: row.distance,
+    notes: row.notes,
+    sortOrder: row.sort_order
+  };
 }
 
-function stripCosts(activities: unknown[]): unknown[] {
-  return activities.map((a: any) => ({
-    ...a,
-    cost: 0,
-    currency: undefined
-  }));
+function stripCosts(activities: ReturnType<typeof rowToActivity>[]) {
+  return activities.map((a) => ({ ...a, cost: 0, currency: undefined }));
+}
+
+async function fetchActivities(env: Env, tripId: string): Promise<ReturnType<typeof rowToActivity>[]> {
+  const result = await env.DB
+    .prepare(`
+      SELECT id, type, name, location, start_date, end_date,
+             cost, currency, distance, notes, sort_order
+      FROM activities
+      WHERE trip_id = ?
+      ORDER BY sort_order ASC, start_date ASC
+    `)
+    .bind(tripId)
+    .all<ActivityRow>();
+
+  return (result.results ?? []).map(rowToActivity);
 }
 
 export async function onRequestGet(context: {
@@ -54,7 +87,7 @@ export async function onRequestGet(context: {
     if (user) {
       const ownedTrip = await env.DB
         .prepare(`
-          SELECT id, user_id, name, notes, activities_json, created_at
+          SELECT id, user_id, name, notes, created_at
           FROM trips
           WHERE id = ? AND user_id = ?
           LIMIT 1
@@ -63,13 +96,14 @@ export async function onRequestGet(context: {
         .first<TripRow>();
 
       if (ownedTrip) {
+        const activities = await fetchActivities(env, tripId);
         return json({
           ok: true,
           trip: {
             id: ownedTrip.id,
             name: ownedTrip.name,
             notes: ownedTrip.notes ?? '',
-            activities: parseActivities(ownedTrip.activities_json),
+            activities,
             created_at: ownedTrip.created_at ?? null
           },
           readOnly: false,
@@ -92,7 +126,7 @@ export async function onRequestGet(context: {
 
       const sharedTrip = await env.DB
         .prepare(`
-          SELECT id, user_id, name, notes, activities_json, created_at
+          SELECT id, user_id, name, notes, created_at
           FROM trips
           WHERE id = ?
           LIMIT 1
@@ -106,9 +140,8 @@ export async function onRequestGet(context: {
 
       await touchShareUsage({ env, shareId: share.id });
 
-      const isPublic = share.mode === 'public';
-      let activities = parseActivities(sharedTrip.activities_json);
-      if (isPublic) {
+      let activities = await fetchActivities(env, tripId);
+      if (share.mode === 'public') {
         activities = stripCosts(activities);
       }
 

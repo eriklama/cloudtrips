@@ -1,0 +1,12 @@
+name = "cloudtrips"
+compatibility_date = "2024-01-01"
+pages_build_output_dir = "public"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "trips"
+database_id = "75d8c0c3-b9c8-4d48-88d2-b8c5702b4806"
+
+[[kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+id = "c419e330eb9b44b0aca72254c1290f66"

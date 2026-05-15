@@ -31,12 +31,12 @@ function sanitizeActivity(activity: ActivityInput) {
     id: toString(activity?.id || crypto.randomUUID()).trim(),
     type: toString(activity?.type || 'other').trim() || 'other',
     name: toString(activity?.name || '').trim(),
+    location: toString(activity?.location || '').trim(),
     startDate: toString(activity?.startDate || '').trim(),
     endDate: toString(activity?.endDate || '').trim(),
     cost: toNumber(activity?.cost),
     currency: toString(activity?.currency || 'EUR').trim().toUpperCase() || 'EUR',
     notes: toString(activity?.notes || '').trim(),
-    location: toString(activity?.location || '').trim(),
     distance: toNumber(
       activity?.distance !== undefined ? activity.distance : activity?.km
     ),
@@ -72,43 +72,68 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
 
   const rawActivities = Array.isArray(body?.activities) ? body.activities : [];
   const activities = rawActivities.map(sanitizeActivity);
-  const activitiesJson = JSON.stringify(activities);
 
   try {
-    if (id) {
-      const result = await env.DB
-        .prepare(`
-          UPDATE trips
-          SET name = ?, notes = ?, activities_json = ?
-          WHERE id = ? AND user_id = ?
-        `)
-        .bind(name, notes, activitiesJson, id, user.id)
-        .run();
+    let tripId = id;
 
-      const changes = Number(result?.meta?.changes || 0);
-      if (changes === 0) {
+    if (tripId) {
+      // Verify trip exists and belongs to user
+      const existing = await env.DB
+        .prepare(`SELECT id FROM trips WHERE id = ? AND user_id = ? LIMIT 1`)
+        .bind(tripId, user.id)
+        .first<{ id: string }>();
+
+      if (!existing) {
         return error('Trip not found.', 404);
       }
 
-      return json({
-        ok: true,
-        trip: { id, name, notes, activities }
-      });
+      await env.DB
+        .prepare(`UPDATE trips SET name = ?, notes = ? WHERE id = ? AND user_id = ?`)
+        .bind(name, notes, tripId, user.id)
+        .run();
+    } else {
+      // Create new trip
+      tripId = crypto.randomUUID();
+      await env.DB
+        .prepare(`
+          INSERT INTO trips (id, user_id, name, notes, created_at)
+          VALUES (?, ?, ?, ?, datetime('now'))
+        `)
+        .bind(tripId, user.id, name, notes)
+        .run();
     }
 
-    const newId = crypto.randomUUID();
-
+    // Replace all activities for this trip atomically:
+    // delete existing rows, then bulk-insert the new set.
     await env.DB
-      .prepare(`
-        INSERT INTO trips (id, user_id, name, notes, activities_json, created_at)
-        VALUES (?, ?, ?, ?, ?, datetime('now'))
-      `)
-      .bind(newId, user.id, name, notes, activitiesJson)
+      .prepare(`DELETE FROM activities WHERE trip_id = ? AND user_id = ?`)
+      .bind(tripId, user.id)
       .run();
+
+    if (activities.length > 0) {
+      // D1 supports batch() for multiple statements in one round-trip
+      const inserts = activities.map((a) =>
+        env.DB.prepare(`
+          INSERT INTO activities
+            (id, trip_id, user_id, type, name, location,
+             start_date, end_date, cost, currency, distance,
+             notes, sort_order)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).bind(
+          a.id, tripId, user.id,
+          a.type, a.name, a.location,
+          a.startDate, a.endDate,
+          a.cost, a.currency, a.distance,
+          a.notes, a.sortOrder
+        )
+      );
+
+      await env.DB.batch(inserts);
+    }
 
     return json({
       ok: true,
-      trip: { id: newId, name, notes, activities }
+      trip: { id: tripId, name, notes, activities }
     });
   } catch (err) {
     console.error('DB error (saveTrip):', err);

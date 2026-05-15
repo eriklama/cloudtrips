@@ -53,6 +53,11 @@ export async function onRequestPost(context: {
     await revokeSharesForTrip({ env, tripId });
 
     await env.DB
+      .prepare(`DELETE FROM activities WHERE trip_id = ?`)
+      .bind(tripId)
+      .run();
+
+    await env.DB
       .prepare(`
         DELETE FROM trips
         WHERE id = ? AND user_id = ?
