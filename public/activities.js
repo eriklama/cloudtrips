@@ -167,6 +167,8 @@ async function saveActivity() {
     notes: data.notes
   });
 
+  const previousActivities = [...state.currentTrip.activities];
+
   if (state.editingActivityId) {
     const index = state.currentTrip.activities.findIndex(
       (item) => String(item.id) === String(state.editingActivityId)
@@ -186,6 +188,8 @@ async function saveActivity() {
     renderActivities();
     showToast('Activity saved.', 'success');
   } catch (error) {
+    state.currentTrip.activities = previousActivities;
+    renderActivities();
     console.error(error);
     showToast(error?.message || 'Failed to save activity.', 'error');
   }
