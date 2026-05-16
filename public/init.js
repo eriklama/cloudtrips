@@ -281,6 +281,14 @@ async function loadCosts() {
       if (logoutBtn) logoutBtn.style.display = 'none';
     }
     renderCosts();
+
+    // Restore saved currency preference
+    const savedCurrency = localStorage.getItem('cloudtrips_convert_currency');
+    const select = document.getElementById('convertCurrency');
+    if (savedCurrency && select) {
+      select.value = savedCurrency;
+      applyConversion();
+    }
   } catch (error) {
     console.error(error);
     table.innerHTML = `
@@ -295,6 +303,9 @@ async function applyConversion() {
   const select = document.getElementById('convertCurrency');
   const status = document.getElementById('conversion-status');
   const convertTo = select?.value || '';
+
+  // Persist preference
+  localStorage.setItem('cloudtrips_convert_currency', convertTo);
 
   if (!convertTo) {
     renderCosts();
