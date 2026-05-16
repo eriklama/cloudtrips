@@ -435,7 +435,7 @@ async function init() {
     if (!onSharedPage && typeof requireAuth === 'function') {
       try {
         const user = await requireAuth();
-        console.log('AUTH USER:', user);
+
       } catch (e) {
         console.warn('AUTH FAILED → redirecting to login', e);
         try {
