@@ -134,3 +134,43 @@ async function saveTrip(trip) {
   saveTripToCache(trip);
   return result;
 }
+
+async function saveTripMeta(trip) {
+  if (!trip?.id) throw new Error('Trip id is required');
+  const result = await apiPost(API.SAVE_TRIP_META, {
+    id: trip.id,
+    name: trip.name || 'Untitled trip',
+    notes: trip.notes || ''
+  });
+  saveTripToCache(trip);
+  return result;
+}
+
+async function upsertActivity(tripId, activity) {
+  const normalized = normalizeActivity(activity);
+  return apiPost(API.UPSERT_ACTIVITY, {
+    tripId,
+    activity: {
+      id: normalized.id || uuid(),
+      type: normalized.type || 'other',
+      name: normalized.name || '',
+      location: normalized.location || '',
+      startDate: normalized.startDate || '',
+      endDate: normalized.endDate || '',
+      cost: Number(normalized.cost || 0),
+      currency: normalized.currency || 'EUR',
+      distance: Number(normalized.distance || normalized.km || 0),
+      notes: normalized.notes || '',
+      sortOrder: normalized.sortOrder !== undefined ? normalized.sortOrder : 0
+    }
+  });
+}
+
+async function deleteActivityById(activityId) {
+  return apiPost(API.DELETE_ACTIVITY, { activityId });
+}
+
+async function reorderActivities(tripId, updates) {
+  return apiPost(API.REORDER_ACTIVITIES, { tripId, updates });
+}
+

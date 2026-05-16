@@ -129,7 +129,8 @@ function saveTripNotes() {
   clearTimeout(_notesSaveTimeout);
   _notesSaveTimeout = setTimeout(async () => {
     try {
-      await saveTrip(state.currentTrip);
+      await saveTripMeta(state.currentTrip);
+      saveTripToCache(state.currentTrip);
     } catch (err) {
       console.error(err);
       showToast('Failed to save notes.', 'error');
@@ -183,7 +184,8 @@ async function saveActivity() {
   state.currentTrip.activities = sortActivities(state.currentTrip.activities);
 
   try {
-    await saveTrip(state.currentTrip);
+    await upsertActivity(state.currentTrip.id, activity);
+    saveTripToCache(state.currentTrip);
     resetActivityForm();
     renderActivities();
     showToast('Activity saved.', 'success');
@@ -253,7 +255,8 @@ async function deleteActivity(activityId) {
   );
 
   try {
-    await saveTrip(state.currentTrip);
+    await deleteActivityById(activityId);
+    saveTripToCache(state.currentTrip);
     if (state.editingActivityId === activityId) resetActivityForm();
     renderActivities();
     showToast('Activity deleted.', 'success');
@@ -285,7 +288,14 @@ function moveActivity(activityId, direction) {
   state.currentTrip.activities = sortActivities(activities);
   renderActivities();
 
-  saveTrip(state.currentTrip).catch(err => {
+  const updates = [
+    { id: activities[index].id, sortOrder: activities[index].sortOrder },
+    { id: activities[newIndex].id, sortOrder: activities[newIndex].sortOrder }
+  ];
+
+  reorderActivities(state.currentTrip.id, updates).then(() => {
+    saveTripToCache(state.currentTrip);
+  }).catch(err => {
     console.error(err);
     showToast('Failed to save order.', 'error');
   });
