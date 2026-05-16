@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Wrangler
+.wrangler/
+.dev.vars
+
+# Environment files (never commit secrets)
+.env
+.env.local
+.env.production
+
+# Build output
+dist/
+.output/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
