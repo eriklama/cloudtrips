@@ -91,6 +91,9 @@ function renderTimelinePage() {
       : 'inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800';
   }
 
+  const jumpBtn = document.getElementById('btnJumpToday');
+  if (jumpBtn) jumpBtn.classList.toggle('hidden', state.timelineView === 'calendar');
+
   if (tripId) {
     saveTimelineView(tripId, state.timelineView);
   }
@@ -136,7 +139,7 @@ function renderTimeline() {
     const totalKm = dayActivities.reduce((sum, activity) => sum + Number(activity.km || 0), 0);
 
     return `
-      <section class="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 shadow-soft">
+      <section id="day-${escapeHtml(key)}" class="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 shadow-soft">
         <button
           type="button"
           onclick="toggleTimelineDay('${escapeHtml(key)}')"
@@ -167,6 +170,40 @@ function renderTimeline() {
   }).join('');
 
   refreshIcons();
+}
+
+function jumpToToday() {
+  const today = new Date();
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
+  // Try exact match first, then find the nearest past day
+  let target = document.getElementById(`day-${todayKey}`);
+
+  if (!target) {
+    // Find all day sections and pick the last one before today
+    const sections = [...document.querySelectorAll('[id^="day-"]')]
+      .map(el => ({ el, key: el.id.replace('day-', '') }))
+      .filter(({ key }) => key !== 'undated')
+      .sort((a, b) => a.key.localeCompare(b.key));
+
+    const past = sections.filter(({ key }) => key <= todayKey);
+    const future = sections.filter(({ key }) => key > todayKey);
+
+    if (past.length) {
+      target = past[past.length - 1].el;
+    } else if (future.length) {
+      target = future[0].el;
+    }
+  }
+
+  if (target) {
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Flash highlight
+    target.classList.add('ring-2', 'ring-primary-500');
+    setTimeout(() => target.classList.remove('ring-2', 'ring-primary-500'), 1500);
+  } else {
+    showToast('No dated activities found.', 'info');
+  }
 }
 
 function renderCalendarView() {
@@ -467,10 +504,6 @@ document.addEventListener('DOMContentLoaded', init);
  * GLOBAL EXPORTS
  * ========================= */
 
-window.addTrip = addTrip;
-window.openTrip = openTrip;
-window.renameTrip = renameTrip;
-window.deleteTrip = deleteTrip;
 window.editActivity = editActivity;
 window.deleteActivity = deleteActivity;
 window.saveActivity = saveActivity;
@@ -482,9 +515,9 @@ window.goToTimeline = goToTimeline;
 window.goToCosts = goToCosts;
 window.toggleTimelineDay = toggleTimelineDay;
 window.switchTimelineView = switchTimelineView;
+window.jumpToToday = jumpToToday;
 window.openPrintView = openPrintView;
 window.renderHeaderNav = renderHeaderNav;
 window.moveActivity = moveActivity;
 window.saveTripNotes = saveTripNotes;
-window.filterTrips = filterTrips;
 window.logout = logout;

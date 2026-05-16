@@ -81,6 +81,36 @@ async function addTrip() {
   }
 }
 
+async function duplicateTrip(tripId) {
+  const trip = state.trips.find((item) => String(item.id) === String(tripId));
+  if (!trip) return;
+
+  const confirmed = await openConfirmModal({
+    title: 'Duplicate trip',
+    message: `Create a copy of "${trip.name}" with all its activities?`,
+    confirmText: 'Duplicate',
+    cancelText: 'Cancel'
+  });
+  if (!confirmed) return;
+
+  try {
+    const result = await apiPost(API.DUPLICATE_TRIP, { tripId });
+    await loadTrips();
+    showToast(`"${result.trip.name}" created with ${result.trip.activitiesCount} activities.`, 'success');
+  } catch (err) {
+    console.error(err);
+    showToast(err?.message || 'Failed to duplicate trip.', 'error');
+  }
+}
+
+window.duplicateTrip = duplicateTrip;
+window.addTrip = addTrip;
+window.openTrip = openTrip;
+window.renameTrip = renameTrip;
+window.deleteTrip = deleteTrip;
+window.loadTrips = loadTrips;
+window.filterTrips = filterTrips;
+
 function openTrip(tripId) {
   window.location.href = buildTripPageUrl('trip.html', tripId);
 }
