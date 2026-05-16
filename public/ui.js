@@ -306,7 +306,7 @@ function renderTimelineActivity(activity) {
       </div>
 
       <div class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-500 dark:text-slate-400">
-        <span>⏱ ${escapeHtml(formatTimeOnly(activity.startDate))} – ${escapeHtml(formatTimeOnly(activity.endDate))}</span>
+        <span>⏱ ${escapeHtml(formatDateTimeRangeFull(activity.startDate, activity.endDate))}</span>
         ${activity.km ? `<span>🚗 ${escapeHtml(`${activity.km} km`)}</span>` : ''}
         <span>💶 ${escapeHtml(formatCurrency(activity.cost, activity.currency))}</span>
       </div>
@@ -348,7 +348,7 @@ function renderCalendarTile(key, dayActivities) {
           <div class="truncate text-sm font-medium text-slate-900 dark:text-slate-100">${escapeHtml(name)}</div>
             ${activity.location ? `<div class="truncate text-xs text-slate-500 dark:text-slate-500 dark:text-slate-400">${escapeHtml(activity.location)}</div>` : ''}
           <div class="mt-0.5 flex flex-wrap gap-x-2 gap-y-1 text-[11px] text-slate-500 dark:text-slate-500 dark:text-slate-400">
-            <span>${escapeHtml(formatTimeOnly(activity.startDate))}–${escapeHtml(formatTimeOnly(activity.endDate))}</span>
+            <span>${escapeHtml(formatDateTimeRangeFull(activity.startDate, activity.endDate))}</span>
             ${activity.km ? `<span>${escapeHtml(`${activity.km} km`)}</span>` : ''}
             <span>${escapeHtml(formatCurrency(activity.cost, activity.currency))}</span>
           </div>
@@ -500,8 +500,8 @@ function renderCosts() {
               </span>
             </td>
 
-            <td data-label="Start" class="px-3 py-3 text-sm text-slate-600 dark:text-slate-300">
-              ${escapeHtml(formatDateTime(activity.startDate))}
+            <td data-label="Date" class="px-3 py-3 text-sm text-slate-600 dark:text-slate-300">
+              ${escapeHtml(formatDateTimeRangeFull(activity.startDate, activity.endDate))}
             </td>
 
             <td data-label="Cost" class="px-3 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">

@@ -135,6 +135,28 @@ function formatTimeOnly(value) {
   }).format(date);
 }
 
+function formatDateTimeRangeFull(startDate, endDate) {
+  if (!startDate) return '—';
+
+  const start = new Date(startDate);
+  if (Number.isNaN(start.getTime())) return '—';
+
+  if (!endDate) return formatDateTime(startDate);
+
+  const end = new Date(endDate);
+  if (Number.isNaN(end.getTime())) return formatDateTime(startDate);
+
+  const sameDay = start.toDateString() === end.toDateString();
+
+  if (sameDay) {
+    // 14 Jan 2025, 09:00 – 17:00
+    return `${formatDateTime(startDate)} – ${formatTimeOnly(endDate)}`;
+  } else {
+    // 14 Jan 2025, 09:00 – 15 Jan 2025, 11:30
+    return `${formatDateTime(startDate)} – ${formatDateTime(endDate)}`;
+  }
+}
+
 /* =========================
  * DATE KEY HELPERS
  * ========================= */
