@@ -52,19 +52,41 @@ function stripCosts(activities: ReturnType<typeof rowToActivity>[]) {
   return activities.map((a) => ({ ...a, cost: 0, currency: undefined }));
 }
 
-async function fetchActivities(env: Env, tripId: string): Promise<ReturnType<typeof rowToActivity>[]> {
-  const result = await env.DB
-    .prepare(`
-      SELECT id, type, name, location, start_date, end_date,
-             cost, currency, distance, notes, sort_order
-      FROM activities
-      WHERE trip_id = ?
-      ORDER BY sort_order ASC, start_date ASC
-    `)
-    .bind(tripId)
-    .all<ActivityRow>();
+const PAGE_SIZE = 50;
 
-  return (result.results ?? []).map(rowToActivity);
+async function fetchActivities(
+  env: Env,
+  tripId: string,
+  page: number
+): Promise<{ activities: ReturnType<typeof rowToActivity>[]; totalCount: number; hasMore: boolean }> {
+  const offset = (page - 1) * PAGE_SIZE;
+
+  const [result, countRow] = await Promise.all([
+    env.DB
+      .prepare(`
+        SELECT id, type, name, location, start_date, end_date,
+               cost, currency, distance, notes, sort_order
+        FROM activities
+        WHERE trip_id = ?
+        ORDER BY sort_order ASC, start_date ASC
+        LIMIT ? OFFSET ?
+      `)
+      .bind(tripId, PAGE_SIZE, offset)
+      .all<ActivityRow>(),
+    env.DB
+      .prepare(`SELECT COUNT(*) as count FROM activities WHERE trip_id = ?`)
+      .bind(tripId)
+      .first<{ count: number }>()
+  ]);
+
+  const totalCount = Number(countRow?.count ?? 0);
+  const activities = (result.results ?? []).map(rowToActivity);
+
+  return {
+    activities,
+    totalCount,
+    hasMore: offset + activities.length < totalCount
+  };
 }
 
 export async function onRequestGet(context: {
@@ -74,6 +96,7 @@ export async function onRequestGet(context: {
   const { request, env } = context;
   const url = new URL(request.url);
   const tripId = (url.searchParams.get('trip') || url.searchParams.get('id') || '').trim();
+  const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));
 
   if (!tripId) {
     return error('trip id is required.', 400);
@@ -96,7 +119,7 @@ export async function onRequestGet(context: {
         .first<TripRow>();
 
       if (ownedTrip) {
-        const activities = await fetchActivities(env, tripId);
+        const { activities, totalCount, hasMore } = await fetchActivities(env, tripId, page);
         return json({
           ok: true,
           trip: {
@@ -106,6 +129,7 @@ export async function onRequestGet(context: {
             activities,
             created_at: ownedTrip.created_at ?? null
           },
+          pagination: { page, totalCount, hasMore },
           readOnly: false,
           access: 'owner'
         });
@@ -140,7 +164,7 @@ export async function onRequestGet(context: {
 
       await touchShareUsage({ env, shareId: share.id });
 
-      let activities = await fetchActivities(env, tripId);
+      let { activities, totalCount, hasMore } = await fetchActivities(env, tripId, page);
       if (share.mode === 'public') {
         activities = stripCosts(activities);
       }
@@ -154,6 +178,7 @@ export async function onRequestGet(context: {
           activities,
           created_at: sharedTrip.created_at ?? null
         },
+        pagination: { page, totalCount, hasMore },
         readOnly: true,
         access: 'shared',
         shareMode: share.mode ?? 'full',

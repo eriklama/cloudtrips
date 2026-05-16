@@ -183,6 +183,78 @@ function renderTripList() {
  * ACTIVITIES (TRIP PAGE)
  * ========================= */
 
+function renderActivityCard(activity) {
+  const meta = getTypeMeta(activity.type);
+  return `
+    <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div class="mb-3 flex flex-wrap items-center gap-2">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
+              <i data-lucide="${meta.icon}" class="h-5 w-5"></i>
+            </span>
+            <h3 class="truncate text-lg font-semibold tracking-tight">${escapeHtml(activity.name || 'Untitled activity')}</h3>
+              ${activity.location ? `<p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">${escapeHtml(activity.location)}</p>` : ''}
+            <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${meta.badge}">
+              ${escapeHtml(activity.type)}
+            </span>
+          </div>
+
+          <div class="space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+              <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
+                <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Start</div>
+                <div class="text-sm font-medium">${escapeHtml(formatDateTime(activity.startDate))}</div>
+              </div>
+              <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
+                <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">End</div>
+                <div class="text-sm font-medium">${escapeHtml(formatDateTime(activity.endDate))}</div>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
+                <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Cost</div>
+                <div class="text-sm font-medium">${escapeHtml(formatCurrency(activity.cost, activity.currency))}</div>
+              </div>
+              <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
+                <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Distance</div>
+                <div class="text-sm font-medium">${activity.km ? escapeHtml(`${activity.km} km`) : '—'}</div>
+              </div>
+            </div>
+            <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
+              <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Notes</div>
+              <div class="text-sm font-medium whitespace-pre-wrap break-words">${escapeHtml(activity.notes || '—')}</div>
+            </div>
+          </div>
+        </div>
+
+        ${!isGuestView() ? `
+          <div class="flex gap-2">
+            <div class="flex flex-col gap-1">
+              <button onclick="moveActivity('${escapeHtml(activity.id)}', 'up')"
+                class="inline-flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+                <i data-lucide="chevron-up" class="h-3.5 w-3.5"></i>
+              </button>
+              <button onclick="moveActivity('${escapeHtml(activity.id)}', 'down')"
+                class="inline-flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+                <i data-lucide="chevron-down" class="h-3.5 w-3.5"></i>
+              </button>
+            </div>
+            <button onclick="editActivity('${escapeHtml(activity.id)}')" class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800">
+              <i data-lucide="pencil" class="h-4 w-4"></i>
+              Edit
+            </button>
+            <button onclick="deleteActivity('${escapeHtml(activity.id)}')" class="inline-flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 hover:bg-red-100 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20">
+              <i data-lucide="trash-2" class="h-4 w-4"></i>
+              Delete
+            </button>
+          </div>
+        ` : ''}
+      </div>
+    </article>
+  `;
+}
+
 function renderActivities() {
   const container = document.getElementById('activities');
   if (!container || !state.currentTrip) return;
@@ -202,81 +274,68 @@ function renderActivities() {
     return;
   }
 
-  container.innerHTML = activities.map((activity) => {
-    const meta = getTypeMeta(activity.type);
+  // Show search header when there are activities
+  const header = document.getElementById('activities-header');
+  if (header) header.classList.toggle('hidden', activities.length === 0);
+
+  // Group by day
+  const groups = {};
+  const undated = [];
+  activities.forEach(a => {
+    if (!a.startDate) { undated.push(a); return; }
+    const d = new Date(a.startDate);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    (groups[key] ||= []).push(a);
+  });
+
+  if (!state.collapsedActivityDays) state.collapsedActivityDays = new Set();
+
+  const renderGroup = (key, label, list) => {
+    const isCollapsed = state.collapsedActivityDays.has(key);
+    const costsByCurrency = list.reduce((acc, a) => {
+      const c = a.currency || 'EUR';
+      acc[c] = (acc[c] || 0) + Number(a.cost || 0);
+      return acc;
+    }, {});
+    const totalKm = list.reduce((sum, a) => sum + Number(a.km || 0), 0);
+
+    const totals = [
+      ...Object.entries(costsByCurrency).filter(([,v]) => v > 0).map(([c,v]) => formatCurrency(v, c)),
+      ...(totalKm ? [`${totalKm} km`] : [])
+    ].join(' · ');
+
     return `
-      <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft dark:border-slate-800 dark:bg-slate-900">
-        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div class="min-w-0 flex-1">
-            <div class="mb-3 flex flex-wrap items-center gap-2">
-              <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
-                <i data-lucide="${meta.icon}" class="h-5 w-5"></i>
-              </span>
-              <h3 class="truncate text-lg font-semibold tracking-tight">${escapeHtml(activity.name || 'Untitled activity')}</h3>
-                ${activity.location ? `<p class="text-sm text-slate-500 dark:text-slate-500 dark:text-slate-400 mt-0.5">${escapeHtml(activity.location)}</p>` : ''}
-              <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${meta.badge}">
-                ${escapeHtml(activity.type)}
-              </span>
-            </div>
-
-            <div class="space-y-3">
-              <div class="grid grid-cols-2 gap-3">
-                <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
-                  <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-500 dark:text-slate-400">Start</div>
-                  <div class="text-sm font-medium">${escapeHtml(formatDateTime(activity.startDate))}</div>
-                </div>
-
-                <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
-                  <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-500 dark:text-slate-400">End</div>
-                  <div class="text-sm font-medium">${escapeHtml(formatDateTime(activity.endDate))}</div>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-2 gap-3">
-                <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
-                  <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-500 dark:text-slate-400">Cost</div>
-                  <div class="text-sm font-medium">${escapeHtml(formatCurrency(activity.cost, activity.currency))}</div>
-                </div>
-
-                <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
-                  <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-500 dark:text-slate-400">Distance</div>
-                  <div class="text-sm font-medium">${activity.km ? escapeHtml(`${activity.km} km`) : '—'}</div>
-                </div>
-              </div>
-
-              <div class="rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70">
-                <div class="mb-1 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-500 dark:text-slate-400">Notes</div>
-                <div class="text-sm font-medium whitespace-pre-wrap break-words">${escapeHtml(activity.notes || '—')}</div>
-              </div>
+      <div class="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
+        <button type="button" onclick="toggleActivityDay('${escapeHtml(key)}')"
+          class="flex w-full items-center justify-between gap-3 bg-slate-100 dark:bg-slate-800/70 px-4 py-3 text-left transition hover:bg-slate-200 dark:hover:bg-slate-800">
+          <div class="min-w-0">
+            <div class="text-sm font-semibold text-slate-900 dark:text-slate-100">${escapeHtml(label)}</div>
+            <div class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+              ${list.length} activit${list.length === 1 ? 'y' : 'ies'}${totals ? ' · ' + escapeHtml(totals) : ''}
             </div>
           </div>
-
-          ${!isGuestView() ? `
-            <div class="flex gap-2">
-              <div class="flex flex-col gap-1">
-                <button onclick="moveActivity('${escapeHtml(activity.id)}', 'up')"
-                  class="inline-flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
-                  <i data-lucide="chevron-up" class="h-3.5 w-3.5"></i>
-                </button>
-                <button onclick="moveActivity('${escapeHtml(activity.id)}', 'down')"
-                  class="inline-flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
-                  <i data-lucide="chevron-down" class="h-3.5 w-3.5"></i>
-                </button>
-              </div>
-              <button onclick="editActivity('${escapeHtml(activity.id)}')" class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800">
-                <i data-lucide="pencil" class="h-4 w-4"></i>
-                Edit
-              </button>
-              <button onclick="deleteActivity('${escapeHtml(activity.id)}')" class="inline-flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 hover:bg-red-100 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20">
-                <i data-lucide="trash-2" class="h-4 w-4"></i>
-                Delete
-              </button>
-            </div>
-          ` : ''}
-        </div>
-      </article>
+          <i data-lucide="${isCollapsed ? 'chevron-right' : 'chevron-down'}" class="h-4 w-4 shrink-0 text-slate-400 transition-transform"></i>
+        </button>
+        ${isCollapsed ? '' : `<div class="space-y-3 p-3">${list.map(renderActivityCard).join('')}</div>`}
+      </div>
     `;
-  }).join('');
+  };
+
+  const sections = Object.keys(groups).sort().map(key =>
+    renderGroup(key, formatDayLabel(groups[key][0].startDate), groups[key])
+  );
+
+  if (undated.length) {
+    sections.push(renderGroup('undated', 'No date', undated));
+  }
+
+  container.innerHTML = sections.join('');
+  // Show/hide load more button
+  const loadMoreContainer = document.getElementById('load-more-container');
+  if (loadMoreContainer) {
+    const hasMore = state.currentTrip._pagination?.hasMore || false;
+    loadMoreContainer.classList.toggle('hidden', !hasMore);
+  }
 
   refreshIcons();
 }

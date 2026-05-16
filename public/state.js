@@ -21,6 +21,7 @@ const state = {
   tripsLoaded: false,
   currentTrip: null,
   editingActivityId: null,
+  collapsedActivityDays: new Set(),
   timelineCollapsedDays: new Set(),
   timelineView: 'timeline'
 };

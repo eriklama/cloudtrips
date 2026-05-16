@@ -120,10 +120,29 @@ function resetActivityForm() {
   const title = document.getElementById('activity-form-title');
   const cancelButton = document.getElementById('cancel-edit-btn');
   const addButton = document.querySelector('button[onclick="addActivity()"]');
+  const searchEl = document.getElementById('activity-search');
+  const clearBtn = document.getElementById('activity-search-clear');
 
   if (title) title.textContent = 'Add activity';
   if (cancelButton) cancelButton.classList.add('hidden');
   if (addButton) addButton.innerHTML = '<i data-lucide="plus" class="w-4 h-4"></i>Add Activity';
+  if (searchEl) searchEl.value = '';
+  if (clearBtn) clearBtn.classList.add('hidden');
+  _activeTypeFilter = '';
+  document.querySelectorAll('.type-filter-pill').forEach(btn => {
+    const isAll = btn.dataset.type === '';
+    btn.classList.toggle('border-primary-500', isAll);
+    btn.classList.toggle('bg-primary-50', isAll);
+    btn.classList.toggle('text-primary-700', isAll);
+    btn.classList.toggle('dark:bg-primary-500/10', isAll);
+    btn.classList.toggle('dark:text-primary-300', isAll);
+    btn.classList.toggle('border-slate-200', !isAll);
+    btn.classList.toggle('dark:border-slate-700', !isAll);
+    btn.classList.toggle('bg-white', !isAll);
+    btn.classList.toggle('dark:bg-slate-900', !isAll);
+    btn.classList.toggle('text-slate-600', !isAll);
+    btn.classList.toggle('dark:text-slate-300', !isAll);
+  });
 
   refreshIcons();
 }
@@ -160,13 +179,6 @@ async function saveActivity() {
   const data = getActivityFormData();
   if (!data.location && !data.name) {
     showToast('Activity name or location is required.', 'info');
-    return;
-  }
-
-  const MAX_ACTIVITIES = 200;
-  const isNewActivity = !state.editingActivityId;
-  if (isNewActivity && state.currentTrip.activities.length >= MAX_ACTIVITIES) {
-    showToast(`Trips are limited to ${MAX_ACTIVITIES} activities.`, 'info');
     return;
   }
 
@@ -336,3 +348,166 @@ function moveActivity(activityId, direction) {
     showToast('Failed to save order.', 'error');
   });
 }
+
+let _activeTypeFilter = '';
+
+function toggleTypeFilter(type) {
+  _activeTypeFilter = type;
+
+  // Update pill active states
+  document.querySelectorAll('.type-filter-pill').forEach(btn => {
+    const isActive = btn.dataset.type === type;
+    btn.classList.toggle('border-primary-500', isActive);
+    btn.classList.toggle('bg-primary-50', isActive);
+    btn.classList.toggle('text-primary-700', isActive);
+    btn.classList.toggle('dark:bg-primary-500/10', isActive);
+    btn.classList.toggle('dark:text-primary-300', isActive);
+    btn.classList.toggle('border-slate-200', !isActive);
+    btn.classList.toggle('dark:border-slate-700', !isActive);
+    btn.classList.toggle('bg-white', !isActive);
+    btn.classList.toggle('dark:bg-slate-900', !isActive);
+    btn.classList.toggle('text-slate-600', !isActive);
+    btn.classList.toggle('dark:text-slate-300', !isActive);
+  });
+
+  filterActivities();
+}
+
+function filterActivities() {
+  const query = (document.getElementById('activity-search')?.value || '').toLowerCase().trim();
+  const clearBtn = document.getElementById('activity-search-clear');
+  if (clearBtn) clearBtn.classList.toggle('hidden', !query);
+
+  const container = document.getElementById('activities');
+  if (!container || !state.currentTrip) return;
+
+  const activities = sortActivities(state.currentTrip.activities);
+
+  const filtered = activities.filter(a => {
+    const matchesQuery = !query ||
+      (a.name || '').toLowerCase().includes(query) ||
+      (a.location || '').toLowerCase().includes(query) ||
+      (a.notes || '').toLowerCase().includes(query) ||
+      (a.type || '').toLowerCase().includes(query);
+
+    const matchesType = !_activeTypeFilter || (a.type || 'other') === _activeTypeFilter;
+
+    return matchesQuery && matchesType;
+  });
+
+  if (!filtered.length) {
+    container.innerHTML = emptyState(
+      'No activities match',
+      query || _activeTypeFilter ? 'Try a different search or filter.' : 'Add your first activity to build the itinerary.',
+      'search-x'
+    );
+    refreshIcons();
+    // Keep header visible
+    const header = document.getElementById('activities-header');
+    if (header) header.classList.remove('hidden');
+    return;
+  }
+
+  // Temporarily swap activities for rendering, then restore
+  const original = state.currentTrip.activities;
+  state.currentTrip.activities = filtered;
+  renderActivities();
+  state.currentTrip.activities = original;
+
+  // Keep header visible and restore search input after re-render
+  const header = document.getElementById('activities-header');
+  if (header) header.classList.remove('hidden');
+  const searchEl = document.getElementById('activity-search');
+  if (searchEl) searchEl.value = query;
+}
+
+function clearActivitySearch() {
+  const searchEl = document.getElementById('activity-search');
+  if (searchEl) searchEl.value = '';
+  _activeTypeFilter = '';
+  toggleTypeFilter('');
+  searchEl?.focus();
+}
+
+async function loadMoreActivitiesUI() {
+  if (!state.currentTrip) return;
+
+  const btn = document.getElementById('load-more-btn');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i data-lucide="loader-circle" class="w-4 h-4 animate-spin"></i> Loading...';
+    refreshIcons();
+  }
+
+  try {
+    const currentPage = state.currentTrip._pagination?.page || 1;
+    const { activities, pagination } = await loadMoreActivities(state.currentTrip.id, currentPage);
+
+    // Append new activities, avoiding duplicates
+    const existingIds = new Set(state.currentTrip.activities.map(a => a.id));
+    const newOnes = activities.filter(a => !existingIds.has(a.id));
+    state.currentTrip.activities = [...state.currentTrip.activities, ...newOnes];
+    state.currentTrip._pagination = pagination;
+
+    saveTripToCache(state.currentTrip);
+    renderActivities();
+    showToast(`Loaded ${newOnes.length} more activities.`, 'success');
+  } catch (err) {
+    console.error(err);
+    showToast(err?.message || 'Failed to load more activities.', 'error');
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i data-lucide="chevrons-down" class="w-4 h-4"></i> Load more activities';
+      refreshIcons();
+    }
+  }
+}
+
+window.loadMoreActivitiesUI = loadMoreActivitiesUI;
+window.clearActivitySearch = clearActivitySearch;
+window.toggleTypeFilter = toggleTypeFilter;
+
+function toggleActivityDay(key) {
+  if (!state.collapsedActivityDays) state.collapsedActivityDays = new Set();
+  if (state.collapsedActivityDays.has(key)) {
+    state.collapsedActivityDays.delete(key);
+  } else {
+    state.collapsedActivityDays.add(key);
+  }
+  renderActivities();
+  const query = document.getElementById('activity-search')?.value || '';
+  if (query || _activeTypeFilter) filterActivities();
+}
+
+function toggleAllActivityDays() {
+  if (!state.collapsedActivityDays) state.collapsedActivityDays = new Set();
+
+  const activities = sortActivities(state.currentTrip?.activities || []);
+  const keys = new Set();
+  activities.forEach(a => {
+    if (!a.startDate) { keys.add('undated'); return; }
+    const d = new Date(a.startDate);
+    keys.add(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
+  });
+
+  const allCollapsed = [...keys].every(k => state.collapsedActivityDays.has(k));
+
+  if (allCollapsed) {
+    // Expand all
+    keys.forEach(k => state.collapsedActivityDays.delete(k));
+    const btn = document.getElementById('activity-collapse-all-btn');
+    if (btn) btn.title = 'Collapse all';
+  } else {
+    // Collapse all
+    keys.forEach(k => state.collapsedActivityDays.add(k));
+    const btn = document.getElementById('activity-collapse-all-btn');
+    if (btn) btn.title = 'Expand all';
+  }
+
+  renderActivities();
+  const query = document.getElementById('activity-search')?.value || '';
+  if (query || _activeTypeFilter) filterActivities();
+}
+
+window.toggleActivityDay = toggleActivityDay;
+window.toggleAllActivityDays = toggleAllActivityDays;

@@ -84,13 +84,13 @@ function apiDelete(url, payload) {
   });
 }
 
-async function fetchTrip(tripId, { forceRefresh = false } = {}) {
-  if (!forceRefresh) {
+async function fetchTrip(tripId, { forceRefresh = false, page = 1 } = {}) {
+  if (!forceRefresh && page === 1) {
     const cached = getTripFromCache(tripId);
     if (cached) return cached;
   }
 
-  const url = `${API.GET_TRIP}?id=${encodeURIComponent(tripId)}`;
+  const url = `${API.GET_TRIP}?id=${encodeURIComponent(tripId)}&page=${page}`;
   const data = await apiGet(url);
 
   if (!data) {
@@ -98,8 +98,26 @@ async function fetchTrip(tripId, { forceRefresh = false } = {}) {
   }
 
   const trip = normalizeFullTrip(data?.trip || data);
-  saveTripToCache(trip);
+  trip._pagination = data.pagination || { page: 1, totalCount: trip.activities.length, hasMore: false };
+
+  if (page === 1) {
+    saveTripToCache(trip);
+  }
+
   return trip;
+}
+
+async function loadMoreActivities(tripId, currentPage) {
+  const nextPage = currentPage + 1;
+  const url = `${API.GET_TRIP}?id=${encodeURIComponent(tripId)}&page=${nextPage}`;
+  const data = await apiGet(url);
+
+  if (!data) throw new Error('Failed to load more activities');
+
+  const newActivities = safeArray(data?.trip?.activities).map(normalizeActivity);
+  const pagination = data.pagination || { page: nextPage, totalCount: 0, hasMore: false };
+
+  return { activities: newActivities, pagination };
 }
 
 async function saveTripMeta(trip) {
