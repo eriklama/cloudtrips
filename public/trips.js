@@ -72,10 +72,7 @@ async function addTrip() {
   }
 
   try {
-    await apiPost(API.SAVE_TRIP, {
-      name,
-      activities: []
-    });
+    await apiPost(API.SAVE_TRIP_META, { name });
     input.value = '';
     await loadTrips();
   } catch (error) {
@@ -114,9 +111,8 @@ async function renameTrip(tripId) {
   renderTripList();
 
   try {
-    const fullTrip = await fetchTrip(tripId, { forceRefresh: true });
-    fullTrip.name = trimmed;
-    await saveTrip(fullTrip);
+    await apiPost(API.SAVE_TRIP_META, { id: tripId, name: trimmed, notes: trip.notes || '' });
+    clearTripCache(tripId);
   } catch (error) {
     trip.name = previousName;
     renderTripList();

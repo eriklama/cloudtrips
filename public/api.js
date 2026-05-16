@@ -102,39 +102,6 @@ async function fetchTrip(tripId, { forceRefresh = false } = {}) {
   return trip;
 }
 
-async function saveTrip(trip) {
-  if (!trip) {
-    throw new Error('Invalid trip object');
-  }
-
-  const payload = {
-    ...(trip.id ? { id: trip.id } : {}),
-    name: trip.name || 'Untitled trip',
-    notes: trip.notes || '',
-    activities: safeArray(trip.activities).map((activity) => {
-      const normalized = normalizeActivity(activity);
-
-      return {
-        id: normalized.id || uuid(),
-        type: normalized.type || 'other',
-        name: normalized.name || '',
-        location: normalized.location || '',
-        startDate: normalized.startDate || '',
-        endDate: normalized.endDate || '',
-        cost: Number(normalized.cost || 0),
-        currency: normalized.currency || 'EUR',
-        distance: Number(normalized.distance || normalized.km || 0),
-        notes: normalized.notes || '',
-        sortOrder: normalized.sortOrder !== undefined ? normalized.sortOrder : 0
-      };
-    })
-  };
-
-  const result = await apiPost(API.SAVE_TRIP, payload);
-  saveTripToCache(trip);
-  return result;
-}
-
 async function saveTripMeta(trip) {
   if (!trip?.id) throw new Error('Trip id is required');
   const result = await apiPost(API.SAVE_TRIP_META, {
