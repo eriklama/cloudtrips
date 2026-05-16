@@ -32,6 +32,17 @@ async function loadTripPage() {
     }
 
     renderActivities();
+
+    // Cmd/Ctrl+Enter to save activity form from any field
+    const form = document.getElementById('activity-form');
+    if (form) {
+      form.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+          e.preventDefault();
+          saveActivity();
+        }
+      });
+    }
   } catch (error) {
     console.error(error);
     const container = document.getElementById('activities');
@@ -152,6 +163,13 @@ async function saveActivity() {
     return;
   }
 
+  const MAX_ACTIVITIES = 200;
+  const isNewActivity = !state.editingActivityId;
+  if (isNewActivity && state.currentTrip.activities.length >= MAX_ACTIVITIES) {
+    showToast(`Trips are limited to ${MAX_ACTIVITIES} activities.`, 'info');
+    return;
+  }
+
   const activity = normalizeActivity({
     id: state.editingActivityId || uuid(),
     name: data.name,
@@ -183,6 +201,14 @@ async function saveActivity() {
 
   state.currentTrip.activities = sortActivities(state.currentTrip.activities);
 
+  const btn = document.getElementById('activity-submit-btn');
+  const originalHtml = btn?.innerHTML;
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i data-lucide="loader-circle" class="w-4 h-4 animate-spin"></i> Saving...';
+    refreshIcons();
+  }
+
   try {
     await upsertActivity(state.currentTrip.id, activity);
     saveTripToCache(state.currentTrip);
@@ -194,6 +220,12 @@ async function saveActivity() {
     renderActivities();
     console.error(error);
     showToast(error?.message || 'Failed to save activity.', 'error');
+  } finally {
+    if (btn && originalHtml) {
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+      refreshIcons();
+    }
   }
 }
 
@@ -250,6 +282,8 @@ async function deleteActivity(activityId) {
   });
   if (!confirmed) return;
 
+  const previousActivities = [...state.currentTrip.activities];
+
   state.currentTrip.activities = state.currentTrip.activities.filter(
     (item) => String(item.id) !== String(activityId)
   );
@@ -261,6 +295,8 @@ async function deleteActivity(activityId) {
     renderActivities();
     showToast('Activity deleted.', 'success');
   } catch (error) {
+    state.currentTrip.activities = previousActivities;
+    renderActivities();
     console.error(error);
     showToast(error?.message || 'Failed to delete activity.', 'error');
   }

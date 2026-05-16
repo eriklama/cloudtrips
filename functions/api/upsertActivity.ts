@@ -33,7 +33,26 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
   const a = body?.activity;
   if (!a) return error('activity is required.', 400);
 
+  const MAX_ACTIVITIES = 200;
   const id = String(a.id || crypto.randomUUID()).trim();
+
+  // Only enforce limit on new activities (not edits to existing ones)
+  const existing = await env.DB
+    .prepare(`SELECT id FROM activities WHERE id = ? AND trip_id = ? LIMIT 1`)
+    .bind(id, tripId)
+    .first<{ id: string }>();
+
+  if (!existing) {
+    const countRow = await env.DB
+      .prepare(`SELECT COUNT(*) as count FROM activities WHERE trip_id = ?`)
+      .bind(tripId)
+      .first<{ count: number }>();
+
+    if ((countRow?.count ?? 0) >= MAX_ACTIVITIES) {
+      return error(`Trip has reached the maximum of ${MAX_ACTIVITIES} activities.`, 400);
+    }
+  }
+
   const type = String(a.type || 'other').trim() || 'other';
   const name = String(a.name || '').trim();
   const location = String(a.location || '').trim();
