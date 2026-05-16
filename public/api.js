@@ -125,7 +125,8 @@ async function saveTripMeta(trip) {
   const result = await apiPost(API.SAVE_TRIP_META, {
     id: trip.id,
     name: trip.name || 'Untitled trip',
-    notes: trip.notes || ''
+    notes: trip.notes || '',
+    country: trip.country || ''
   });
   saveTripToCache(trip);
   return result;

@@ -16,9 +16,11 @@ async function loadTripPage() {
     setText('trip-title', state.currentTrip.name || 'Trip');
     setText('trip-title-hero', state.currentTrip.name || 'Trip');
 
-    // Populate notes
+    // Populate notes and country
     const notesEl = document.getElementById('trip-notes');
     if (notesEl) notesEl.value = state.currentTrip.notes || '';
+    const countryEl = document.getElementById('trip-country');
+    if (countryEl) countryEl.value = state.currentTrip.country || '';
 
     applySharedViewUi('trip-title', 'trip-title-hero');
 
@@ -164,6 +166,23 @@ function saveTripNotes() {
     } catch (err) {
       console.error(err);
       showToast('Failed to save notes.', 'error');
+    }
+  }, 1000);
+}
+
+let _countrySaveTimeout = null;
+function saveTripCountry() {
+  const countryEl = document.getElementById('trip-country');
+  if (!countryEl || !state.currentTrip) return;
+  state.currentTrip.country = countryEl.value;
+  clearTimeout(_countrySaveTimeout);
+  _countrySaveTimeout = setTimeout(async () => {
+    try {
+      await saveTripMeta(state.currentTrip);
+      saveTripToCache(state.currentTrip);
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to save country.', 'error');
     }
   }, 1000);
 }

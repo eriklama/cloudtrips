@@ -48,9 +48,9 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
   try {
     // Verify ownership
     const original = await env.DB
-      .prepare(`SELECT id, name, notes FROM trips WHERE id = ? AND user_id = ? LIMIT 1`)
+      .prepare(`SELECT id, name, notes, country FROM trips WHERE id = ? AND user_id = ? LIMIT 1`)
       .bind(tripId, user.id)
-      .first<{ id: string; name: string; notes: string }>();
+      .first<{ id: string; name: string; notes: string; country: string }>();
 
     if (!original) return error('Trip not found.', 404);
 
@@ -74,10 +74,10 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
 
     await env.DB
       .prepare(`
-        INSERT INTO trips (id, user_id, name, notes, created_at)
-        VALUES (?, ?, ?, ?, datetime('now'))
+        INSERT INTO trips (id, user_id, name, notes, country, created_at)
+        VALUES (?, ?, ?, ?, ?, datetime('now'))
       `)
-      .bind(newTripId, user.id, newName, original.notes ?? '')
+      .bind(newTripId, user.id, newName, original.notes ?? '', original.country ?? '')
       .run();
 
     // Duplicate activities with new IDs

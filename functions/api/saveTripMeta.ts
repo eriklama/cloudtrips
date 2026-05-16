@@ -22,32 +22,31 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
   const id = String(body?.id || '').trim();
   const name = String(body?.name || '').trim();
   const notes = String(body?.notes ?? '').trim();
+  const country = String(body?.country ?? '').trim();
 
   if (!name) return error('Trip name is required.', 400);
 
   try {
     if (id) {
-      // Update existing trip metadata
       const result = await env.DB
-        .prepare(`UPDATE trips SET name = ?, notes = ? WHERE id = ? AND user_id = ?`)
-        .bind(name, notes, id, user.id)
+        .prepare(`UPDATE trips SET name = ?, notes = ?, country = ? WHERE id = ? AND user_id = ?`)
+        .bind(name, notes, country, id, user.id)
         .run();
 
       if (!result.meta?.changes) return error('Trip not found.', 404);
 
-      return json({ ok: true, trip: { id, name, notes } });
+      return json({ ok: true, trip: { id, name, notes, country } });
     } else {
-      // Create new trip (no activities yet — added via upsertActivity)
       const tripId = crypto.randomUUID();
       await env.DB
         .prepare(`
-          INSERT INTO trips (id, user_id, name, notes, created_at)
-          VALUES (?, ?, ?, ?, datetime('now'))
+          INSERT INTO trips (id, user_id, name, notes, country, created_at)
+          VALUES (?, ?, ?, ?, ?, datetime('now'))
         `)
-        .bind(tripId, user.id, name, notes)
+        .bind(tripId, user.id, name, notes, country)
         .run();
 
-      return json({ ok: true, trip: { id: tripId, name, notes, activities: [] } });
+      return json({ ok: true, trip: { id: tripId, name, notes, country, activities: [] } });
     }
   } catch (err) {
     console.error('DB error (saveTripMeta):', err);

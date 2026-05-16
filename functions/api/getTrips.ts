@@ -6,6 +6,7 @@ type TripSummaryRow = {
   id: string;
   name: string;
   notes: string | null;
+  country: string | null;
   created_at: string | null;
   activities_count: number;
   start_date: string | null;
@@ -30,6 +31,7 @@ export async function onRequestGet(context: { request: Request; env: Env }) {
           t.id,
           t.name,
           t.notes,
+          t.country,
           t.created_at,
           COUNT(a.id)                          AS activities_count,
           MIN(NULLIF(a.start_date, ''))         AS start_date,
@@ -55,6 +57,7 @@ export async function onRequestGet(context: { request: Request; env: Env }) {
       id: row.id,
       name: row.name,
       notes: row.notes ?? '',
+      country: row.country ?? '',
       activitiesCount: Number(row.activities_count ?? 0),
       startDate: row.start_date ?? '',
       endDate: row.end_date ?? ''

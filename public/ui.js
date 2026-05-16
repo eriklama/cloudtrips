@@ -147,6 +147,12 @@ function renderTripCard(trip) {
           <i data-lucide="calendar-days" class="h-3.5 w-3.5"></i>
           ${escapeHtml(dateLabel)}
         </span>
+        ${trip.country ? `
+          <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 dark:bg-slate-800">
+            <i data-lucide="map-pin" class="h-3.5 w-3.5"></i>
+            ${escapeHtml(trip.country)}
+          </span>
+        ` : ''}
       </div>
 
       ${trip.notes ? `
@@ -458,6 +464,87 @@ function renderCalendarTile(key, dayActivities) {
 /* =========================
  * COSTS PAGE
  * ========================= */
+
+function renderTripStats() {
+  const container = document.getElementById('trip-stats');
+  if (!container || !state.currentTrip) return;
+
+  const activities = sortActivities(state.currentTrip.activities)
+    .filter(a => Number(a.cost || 0) > 0 || a.startDate);
+
+  if (!activities.length) {
+    container.classList.add('hidden');
+    return;
+  }
+
+  // Total trip days
+  const dated = activities.filter(a => a.startDate);
+  const days = new Set(dated.map(a => {
+    const d = new Date(a.startDate);
+    return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  }));
+  const totalDays = days.size;
+
+  // Total activities
+  const totalActivities = state.currentTrip.activities.length;
+
+  // Total distance
+  const totalKm = activities.reduce((sum, a) => sum + Number(a.km || 0), 0);
+
+  // Busiest day (most activities)
+  const countByDay = {};
+  dated.forEach(a => {
+    const d = new Date(a.startDate);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    countByDay[key] = (countByDay[key] || 0) + 1;
+  });
+  const busiestEntry = Object.entries(countByDay).sort((a, b) => b[1] - a[1])[0];
+  const busiestDay = busiestEntry
+    ? `${formatDayLabel(busiestEntry[0] + 'T00:00')} (${busiestEntry[1]})`
+    : '—';
+
+  // Most expensive day (per currency — pick the day with highest single-currency spend)
+  const costByDay = {};
+  activities.filter(a => a.startDate).forEach(a => {
+    const d = new Date(a.startDate);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const currency = a.currency || 'EUR';
+    if (!costByDay[key]) costByDay[key] = {};
+    costByDay[key][currency] = (costByDay[key][currency] || 0) + Number(a.cost || 0);
+  });
+
+  let expensiveDayLabel = '—';
+  let expensiveDayMax = 0;
+  for (const [key, currencies] of Object.entries(costByDay)) {
+    const dayTotal = Object.values(currencies).reduce((s, v) => s + v, 0);
+    if (dayTotal > expensiveDayMax) {
+      expensiveDayMax = dayTotal;
+      const topCurrency = Object.entries(currencies).sort((a, b) => b[1] - a[1])[0];
+      expensiveDayLabel = `${formatDayLabel(key + 'T00:00')} · ${formatCurrency(topCurrency[1], topCurrency[0])}`;
+    }
+  }
+
+  const stat = (icon, label, value) => `
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-4 py-3">
+      <div class="mb-1 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+        <i data-lucide="${icon}" class="h-3.5 w-3.5"></i>
+        ${escapeHtml(label)}
+      </div>
+      <div class="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">${escapeHtml(String(value))}</div>
+    </div>
+  `;
+
+  container.classList.remove('hidden');
+  container.innerHTML = [
+    stat('calendar-days', 'Trip days', totalDays || '—'),
+    stat('list', 'Activities', totalActivities),
+    stat('route', 'Total distance', totalKm ? `${totalKm} km` : '—'),
+    stat('flame', 'Busiest day', busiestDay),
+    stat('trending-up', 'Priciest day', expensiveDayLabel),
+  ].join('');
+
+  refreshIcons();
+}
 
 function renderCosts(convertTo = null, rates = null) {
   const table = document.getElementById('cost-table');
