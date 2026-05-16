@@ -459,7 +459,7 @@ function renderCalendarTile(key, dayActivities) {
  * COSTS PAGE
  * ========================= */
 
-function renderCosts() {
+function renderCosts(convertTo = null, rates = null) {
   const table = document.getElementById('cost-table');
   const totalEl = document.getElementById('totalCost');
   const summaryEl = document.getElementById('cost-summary');
@@ -467,28 +467,36 @@ function renderCosts() {
   if (!table || !totalEl || !summaryEl || !state.currentTrip) return;
 
   const activities = sortActivities(state.currentTrip.activities);
-  const total = activities.reduce((sum, activity) => sum + Number(activity.cost || 0), 0);
   const totalKm = activities.reduce((sum, activity) => sum + Number(activity.km || 0), 0);
 
+  // Helper: convert an amount if rates are available
+  const convert = (amount, fromCurrency) => {
+    if (!convertTo || !rates || fromCurrency === convertTo) return { amount, currency: fromCurrency };
+    const converted = convertCurrency(amount, fromCurrency, convertTo, rates);
+    return converted !== null
+      ? { amount: converted, currency: convertTo }
+      : { amount, currency: fromCurrency }; // fallback to original if rate missing
+  };
+
   // Group by currency for totals
-  const byCurrency = activities.reduce((acc, activity) => {
-    const currency = activity.currency || 'EUR';
-    acc[currency] = (acc[currency] || 0) + Number(activity.cost || 0);
-    return acc;
-  }, {});
+  const byCurrency = {};
+  for (const activity of activities) {
+    const { amount, currency } = convert(Number(activity.cost || 0), activity.currency || 'EUR');
+    byCurrency[currency] = (byCurrency[currency] || 0) + amount;
+  }
 
   // Group by type within each currency for summary
-  const byTypeCurrency = activities.reduce((acc, activity) => {
-    const currency = activity.currency || 'EUR';
+  const byTypeCurrency = {};
+  for (const activity of activities) {
+    const { amount, currency } = convert(Number(activity.cost || 0), activity.currency || 'EUR');
     const type = activity.type || 'other';
     const key = `${type}__${currency}`;
-    acc[key] = {
+    byTypeCurrency[key] = {
       type,
       currency,
-      amount: (acc[key]?.amount || 0) + Number(activity.cost || 0)
+      amount: (byTypeCurrency[key]?.amount || 0) + amount
     };
-    return acc;
-  }, {});
+  }
 
   const typeEntries = Object.values(byTypeCurrency).sort((a, b) => b.amount - a.amount);
 
@@ -519,14 +527,12 @@ function renderCosts() {
               </span>
               <span class="font-medium capitalize">
                 ${escapeHtml(type)}
-                <span class="ml-1 text-xs text-slate-500 dark:text-slate-500 dark:text-slate-400">${escapeHtml(currency)}</span>
+                <span class="ml-1 text-xs text-slate-500 dark:text-slate-400">${escapeHtml(currency)}</span>
               </span>
             </div>
-
-            <div class="text-right text-sm tabular-nums text-slate-500 dark:text-slate-500 dark:text-slate-400">
+            <div class="text-right text-sm tabular-nums text-slate-500 dark:text-slate-400">
               ${percent}%
             </div>
-
             <div class="text-right text-sm font-medium tabular-nums">
               ${escapeHtml(formatCurrency(amount, currency))}
             </div>
@@ -556,21 +562,17 @@ function renderCosts() {
                 </div>
               </div>
             </td>
-
             <td data-label="Type" class="px-3 py-3">
               <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${meta.badge}">
                 ${escapeHtml(activity.type)}
               </span>
             </td>
-
             <td data-label="Date" class="px-3 py-3 text-sm text-slate-600 dark:text-slate-300">
               ${escapeHtml(formatDateTimeRangeFull(activity.startDate, activity.endDate))}
             </td>
-
             <td data-label="Cost" class="px-3 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">
-              ${escapeHtml(formatCurrency(activity.cost, activity.currency))}
+              ${escapeHtml(formatCurrency(activity.cost, activity.currency || 'EUR'))}
             </td>
-
             <td data-label="KM" class="rounded-r-2xl px-3 py-3 text-right text-sm text-slate-600 dark:text-slate-300">
               ${activity.km ? escapeHtml(`${activity.km} km`) : '—'}
             </td>

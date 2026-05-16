@@ -415,3 +415,53 @@ function setTheme(theme) {
 function toggleTheme() {
   setTheme(getTheme() === 'dark' ? 'light' : 'dark');
 }
+
+/* =========================
+ * CURRENCY CONVERTER
+ * ========================= */
+
+const RATES_CACHE_KEY = 'cloudtrips_exchange_rates';
+const RATES_CACHE_TTL = 60 * 60 * 1000; // 1 hour
+
+async function fetchExchangeRates(baseCurrency = 'EUR') {
+  const cacheKey = `${RATES_CACHE_KEY}_${baseCurrency}`;
+
+  try {
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) {
+      const { rates, timestamp } = JSON.parse(cached);
+      if (Date.now() - timestamp < RATES_CACHE_TTL) {
+        return rates;
+      }
+    }
+  } catch {
+    // ignore parse errors
+  }
+
+  const response = await fetch(`https://open.er-api.com/v6/latest/${encodeURIComponent(baseCurrency)}`);
+  if (!response.ok) throw new Error('Failed to fetch exchange rates.');
+
+  const data = await response.json();
+  if (data.result !== 'success') throw new Error('Exchange rate API error.');
+
+  const rates = data.rates;
+
+  try {
+    sessionStorage.setItem(cacheKey, JSON.stringify({ rates, timestamp: Date.now() }));
+  } catch {
+    // ignore storage errors
+  }
+
+  return rates;
+}
+
+function convertCurrency(amount, fromCurrency, toCurrency, rates) {
+  if (!amount || fromCurrency === toCurrency) return amount;
+  if (!rates) return null;
+
+  // rates are relative to the base currency (toCurrency)
+  const fromRate = rates[fromCurrency];
+  if (!fromRate) return null;
+
+  return (amount / fromRate) * (rates[toCurrency] || 1);
+}

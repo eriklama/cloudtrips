@@ -291,6 +291,33 @@ async function loadCosts() {
   }
 }
 
+async function applyConversion() {
+  const select = document.getElementById('convertCurrency');
+  const status = document.getElementById('conversion-status');
+  const convertTo = select?.value || '';
+
+  if (!convertTo) {
+    renderCosts();
+    if (status) status.textContent = '';
+    return;
+  }
+
+  if (status) status.textContent = 'Fetching rates…';
+
+  try {
+    const rates = await fetchExchangeRates(convertTo);
+    renderCosts(convertTo, rates);
+    if (status) {
+      const date = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      status.textContent = `Rates as of ${date}`;
+    }
+  } catch (err) {
+    console.error(err);
+    if (status) status.textContent = 'Failed to fetch rates.';
+    showToast('Could not fetch exchange rates. Try again later.', 'error');
+  }
+}
+
 /* =========================
  * SHARE
  * ========================= */
@@ -518,6 +545,7 @@ window.switchTimelineView = switchTimelineView;
 window.jumpToToday = jumpToToday;
 window.openPrintView = openPrintView;
 window.renderHeaderNav = renderHeaderNav;
+window.applyConversion = applyConversion;
 window.moveActivity = moveActivity;
 window.saveTripNotes = saveTripNotes;
 window.logout = logout;

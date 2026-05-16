@@ -104,9 +104,29 @@
       </p>
     </div>
 
-  </section>
+    <!-- CURRENCY CONVERTER -->
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <div class="flex items-center gap-2">
+        <label for="convertCurrency" class="text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">Convert to</label>
+        <select id="convertCurrency" onchange="applyConversion()"
+          class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500">
+          <option value="">Original currencies</option>
+          <option value="EUR">EUR €</option>
+          <option value="USD">USD $</option>
+          <option value="GBP">GBP £</option>
+          <option value="CZK">CZK Kč</option>
+          <option value="CHF">CHF Fr</option>
+          <option value="PLN">PLN zł</option>
+          <option value="HUF">HUF Ft</option>
+          <option value="SEK">SEK kr</option>
+          <option value="NOK">NOK kr</option>
+          <option value="DKK">DKK kr</option>
+        </select>
+      </div>
+      <span id="conversion-status" class="text-xs text-slate-400 dark:text-slate-500"></span>
+    </div>
 
-  <!-- MAIN GRID -->
+  </section>
   <section class="grid gap-4 sm:gap-6 xl:grid-cols-[0.7fr_1.3fr]">
 
     <!-- SUMMARY -->
