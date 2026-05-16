@@ -34,6 +34,40 @@ async function loadTrips() {
       renderTripList();
     }
 
+    // Render quick stats strip
+    const statsEl = document.getElementById('index-stats');
+    if (statsEl && state.trips.length) {
+      const totalTrips = state.trips.length;
+      const countries = [...new Set(state.trips.map(t => t.country).filter(Boolean))];
+      const years = [...new Set(state.trips.map(t => t.startDate ? new Date(t.startDate).getFullYear() : null).filter(Boolean))];
+
+      const stat = (icon, label, value, clickable = false) => `
+        <div class="${clickable
+          ? 'rounded-2xl bg-primary-600 px-4 py-3 cursor-pointer transition hover:bg-primary-500 active:scale-[0.98] shadow-sm'
+          : 'rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-4 py-3'}">
+          <div class="mb-1 flex items-center gap-1.5 text-xs ${clickable ? 'text-primary-200' : 'text-slate-500 dark:text-slate-400'}">
+            <i data-lucide="${icon}" class="h-3.5 w-3.5"></i>${escapeHtml(label)}
+          </div>
+          <div class="text-sm font-semibold ${clickable ? 'text-white' : 'text-slate-900 dark:text-slate-100'}">${escapeHtml(String(value))}</div>
+        </div>`;
+
+      statsEl.classList.remove('hidden');
+      statsEl.innerHTML = [
+        stat('map', 'Trips', totalTrips),
+        stat('flag', 'Countries', countries.length || '—'),
+        stat('calendar', 'Years', years.length || '—'),
+        stat('bar-chart-2', 'Full stats', '→ View', true),
+      ].join('');
+
+      // Make the last card a link
+      const lastCard = statsEl.lastElementChild;
+      if (lastCard) {
+        lastCard.onclick = () => { window.location.href = '/stats.html'; };
+      }
+
+      refreshIcons();
+    }
+
     // Populate year filter
     const years = [...new Set(
       state.trips

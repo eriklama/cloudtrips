@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <script>
+  (function() {
+    const theme = localStorage.getItem('cloudtrips_theme') || 'dark';
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+  })();
+  </script>
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stats</title>
+
+  <link href="/output.css" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body class="min-h-full bg-slate-300 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-x-hidden">
+<div class="min-h-screen bg-gradient-to-br from-slate-300 via-slate-200 to-slate-300 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900">
+
+  <!-- HEADER -->
+  <header class="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
+      <h1 class="text-xl font-semibold tracking-tight">Stats</h1>
+      <div class="flex items-center gap-2">
+        <div id="nav-actions" class="flex gap-2"></div>
+        <span id="auth-user-email" class="hidden sm:inline text-sm text-slate-500 dark:text-slate-400 truncate max-w-[160px]"></span>
+        <button id="logout-button" onclick="logout()"
+          class="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="max-w-6xl mx-auto px-4 py-6 sm:py-8 pb-20">
+
+    <!-- HERO -->
+    <section class="mb-6 flex flex-col gap-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-4 sm:p-6 shadow-soft lg:flex-row lg:items-center lg:justify-between">
+      <div>
+        <div class="mb-2 inline-flex items-center gap-2 rounded-full bg-primary-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary-300">
+          <i data-lucide="bar-chart-2" class="h-3.5 w-3.5"></i>
+          Travel stats
+        </div>
+        <h2 class="text-xl sm:text-2xl font-semibold tracking-tight">Your travel overview</h2>
+        <p class="mt-1 sm:mt-2 text-sm text-slate-500 dark:text-slate-400">Aggregated across all your trips.</p>
+      </div>
+
+      <!-- Currency converter -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <label for="statsCurrency" class="text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">Show costs in</label>
+        <select id="statsCurrency" onchange="applyStatsCurrency()"
+          class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500">
+          <option value="">Original currencies</option>
+          <option value="EUR">EUR €</option>
+          <option value="USD">USD $</option>
+          <option value="GBP">GBP £</option>
+          <option value="CZK">CZK Kč</option>
+          <option value="CHF">CHF Fr</option>
+          <option value="PLN">PLN zł</option>
+          <option value="HUF">HUF Ft</option>
+          <option value="SEK">SEK kr</option>
+          <option value="NOK">NOK kr</option>
+          <option value="DKK">DKK kr</option>
+        </select>
+        <span id="stats-rates-status" class="text-xs text-slate-400 dark:text-slate-500"></span>
+      </div>
+    </section>
+
+    <!-- ALL-TIME TOTALS -->
+    <div id="alltime-stats" class="mb-6 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3"></div>
+
+    <!-- YEAR FILTER -->
+    <div class="mb-3 flex items-center gap-3 flex-wrap">
+      <span class="text-sm font-medium text-slate-600 dark:text-slate-400">Year</span>
+      <div id="year-pills" class="flex flex-wrap gap-2"></div>
+    </div>
+
+    <!-- COUNTRY FILTER -->
+    <div class="mb-4 flex items-center gap-3 flex-wrap">
+      <span class="text-sm font-medium text-slate-600 dark:text-slate-400">Country</span>
+      <div id="country-pills" class="flex flex-wrap gap-2"></div>
+    </div>
+
+    <!-- PER-TRIP TABLE -->
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-4 sm:p-5">
+      <h3 class="text-base font-semibold mb-4">Per-trip breakdown</h3>
+      <div class="overflow-x-auto">
+        <table class="min-w-full table-fixed border-separate border-spacing-y-2 text-sm">
+          <thead class="hidden sm:table-header-group">
+            <tr class="text-left text-xs text-slate-500 dark:text-slate-400">
+              <th class="px-3 py-1 font-medium">Trip</th>
+              <th class="px-3 py-1 font-medium">Country</th>
+              <th class="px-3 py-1 font-medium">Dates</th>
+              <th class="px-3 py-1 font-medium text-right cursor-pointer select-none hover:text-primary-500" onclick="sortStatsBy('days')">Days <span id="sort-days"></span></th>
+              <th class="px-3 py-1 font-medium text-right cursor-pointer select-none hover:text-primary-500" onclick="sortStatsBy('activities')">Activities <span id="sort-activities"></span></th>
+              <th class="px-3 py-1 font-medium text-right cursor-pointer select-none hover:text-primary-500" onclick="sortStatsBy('km')">Distance <span id="sort-km"></span></th>
+              <th class="px-3 py-1 font-medium text-right cursor-pointer select-none hover:text-primary-500" onclick="sortStatsBy('cost')">Cost <span id="sort-cost"></span></th>
+            </tr>
+          </thead>
+          <tbody id="stats-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+</div>
+
+<script src="/state.js"></script>
+<script src="/helpers.js"></script>
+<script src="/ui.js"></script>
+<script src="/auth.js"></script>
+<script src="/api.js"></script>
+<script src="/trips.js"></script>
+<script src="/activities.js"></script>
+<script src="/init.js"></script>
+
+</body>
+</html>

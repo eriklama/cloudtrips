@@ -396,10 +396,16 @@ function renderHeaderNav(current) {
   // Build nav items list
   const items = [];
   items.push({ label: 'Home', icon: 'home', onClick: () => { window.location.href = '/'; } });
-  if (current !== 'trip') items.push({ label: 'Trip', icon: 'notebook-pen', onClick: goToTrip });
-  if (current !== 'timeline') items.push({ label: 'Timeline', icon: 'list-tree', onClick: goToTimeline });
-  if (current !== 'costs') items.push({ label: 'Costs', icon: 'badge-euro', onClick: goToCosts });
-  items.push({ label: 'Export', icon: 'printer', onClick: openPrintView });
+
+  if (current === 'stats') {
+    // Stats page — no trip-specific links
+  } else {
+    // Trip pages — show trip navigation
+    if (current !== 'trip') items.push({ label: 'Trip', icon: 'notebook-pen', onClick: goToTrip });
+    if (current !== 'timeline') items.push({ label: 'Timeline', icon: 'list-tree', onClick: goToTimeline });
+    if (current !== 'costs') items.push({ label: 'Costs', icon: 'badge-euro', onClick: goToCosts });
+    items.push({ label: 'Export', icon: 'printer', onClick: openPrintView });
+  }
 
   const btnClass = 'inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 transition';
 
@@ -501,8 +507,224 @@ function renderHeaderNav(current) {
 }
 
 /* =========================
- * APP INIT
+ * STATS PAGE
  * ========================= */
+
+let _statsData = null;
+let _statsRates = null;
+let _statsYear = '';
+let _statsCountry = '';
+let _statsSort = { key: '', dir: 'desc' };
+
+async function loadStats() {
+  const table = document.getElementById('stats-table');
+  if (!table) return;
+
+  table.innerHTML = `<tr><td colspan="7" class="px-3 py-8 text-center text-slate-500 dark:text-slate-400">Loading stats…</td></tr>`;
+
+  try {
+    const data = await apiGet(API.GET_STATS);
+    _statsData = data;
+
+    // Restore saved currency preference
+    const savedCurrency = localStorage.getItem('cloudtrips_stats_currency');
+    const select = document.getElementById('statsCurrency');
+    if (savedCurrency && select) {
+      select.value = savedCurrency;
+      if (savedCurrency) {
+        await applyStatsCurrency();
+        return;
+      }
+    }
+
+    renderStats();
+  } catch (err) {
+    console.error(err);
+    const table = document.getElementById('stats-table');
+    if (table) table.innerHTML = `<tr><td colspan="7" class="px-3 py-8 text-center text-red-500">${escapeHtml(err?.message || 'Failed to load stats.')}</td></tr>`;
+  }
+}
+
+async function applyStatsCurrency() {
+  const select = document.getElementById('statsCurrency');
+  const status = document.getElementById('stats-rates-status');
+  const convertTo = select?.value || '';
+
+  localStorage.setItem('cloudtrips_stats_currency', convertTo);
+
+  if (!convertTo) {
+    _statsRates = null;
+    renderStats();
+    if (status) status.textContent = '';
+    return;
+  }
+
+  if (status) status.textContent = 'Fetching rates…';
+
+  try {
+    _statsRates = await fetchExchangeRates(convertTo);
+    renderStats();
+    if (status) {
+      const date = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      status.textContent = `Rates as of ${date}`;
+    }
+  } catch (err) {
+    console.error(err);
+    if (status) status.textContent = 'Failed to fetch rates.';
+    showToast('Could not fetch exchange rates.', 'error');
+  }
+}
+
+function renderStats() {
+  if (!_statsData) return;
+
+  const convertTo = document.getElementById('statsCurrency')?.value || '';
+  const trips = _statsData.trips || [];
+  const allTime = _statsData.allTime || {};
+
+  // Convert costs helper
+  const getConvertedTotal = (costsByCurrency) => {
+    if (!convertTo || !_statsRates) {
+      return Object.entries(costsByCurrency)
+        .filter(([, v]) => v > 0)
+        .map(([c, v]) => formatCurrency(v, c))
+        .join(' + ') || '—';
+    }
+    const total = Object.entries(costsByCurrency).reduce((sum, [currency, amount]) => {
+      const converted = convertCurrency(amount, currency, convertTo, _statsRates);
+      return sum + (converted ?? amount);
+    }, 0);
+    return total > 0 ? formatCurrency(total, convertTo) : '—';
+  };
+
+  // Total cost all-time
+  const allCosts = trips.reduce((acc, t) => {
+    Object.entries(t.costsByCurrency).forEach(([c, v]) => {
+      acc[c] = (acc[c] || 0) + v;
+    });
+    return acc;
+  }, {});
+  const totalCostStr = getConvertedTotal(allCosts);
+
+  // All-time stat cards
+  const alltimeEl = document.getElementById('alltime-stats');
+  if (alltimeEl) {
+    const stat = (icon, label, value) => `
+      <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-4 py-3">
+        <div class="mb-1 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+          <i data-lucide="${icon}" class="h-3.5 w-3.5"></i>${escapeHtml(label)}
+        </div>
+        <div class="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">${escapeHtml(String(value))}</div>
+      </div>`;
+
+    alltimeEl.innerHTML = [
+      stat('map', 'Trips', allTime.totalTrips || 0),
+      stat('calendar-days', 'Days travelling', allTime.totalDays || 0),
+      stat('route', 'Total distance', allTime.totalKm ? `${allTime.totalKm} km` : '—'),
+      stat('list', 'Activities', allTime.totalActivities || 0),
+      stat('flag', 'Countries', allTime.countries?.length || 0),
+      stat('wallet', 'Total spend', totalCostStr),
+    ].join('');
+    refreshIcons();
+  }
+
+  // Build year filter
+  const years = [...new Set(trips.map(t => t.startDate ? new Date(t.startDate).getFullYear() : null).filter(Boolean))].sort((a, b) => b - a);
+  const yearPillsEl = document.getElementById('year-pills');
+  if (yearPillsEl) {
+    const pillClass = (active) => `stats-year-pill rounded-full border px-3 py-1 text-xs font-medium transition ${active ? 'border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:border-primary-400'}`;
+    yearPillsEl.innerHTML = `
+      <button onclick="setStatsYear('')" class="${pillClass(!_statsYear)}">All</button>
+      ${years.map(y => `<button onclick="setStatsYear('${y}')" class="${pillClass(_statsYear === String(y))}">${y}</button>`).join('')}
+    `;
+  }
+
+  // Build country filter
+  const countries = [...new Set(trips.map(t => t.country).filter(Boolean))].sort();
+  const countryPillsEl = document.getElementById('country-pills');
+  if (countryPillsEl) {
+    const pillClass = (active) => `rounded-full border px-3 py-1 text-xs font-medium transition ${active ? 'border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:border-primary-400'}`;
+    countryPillsEl.innerHTML = countries.length ? `
+      <button onclick="setStatsCountry('')" class="${pillClass(!_statsCountry)}">All</button>
+      ${countries.map(c => `<button onclick="setStatsCountry('${escapeHtml(c)}')" class="${pillClass(_statsCountry === c)}">${escapeHtml(c)}</button>`).join('')}
+    ` : '<span class="text-xs text-slate-400">No countries set on trips yet</span>';
+  }
+
+  // Filter trips by year and country
+  let filtered = trips;
+  if (_statsYear) filtered = filtered.filter(t => t.startDate && new Date(t.startDate).getFullYear() === Number(_statsYear));
+  if (_statsCountry) filtered = filtered.filter(t => t.country === _statsCountry);
+
+  // Sort
+  if (_statsSort.key) {
+    filtered = [...filtered].sort((a, b) => {
+      let va, vb;
+      if (_statsSort.key === 'days') { va = a.days; vb = b.days; }
+      else if (_statsSort.key === 'activities') { va = a.activitiesCount; vb = b.activitiesCount; }
+      else if (_statsSort.key === 'km') { va = a.totalKm; vb = b.totalKm; }
+      else if (_statsSort.key === 'cost') {
+        va = Object.values(a.costsByCurrency).reduce((s, v) => s + v, 0);
+        vb = Object.values(b.costsByCurrency).reduce((s, v) => s + v, 0);
+      }
+      return _statsSort.dir === 'asc' ? va - vb : vb - va;
+    });
+  }
+
+  // Update sort indicators
+  ['days', 'activities', 'km', 'cost'].forEach(key => {
+    const el = document.getElementById(`sort-${key}`);
+    if (el) el.textContent = _statsSort.key === key ? (_statsSort.dir === 'asc' ? '↑' : '↓') : '';
+  });
+
+  // Render table
+  const table = document.getElementById('stats-table');
+  if (!table) return;
+
+  table.innerHTML = filtered.length
+    ? filtered.map(t => {
+        const dateRange = t.startDate
+          ? `${formatDayLabel(t.startDate)}${t.endDate && t.endDate !== t.startDate ? ' → ' + formatDayLabel(t.endDate) : ''}`
+          : '—';
+        const costStr = getConvertedTotal(t.costsByCurrency);
+
+        return `
+          <tr class="rounded-2xl bg-white dark:bg-slate-950/60 cursor-pointer transition hover:-translate-y-0.5 hover:border-primary-200 dark:hover:border-primary-500/30" onclick="openTrip('${escapeHtml(t.id)}')" style="transform-origin: center;">
+            <td class="rounded-l-2xl px-3 py-3 font-medium text-slate-900 dark:text-slate-100">${escapeHtml(t.name)}</td>
+            <td class="px-3 py-3 text-slate-500 dark:text-slate-400">${escapeHtml(t.country || '—')}</td>
+            <td class="px-3 py-3 text-sm text-slate-500 dark:text-slate-400">${escapeHtml(dateRange)}</td>
+            <td class="px-3 py-3 text-right text-slate-700 dark:text-slate-300">${t.days || '—'}</td>
+            <td class="px-3 py-3 text-right text-slate-700 dark:text-slate-300">${t.activitiesCount}</td>
+            <td class="px-3 py-3 text-right text-slate-700 dark:text-slate-300">${t.totalKm ? `${t.totalKm} km` : '—'}</td>
+            <td class="rounded-r-2xl px-3 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">${escapeHtml(costStr)}</td>
+          </tr>
+        `;
+      }).join('')
+    : `<tr><td colspan="7" class="px-3 py-8 text-center text-slate-500 dark:text-slate-400">No trips found.</td></tr>`;
+}
+
+function setStatsYear(year) {
+  _statsYear = String(year);
+  renderStats();
+}
+
+function setStatsCountry(country) {
+  _statsCountry = country;
+  renderStats();
+}
+
+function sortStatsBy(key) {
+  if (_statsSort.key === key) {
+    _statsSort.dir = _statsSort.dir === 'asc' ? 'desc' : 'asc';
+  } else {
+    _statsSort = { key, dir: 'desc' };
+  }
+  renderStats();
+}
+
+window.applyStatsCurrency = applyStatsCurrency;
+window.setStatsYear = setStatsYear;
+window.setStatsCountry = setStatsCountry;
+window.sortStatsBy = sortStatsBy;
 
 async function init() {
   try {
@@ -529,6 +751,7 @@ async function init() {
     if (hasEl('activities')) { await loadTripPage(); renderHeaderNav('trip'); }
     if (hasEl('timeline')) { await loadTimeline(); renderHeaderNav('timeline'); }
     if (hasEl('cost-table')) { await loadCosts(); renderHeaderNav('costs'); }
+    if (hasEl('stats-table')) { await loadStats(); renderHeaderNav('stats'); }
 
   } catch (error) {
     console.error('INIT ERROR:', error);

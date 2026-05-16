@@ -317,7 +317,7 @@ function renderActivities() {
     return `
       <div class="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
         <button type="button" onclick="toggleActivityDay('${escapeHtml(key)}')"
-          class="flex w-full items-center justify-between gap-3 bg-slate-100 dark:bg-slate-800/70 px-4 py-3 text-left transition hover:bg-slate-200 dark:hover:bg-slate-800">
+          class="flex w-full items-center justify-between gap-3 bg-slate-100 dark:bg-slate-800/70 px-4 py-3 text-left cursor-pointer transition hover:bg-slate-200 dark:hover:bg-slate-800">
           <div class="min-w-0">
             <div class="text-sm font-semibold text-slate-900 dark:text-slate-100">${escapeHtml(label)}</div>
             <div class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">

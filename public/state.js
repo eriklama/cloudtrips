@@ -5,6 +5,7 @@
 const API = {
   GET_TRIPS: '/api/getTrips',
   GET_TRIP: '/api/getTrip',
+  GET_STATS: '/api/getStats',
   SAVE_TRIP_META: '/api/saveTripMeta',
   DUPLICATE_TRIP: '/api/duplicateTrip',
   UPSERT_ACTIVITY: '/api/upsertActivity',
