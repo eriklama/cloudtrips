@@ -176,15 +176,27 @@ function saveTripCountry() {
   if (!countryEl || !state.currentTrip) return;
   state.currentTrip.country = countryEl.value;
   clearTimeout(_countrySaveTimeout);
-  _countrySaveTimeout = setTimeout(async () => {
-    try {
-      await saveTripMeta(state.currentTrip);
-      saveTripToCache(state.currentTrip);
-    } catch (err) {
-      console.error(err);
-      showToast('Failed to save country.', 'error');
+  _countrySaveTimeout = setTimeout(() => saveTripCountryNow(), 1000);
+}
+
+async function saveTripCountryNow() {
+  clearTimeout(_countrySaveTimeout);
+  const countryEl = document.getElementById('trip-country');
+  const savedEl = document.getElementById('country-saved');
+  if (!countryEl || !state.currentTrip) return;
+  state.currentTrip.country = countryEl.value.trim();
+  try {
+    await saveTripMeta(state.currentTrip);
+    saveTripToCache(state.currentTrip);
+    if (savedEl) {
+      savedEl.classList.remove('hidden');
+      refreshIcons();
+      setTimeout(() => savedEl.classList.add('hidden'), 2000);
     }
-  }, 1000);
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to save country.', 'error');
+  }
 }
 
 async function saveActivity() {

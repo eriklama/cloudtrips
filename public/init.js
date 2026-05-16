@@ -561,4 +561,5 @@ window.applyConversion = applyConversion;
 window.moveActivity = moveActivity;
 window.saveTripNotes = saveTripNotes;
 window.saveTripCountry = saveTripCountry;
+window.saveTripCountryNow = saveTripCountryNow;
 window.logout = logout;

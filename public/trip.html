@@ -126,9 +126,14 @@
         rows="2"
         class="flex-1 rounded-xl border-0 bg-transparent px-0 py-1 text-sm text-slate-900 dark:text-slate-100 outline-none resize-none placeholder:text-slate-400 dark:placeholder:text-slate-600"
         oninput="saveTripNotes()"></textarea>
-      <input id="trip-country" type="text" placeholder="Country" list="country-list"
-        class="w-36 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-1.5 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 placeholder:text-slate-400"
-        oninput="saveTripCountry()" />
+      <div class="relative flex items-center">
+        <input id="trip-country" type="text" placeholder="Country" list="country-list"
+          class="w-36 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-1.5 pr-7 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 placeholder:text-slate-400"
+          oninput="saveTripCountry()" onchange="saveTripCountryNow()" />
+        <span id="country-saved" class="hidden absolute right-2 text-emerald-500">
+          <i data-lucide="check" class="h-3.5 w-3.5"></i>
+        </span>
+      </div>
       <datalist id="country-list">
         <option value="Afghanistan"><option value="Albania"><option value="Algeria"><option value="Andorra"><option value="Angola">
         <option value="Antigua and Barbuda"><option value="Argentina"><option value="Armenia"><option value="Australia"><option value="Austria">
