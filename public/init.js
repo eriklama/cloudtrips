@@ -147,7 +147,7 @@ function renderTimeline() {
         >
           <div class="min-w-0">
             <div class="text-sm font-semibold tracking-tight text-slate-900 dark:text-slate-100">${escapeHtml(label)}</div>
-            <div class="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-500 dark:text-slate-400">
+            <div class="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
               <span>${dayActivities.length} item${dayActivities.length === 1 ? '' : 's'}</span>
               ${Object.entries(costsByCurrency).filter(([, amount]) => amount > 0).map(([currency, amount]) =>
                 `<span>${escapeHtml(formatCurrency(amount, currency))}</span>`
@@ -176,11 +176,9 @@ function jumpToToday() {
   const today = new Date();
   const todayKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
 
-  // Try exact match first, then find the nearest past day
   let target = document.getElementById(`day-${todayKey}`);
 
   if (!target) {
-    // Find all day sections and pick the last one before today
     const sections = [...document.querySelectorAll('[id^="day-"]')]
       .map(el => ({ el, key: el.id.replace('day-', '') }))
       .filter(({ key }) => key !== 'undated')
@@ -198,7 +196,6 @@ function jumpToToday() {
 
   if (target) {
     target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    // Flash highlight
     target.classList.add('ring-2', 'ring-primary-500');
     setTimeout(() => target.classList.remove('ring-2', 'ring-primary-500'), 1500);
   } else {
@@ -242,7 +239,7 @@ function renderCalendarView() {
         <div class="mb-4 flex items-center justify-between gap-3">
           <div>
             <h3 class="text-base font-semibold tracking-tight text-slate-900 dark:text-slate-100">${escapeHtml(monthLabel)}</h3>
-            <p class="mt-1 text-xs text-slate-500 dark:text-slate-500 dark:text-slate-400">${entries.length} day${entries.length === 1 ? '' : 's'}</p>
+            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">${entries.length} day${entries.length === 1 ? '' : 's'}</p>
           </div>
         </div>
 
@@ -267,7 +264,7 @@ async function loadCosts() {
 
   table.innerHTML = `
     <tr>
-      <td colspan="5" class="px-3 py-8 text-center text-slate-500 dark:text-slate-500 dark:text-slate-400">Loading costs…</td>
+      <td colspan="5" class="px-3 py-8 text-center text-slate-500 dark:text-slate-400">Loading costs…</td>
     </tr>
   `;
 
@@ -282,11 +279,14 @@ async function loadCosts() {
     }
     renderCosts();
 
-    // Restore saved currency preference
-    const savedCurrency = localStorage.getItem('cloudtrips_convert_currency');
-    const select = document.getElementById('convertCurrency');
-    if (savedCurrency && select) {
-      select.value = savedCurrency;
+    // Restore currency: explicit localStorage choice wins, then user's default, then blank
+    const savedCostsCurrency =
+      localStorage.getItem('cloudtrips_convert_currency') ||
+      state.settings.defaultCurrency ||
+      '';
+    const costsSelect = document.getElementById('convertCurrency');
+    if (savedCostsCurrency && costsSelect) {
+      costsSelect.value = savedCostsCurrency;
       applyConversion();
     }
   } catch (error) {
@@ -383,6 +383,114 @@ function openPrintView() {
 }
 
 /* =========================
+ * SETTINGS
+ * ========================= */
+
+async function loadUserSettings() {
+  if (isGuestView()) return;
+  try {
+    const data = await apiGet(API.GET_USER_SETTINGS);
+    if (data?.settings) {
+      state.settings = { ...state.settings, ...data.settings };
+    }
+  } catch {
+    // non-fatal — defaults remain
+  }
+}
+
+async function openSettingsModal() {
+  const current = state.settings.defaultCurrency || '';
+
+  const currencies = [
+    { value: '',    label: 'None (show original)' },
+    { value: 'EUR', label: 'EUR €' },
+    { value: 'USD', label: 'USD $' },
+    { value: 'GBP', label: 'GBP £' },
+    { value: 'CZK', label: 'CZK Kč' },
+    { value: 'CHF', label: 'CHF Fr' },
+    { value: 'PLN', label: 'PLN zł' },
+    { value: 'HUF', label: 'HUF Ft' },
+    { value: 'SEK', label: 'SEK kr' },
+    { value: 'NOK', label: 'NOK kr' },
+    { value: 'DKK', label: 'DKK kr' },
+  ];
+
+  const options = currencies
+    .map(c => `<option value="${c.value}" ${c.value === current ? 'selected' : ''}>${escapeHtml(c.label)}</option>`)
+    .join('');
+
+  const overlay = document.createElement('div');
+  overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-slate-900/20 dark:bg-slate-950/60 p-4';
+
+  overlay.innerHTML = `
+    <div class="w-full max-w-sm rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xl">
+      <div class="flex items-center justify-between mb-5">
+        <h2 class="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">Settings</h2>
+        <button id="settings-close" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label for="settings-currency" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+            Default display currency
+          </label>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mb-2">
+            Pre-selects the currency on the Costs and Stats pages. You can still change it per-session.
+          </p>
+          <select id="settings-currency"
+            class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-3 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500">
+            ${options}
+          </select>
+        </div>
+      </div>
+
+      <div class="mt-5 flex justify-end gap-2">
+        <button id="settings-cancel"
+          class="inline-flex items-center justify-center rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800">
+          Cancel
+        </button>
+        <button id="settings-save"
+          class="inline-flex items-center justify-center rounded-2xl bg-primary-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-700">
+          Save
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+  refreshIcons();
+
+  function close() { overlay.remove(); }
+
+  overlay.querySelector('#settings-close').addEventListener('click', close);
+  overlay.querySelector('#settings-cancel').addEventListener('click', close);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+
+  overlay.querySelector('#settings-save').addEventListener('click', async () => {
+    const select = overlay.querySelector('#settings-currency');
+    const defaultCurrency = select?.value || '';
+    const saveBtn = overlay.querySelector('#settings-save');
+
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving…';
+
+    try {
+      await apiPost(API.SAVE_USER_SETTINGS, { defaultCurrency });
+      state.settings.defaultCurrency = defaultCurrency;
+      showToast('Settings saved.', 'success');
+      close();
+    } catch (err) {
+      console.error(err);
+      showToast(err?.message || 'Failed to save settings.', 'error');
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save';
+    }
+  });
+}
+
+/* =========================
  * HEADER NAVIGATION
  * ========================= */
 
@@ -392,14 +500,12 @@ function renderHeaderNav(current) {
 
   nav.innerHTML = '';
 
-  // Build nav items list
   const items = [];
   items.push({ label: 'Home', icon: 'home', onClick: () => { window.location.href = '/'; } });
 
   if (current === 'stats') {
     // Stats page — no trip-specific links
   } else {
-    // Trip pages — show trip navigation
     if (current !== 'trip') items.push({ label: 'Trip', icon: 'notebook-pen', onClick: goToTrip });
     if (current !== 'timeline') items.push({ label: 'Timeline', icon: 'list-tree', onClick: goToTimeline });
     if (current !== 'costs') items.push({ label: 'Costs', icon: 'badge-euro', onClick: goToCosts });
@@ -408,7 +514,7 @@ function renderHeaderNav(current) {
 
   const btnClass = 'inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 transition';
 
-  // ── DESKTOP: regular button row (hidden on mobile) ──
+  // ── DESKTOP ──
   const desktopRow = document.createElement('div');
   desktopRow.className = 'hidden sm:flex gap-2';
 
@@ -421,7 +527,6 @@ function renderHeaderNav(current) {
     desktopRow.appendChild(btn);
   });
 
-  // Theme toggle — desktop
   const themeBtn = document.createElement('button');
   themeBtn.type = 'button';
   themeBtn.className = btnClass + ' px-2.5';
@@ -433,7 +538,7 @@ function renderHeaderNav(current) {
   themeBtn.onclick = toggleTheme;
   desktopRow.appendChild(themeBtn);
 
-  // ── MOBILE: hamburger + dropdown (hidden on desktop) ──
+  // ── MOBILE ──
   const mobileWrapper = document.createElement('div');
   mobileWrapper.className = 'relative sm:hidden';
 
@@ -450,22 +555,18 @@ function renderHeaderNav(current) {
     const item = document.createElement('button');
     item.type = 'button';
     item.className = 'flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition';
-    item.innerHTML = `<i data-lucide="${icon}" class="h-4 w-4 text-slate-500 dark:text-slate-500 dark:text-slate-400"></i>${label}`;
-    item.onclick = () => {
-      closeDropdown();
-      onClick();
-    };
+    item.innerHTML = `<i data-lucide="${icon}" class="h-4 w-4 text-slate-500 dark:text-slate-400"></i>${label}`;
+    item.onclick = () => { closeDropdown(); onClick(); };
     dropdown.appendChild(item);
   });
 
-  // Theme toggle — mobile dropdown
   const themeItem = document.createElement('button');
   themeItem.type = 'button';
   themeItem.className = 'flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition';
   themeItem.setAttribute('data-theme-toggle', '');
   themeItem.innerHTML = getTheme() === 'dark'
-    ? '<i data-lucide="sun" class="h-4 w-4 text-slate-500 dark:text-slate-500 dark:text-slate-400"></i>Light mode'
-    : '<i data-lucide="moon" class="h-4 w-4 text-slate-500 dark:text-slate-500 dark:text-slate-400"></i>Dark mode';
+    ? '<i data-lucide="sun" class="h-4 w-4 text-slate-500 dark:text-slate-400"></i>Light mode'
+    : '<i data-lucide="moon" class="h-4 w-4 text-slate-500 dark:text-slate-400"></i>Dark mode';
   themeItem.onclick = () => { closeDropdown(); toggleTheme(); };
   dropdown.appendChild(themeItem);
 
@@ -473,9 +574,7 @@ function renderHeaderNav(current) {
     dropdown.classList.remove('hidden');
     hamburger.innerHTML = '<i data-lucide="x" class="h-5 w-5"></i>';
     refreshIcons();
-    setTimeout(() => {
-      document.addEventListener('click', outsideClickHandler);
-    }, 0);
+    setTimeout(() => { document.addEventListener('click', outsideClickHandler); }, 0);
   }
 
   function closeDropdown() {
@@ -486,9 +585,7 @@ function renderHeaderNav(current) {
   }
 
   function outsideClickHandler(e) {
-    if (!mobileWrapper.contains(e.target)) {
-      closeDropdown();
-    }
+    if (!mobileWrapper.contains(e.target)) closeDropdown();
   }
 
   hamburger.addEventListener('click', (e) => {
@@ -514,7 +611,6 @@ let _statsRates = null;
 let _statsYear = '';
 let _statsCountry = '';
 let _statsSort = { key: '', dir: 'desc' };
-
 let _visitedCountries = [];
 
 async function loadVisitedCountries() {
@@ -664,7 +760,6 @@ function populateCountrySelector() {
   };
 }
 
-// Country name → ISO 3166-1 numeric code mapping for TopoJSON
 const COUNTRY_NAME_TO_ID = {
   'Afghanistan':4,'Albania':8,'Algeria':12,'Andorra':20,'Angola':24,'Antigua and Barbuda':28,
   'Argentina':32,'Armenia':51,'Australia':36,'Austria':40,'Azerbaijan':31,'Bahamas':44,'Bahrain':48,
@@ -779,11 +874,14 @@ async function loadStats() {
     renderVisitedPills();
     renderWorldMap();
 
-    // Restore saved currency preference
-    const savedCurrency = localStorage.getItem('cloudtrips_stats_currency');
-    const select = document.getElementById('statsCurrency');
-    if (savedCurrency && select) {
-      select.value = savedCurrency;
+    // Restore currency: explicit localStorage choice wins, then user's default, then blank
+    const savedStatsCurrency =
+      localStorage.getItem('cloudtrips_stats_currency') ||
+      state.settings.defaultCurrency ||
+      '';
+    const statsSelect = document.getElementById('statsCurrency');
+    if (savedStatsCurrency && statsSelect) {
+      statsSelect.value = savedStatsCurrency;
       applyStatsCurrency(); // fire and forget — don't await
     }
 
@@ -833,7 +931,6 @@ function renderStats() {
   const trips = _statsData.trips || [];
   const allTime = _statsData.allTime || {};
 
-  // Convert costs helper
   const getConvertedTotal = (costsByCurrency) => {
     if (!convertTo || !_statsRates) {
       return Object.entries(costsByCurrency)
@@ -848,7 +945,6 @@ function renderStats() {
     return total > 0 ? formatCurrency(total, convertTo) : '—';
   };
 
-  // Total cost all-time
   const allCosts = trips.reduce((acc, t) => {
     Object.entries(t.costsByCurrency).forEach(([c, v]) => {
       acc[c] = (acc[c] || 0) + v;
@@ -857,7 +953,6 @@ function renderStats() {
   }, {});
   const totalCostStr = getConvertedTotal(allCosts);
 
-  // All-time stat cards
   const alltimeEl = document.getElementById('alltime-stats');
   if (alltimeEl) {
     const stat = (icon, label, value) => `
@@ -879,7 +974,6 @@ function renderStats() {
     refreshIcons();
   }
 
-  // Build year filter
   const years = [...new Set(trips.map(t => t.startDate ? new Date(t.startDate).getFullYear() : null).filter(Boolean))].sort((a, b) => b - a);
   const yearPillsEl = document.getElementById('year-pills');
   if (yearPillsEl) {
@@ -890,7 +984,6 @@ function renderStats() {
     `;
   }
 
-  // Build country filter
   const countries = [...new Set(trips.map(t => t.country).filter(Boolean))].sort();
   const countryPillsEl = document.getElementById('country-pills');
   if (countryPillsEl) {
@@ -901,12 +994,10 @@ function renderStats() {
     ` : '<span class="text-xs text-slate-400">No countries set on trips yet</span>';
   }
 
-  // Filter trips by year and country
   let filtered = trips;
   if (_statsYear) filtered = filtered.filter(t => t.startDate && new Date(t.startDate).getFullYear() === Number(_statsYear));
   if (_statsCountry) filtered = filtered.filter(t => t.country === _statsCountry);
 
-  // Sort
   if (_statsSort.key) {
     filtered = [...filtered].sort((a, b) => {
       let va, vb;
@@ -921,13 +1012,11 @@ function renderStats() {
     });
   }
 
-  // Update sort indicators
   ['days', 'activities', 'km', 'cost'].forEach(key => {
     const el = document.getElementById(`sort-${key}`);
     if (el) el.textContent = _statsSort.key === key ? (_statsSort.dir === 'asc' ? '↑' : '↓') : '';
   });
 
-  // Render table
   const table = document.getElementById('stats-table');
   if (!table) return;
 
@@ -939,7 +1028,7 @@ function renderStats() {
         const costStr = getConvertedTotal(t.costsByCurrency);
 
         return `
-          <tr class="rounded-2xl bg-white dark:bg-slate-950/60 cursor-pointer transition hover:-translate-y-0.5 hover:border-primary-200 dark:hover:border-primary-500/30" onclick="openTrip('${escapeHtml(t.id)}')" style="transform-origin: center;">
+          <tr class="rounded-2xl bg-white dark:bg-slate-950/60 cursor-pointer transition hover:-translate-y-0.5 hover:border-primary-200 dark:hover:border-primary-500/30" onclick="openTrip('${escapeHtml(t.id)}')">
             <td class="rounded-l-2xl px-3 py-3 font-medium text-slate-900 dark:text-slate-100">${escapeHtml(t.name)}</td>
             <td class="px-3 py-3 text-slate-500 dark:text-slate-400">${escapeHtml(t.country || '—')}</td>
             <td class="px-3 py-3 text-sm text-slate-500 dark:text-slate-400">${escapeHtml(dateRange)}</td>
@@ -1019,7 +1108,6 @@ async function loadErrors() {
       <div class="mt-2 text-xs text-slate-400 text-right">${errors.length} most recent error${errors.length === 1 ? '' : 's'}</div>
     `;
   } catch (err) {
-    // 403 = not admin — show a subtle not-authorised message
     if (err?.message?.includes('403') || err?.message?.includes('Forbidden')) {
       container.innerHTML = '<div class="text-center py-4 text-slate-400 text-xs">Error log is only visible to the admin account.</div>';
       return;
@@ -1034,14 +1122,17 @@ window.setStatsYear = setStatsYear;
 window.setStatsCountry = setStatsCountry;
 window.sortStatsBy = sortStatsBy;
 
+/* =========================
+ * INIT
+ * ========================= */
+
 async function init() {
   try {
     const onSharedPage = isGuestView();
 
     if (!onSharedPage && typeof requireAuth === 'function') {
       try {
-        const user = await requireAuth();
-
+        await requireAuth();
       } catch (e) {
         console.warn('AUTH FAILED → redirecting to login', e);
         try {
@@ -1053,6 +1144,9 @@ async function init() {
       }
     }
 
+    // Load user settings before page dispatch so currency preference is ready
+    await loadUserSettings();
+
     const hasEl = (id) => Boolean(document.getElementById(id));
 
     if (hasEl('trip-list')) await loadTrips();
@@ -1062,10 +1156,8 @@ async function init() {
     if (hasEl('stats-table')) {
       await loadStats();
       renderHeaderNav('stats');
-      // Set after renderHeaderNav so nav row is included in height
       requestAnimationFrame(() => {
         const header = document.querySelector('header');
-        const nav = document.getElementById('nav-actions')?.closest('div');
         const totalHeight = (header?.offsetHeight || 0);
         document.documentElement.style.setProperty('--header-height', totalHeight + 'px');
       });
@@ -1097,6 +1189,7 @@ window.toggleTimelineDay = toggleTimelineDay;
 window.switchTimelineView = switchTimelineView;
 window.jumpToToday = jumpToToday;
 window.openPrintView = openPrintView;
+window.openSettingsModal = openSettingsModal;
 window.renderHeaderNav = renderHeaderNav;
 window.applyConversion = applyConversion;
 window.moveActivity = moveActivity;

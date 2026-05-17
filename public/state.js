@@ -9,6 +9,7 @@ const API = {
   GET_ERRORS: '/api/getErrors',
   GET_VISITED_COUNTRIES: '/api/getVisitedCountries',
   SAVE_VISITED_COUNTRIES: '/api/saveVisitedCountries',
+  GET_USER_SETTINGS: '/api/getUserSettings',
   SAVE_USER_SETTINGS: '/api/saveUserSettings',
   SAVE_TRIP_META: '/api/saveTripMeta',
   DUPLICATE_TRIP: '/api/duplicateTrip',
@@ -29,5 +30,8 @@ const state = {
   editingActivityId: null,
   collapsedActivityDays: new Set(),
   timelineCollapsedDays: new Set(),
-  timelineView: 'timeline'
+  timelineView: 'timeline',
+  settings: {
+    defaultCurrency: ''
+  }
 };

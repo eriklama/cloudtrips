@@ -144,6 +144,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     signupForm.addEventListener('submit', handleSignupSubmit);
     return;
   }
-
-  await requireAuth();
 });
