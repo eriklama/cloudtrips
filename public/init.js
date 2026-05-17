@@ -281,7 +281,6 @@ async function loadCosts() {
       if (logoutBtn) logoutBtn.style.display = 'none';
     }
     renderCosts();
-    renderTripStats();
 
     // Restore saved currency preference
     const savedCurrency = localStorage.getItem('cloudtrips_convert_currency');

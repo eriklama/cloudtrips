@@ -34,6 +34,20 @@
     </div>
   </header>
 
+  <!-- ROTATE MESSAGE (mobile portrait only) -->
+  <div class="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-slate-950 text-white sm:hidden landscape:hidden" id="rotate-overlay">
+    <i data-lucide="rotate-ccw" class="h-12 w-12 text-primary-400 animate-spin-slow"></i>
+    <p class="text-lg font-semibold">Rotate your device</p>
+    <p class="text-sm text-slate-400 text-center px-8">The stats page is best viewed in landscape mode.</p>
+  </div>
+
+  <style>
+    @keyframes spin-slow { to { transform: rotate(360deg); } }
+    .animate-spin-slow { animation: spin-slow 3s linear infinite; }
+    @media (orientation: landscape) { #rotate-overlay { display: none !important; } }
+    @media (min-width: 640px) { #rotate-overlay { display: none !important; } }
+  </style>
+
   <!-- MAIN -->
   <main class="max-w-6xl mx-auto px-4 py-6 sm:py-8 pb-20">
 
