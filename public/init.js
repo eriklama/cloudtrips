@@ -725,10 +725,7 @@ function sortStatsBy(key) {
 
 async function loadErrors() {
   const container = document.getElementById('error-log');
-  const section = container?.closest('.rounded-2xl');
   if (!container) return;
-
-  container.innerHTML = '<div class="text-center py-4 text-slate-400">Loading…</div>';
 
   try {
     const data = await apiGet('/api/getErrors?limit=50');
@@ -813,7 +810,13 @@ async function init() {
     if (hasEl('activities')) { await loadTripPage(); renderHeaderNav('trip'); }
     if (hasEl('timeline')) { await loadTimeline(); renderHeaderNav('timeline'); }
     if (hasEl('cost-table')) { await loadCosts(); renderHeaderNav('costs'); }
-    if (hasEl('stats-table')) { await loadStats(); renderHeaderNav('stats'); }
+    if (hasEl('stats-table')) {
+      // Set header height for rotate overlay positioning
+      const header = document.querySelector('header');
+      if (header) document.documentElement.style.setProperty('--header-height', header.offsetHeight + 'px');
+      await loadStats();
+      renderHeaderNav('stats');
+    }
 
   } catch (error) {
     console.error('INIT ERROR:', error);

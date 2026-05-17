@@ -35,7 +35,7 @@
   </header>
 
   <!-- ROTATE MESSAGE (mobile portrait only) -->
-  <div class="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-slate-950 text-white sm:hidden landscape:hidden" id="rotate-overlay">
+  <div class="fixed inset-x-0 bottom-0 z-50 flex flex-col items-center justify-center gap-4 bg-slate-950/95 text-white sm:hidden" id="rotate-overlay">
     <i data-lucide="rotate-ccw" class="h-12 w-12 text-primary-400 animate-spin-slow"></i>
     <p class="text-lg font-semibold">Rotate your device</p>
     <p class="text-sm text-slate-400 text-center px-8">The stats page is best viewed in landscape mode.</p>
@@ -44,6 +44,7 @@
   <style>
     @keyframes spin-slow { to { transform: rotate(360deg); } }
     .animate-spin-slow { animation: spin-slow 3s linear infinite; }
+    #rotate-overlay { top: var(--header-height, 57px); }
     @media (orientation: landscape) { #rotate-overlay { display: none !important; } }
     @media (min-width: 640px) { #rotate-overlay { display: none !important; } }
   </style>
@@ -117,6 +118,18 @@
           <tbody id="stats-table"></tbody>
         </table>
       </div>
+    </div>
+
+    <!-- ERROR LOG -->
+    <div class="mt-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-4 sm:p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-base font-semibold">Recent errors</h3>
+        <button onclick="loadErrors()" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+          <i data-lucide="refresh-cw" class="h-3.5 w-3.5"></i>
+          Refresh
+        </button>
+      </div>
+      <div id="error-log" class="text-sm text-slate-500 dark:text-slate-400 text-center py-4"></div>
     </div>
 
   </main>
