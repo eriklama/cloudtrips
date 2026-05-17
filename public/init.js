@@ -771,23 +771,18 @@ async function loadStats() {
     _statsData = data;
     await loadVisitedCountries();
 
+    renderStats();
+    populateCountrySelector();
+    renderVisitedPills();
+    renderWorldMap();
+
     // Restore saved currency preference
     const savedCurrency = localStorage.getItem('cloudtrips_stats_currency');
     const select = document.getElementById('statsCurrency');
     if (savedCurrency && select) {
       select.value = savedCurrency;
-      if (savedCurrency) {
-        await applyStatsCurrency();
-      } else {
-        renderStats();
-      }
-    } else {
-      renderStats();
+      applyStatsCurrency(); // fire and forget — don't await
     }
-
-    populateCountrySelector();
-    renderVisitedPills();
-    renderWorldMap();
 
     // Load error log — will silently hide if user is not admin
     loadErrors();
