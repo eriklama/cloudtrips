@@ -82,7 +82,7 @@
         Trip
       </h1>
 
-            <!-- NAV + AUTH -->
+      <!-- NAV + AUTH -->
       <div class="flex items-center gap-2">
 
         <!-- Dynamic nav -->
@@ -96,16 +96,23 @@
         </button>
 
         <!-- Manage share links -->
-<button onclick="openManageSharesModal()"
-  class="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
-  <i data-lucide="link" class="w-4 h-4"></i>
-  <span class="hidden sm:inline">Links</span>
-</button>
+        <button onclick="openManageSharesModal()"
+          class="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+          <i data-lucide="link" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Links</span>
+        </button>
 
         <!-- User -->
         <span id="auth-user-email"
           class="hidden sm:inline text-sm text-slate-500 dark:text-slate-400 truncate max-w-[160px]">
         </span>
+
+        <!-- Settings -->
+        <button onclick="openSettingsModal()"
+          class="inline-flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+          aria-label="Settings">
+          <i data-lucide="settings" class="w-4 h-4"></i>
+        </button>
 
         <!-- Logout -->
         <button id="logout-button" onclick="logout()"
@@ -296,7 +303,7 @@
         </button>
       </div>
       <div id="activity-type-filters" class="flex flex-wrap gap-1.5">
-        <button onclick="toggleTypeFilter('')" data-type="" class="type-filter-pill active rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-300 hover:border-primary-400 transition data-[active]:border-primary-500 data-[active]:bg-primary-50 data-[active]:text-primary-700 dark:data-[active]:bg-primary-500/10 dark:data-[active]:text-primary-300">All</button>
+        <button onclick="toggleTypeFilter('')" data-type="" class="type-filter-pill active rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-300 hover:border-primary-400 transition">All</button>
         <button onclick="toggleTypeFilter('plane')" data-type="plane" class="type-filter-pill rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-300 hover:border-primary-400 transition">✈️ Plane</button>
         <button onclick="toggleTypeFilter('car')" data-type="car" class="type-filter-pill rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-300 hover:border-primary-400 transition">🚗 Car</button>
         <button onclick="toggleTypeFilter('hike')" data-type="hike" class="type-filter-pill rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-300 hover:border-primary-400 transition">🥾 Hike</button>

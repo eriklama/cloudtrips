@@ -28,6 +28,14 @@
       <div class="flex items-center gap-2">
         <div id="nav-actions" class="flex gap-2"></div>
         <span id="auth-user-email" class="hidden sm:inline text-sm text-slate-500 dark:text-slate-400 truncate max-w-[160px]"></span>
+
+        <!-- Settings -->
+        <button onclick="openSettingsModal()"
+          class="inline-flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+          aria-label="Settings">
+          <i data-lucide="settings" class="w-4 h-4"></i>
+        </button>
+
         <button id="logout-button" onclick="logout()"
           class="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
           <i data-lucide="log-out" class="w-4 h-4"></i>
@@ -103,7 +111,6 @@
           </select>
         </div>
       </div>
-      <!-- Map -->
       <div id="world-map" class="w-full overflow-hidden rounded-xl bg-slate-200 dark:bg-slate-800" style="height:380px;">
         <div class="flex items-center justify-center h-full text-slate-400 text-sm">Loading map…</div>
       </div>
