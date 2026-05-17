@@ -509,7 +509,7 @@ function renderHeaderNav(current) {
     if (current !== 'trip') items.push({ label: 'Trip', icon: 'notebook-pen', onClick: goToTrip });
     if (current !== 'timeline') items.push({ label: 'Timeline', icon: 'list-tree', onClick: goToTimeline });
     if (current !== 'costs') items.push({ label: 'Costs', icon: 'badge-euro', onClick: goToCosts });
-    items.push({ label: 'Export', icon: 'printer', onClick: openPrintView });
+    // Export dropdown only on trip page
   }
 
   const btnClass = 'inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 transition';
@@ -526,6 +526,19 @@ function renderHeaderNav(current) {
     btn.innerHTML = `<i data-lucide="${icon}" class="h-4 w-4"></i>${label}`;
     desktopRow.appendChild(btn);
   });
+
+  // Export dropdown button — trip page only, desktop
+  if (current === 'trip') {
+    const exportWrapper = document.createElement('div');
+    exportWrapper.className = 'export-btn-wrapper relative';
+    const exportBtn = document.createElement('button');
+    exportBtn.type = 'button';
+    exportBtn.className = btnClass;
+    exportBtn.innerHTML = '<i data-lucide="download" class="h-4 w-4"></i>Export<i data-lucide="chevron-down" class="h-3 w-3 ml-0.5"></i>';
+    exportBtn.onclick = (e) => { e.stopPropagation(); openExportDropdown(exportBtn); };
+    exportWrapper.appendChild(exportBtn);
+    desktopRow.appendChild(exportWrapper);
+  }
 
   const themeBtn = document.createElement('button');
   themeBtn.type = 'button';
@@ -559,6 +572,23 @@ function renderHeaderNav(current) {
     item.onclick = () => { closeDropdown(); onClick(); };
     dropdown.appendChild(item);
   });
+
+  // Export items in mobile menu — trip page only
+  if (current === 'trip') {
+    const csvItem = document.createElement('button');
+    csvItem.type = 'button';
+    csvItem.className = 'flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition';
+    csvItem.innerHTML = '<i data-lucide="file-spreadsheet" class="h-4 w-4 text-slate-500 dark:text-slate-400"></i>Export CSV';
+    csvItem.onclick = () => { closeDropdown(); exportCsv(); };
+    dropdown.appendChild(csvItem);
+
+    const printItem = document.createElement('button');
+    printItem.type = 'button';
+    printItem.className = 'flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition';
+    printItem.innerHTML = '<i data-lucide="printer" class="h-4 w-4 text-slate-500 dark:text-slate-400"></i>Print / PDF';
+    printItem.onclick = () => { closeDropdown(); openPrintView(); };
+    dropdown.appendChild(printItem);
+  }
 
   const themeItem = document.createElement('button');
   themeItem.type = 'button';
