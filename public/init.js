@@ -811,11 +811,13 @@ async function init() {
     if (hasEl('timeline')) { await loadTimeline(); renderHeaderNav('timeline'); }
     if (hasEl('cost-table')) { await loadCosts(); renderHeaderNav('costs'); }
     if (hasEl('stats-table')) {
-      // Set header height for rotate overlay positioning
-      const header = document.querySelector('header');
-      if (header) document.documentElement.style.setProperty('--header-height', header.offsetHeight + 'px');
       await loadStats();
       renderHeaderNav('stats');
+      // Set after renderHeaderNav so nav row is included in height
+      requestAnimationFrame(() => {
+        const header = document.querySelector('header');
+        if (header) document.documentElement.style.setProperty('--header-height', header.offsetHeight + 'px');
+      });
     }
 
   } catch (error) {
