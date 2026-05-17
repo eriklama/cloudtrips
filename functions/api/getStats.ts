@@ -43,7 +43,7 @@ export async function onRequestGet(context: { request: Request; env: Env }) {
   }
 
   try {
-    const [tripsResult, costsResult, daysResult] = await Promise.all([
+    const [tripsResult, costsResult, daysResult, userRow] = await Promise.all([
       // Trip summaries
       env.DB.prepare(`
         SELECT
@@ -83,6 +83,11 @@ export async function onRequestGet(context: { request: Request; env: Env }) {
         WHERE t.user_id = ? AND a.start_date != ''
         GROUP BY a.trip_id
       `).bind(user.id).all<DayRow>(),
+
+      // User visited countries
+      env.DB.prepare(`SELECT visited_countries FROM users WHERE id = ? LIMIT 1`)
+        .bind(user.id)
+        .first<{ visited_countries: string }>(),
     ]);
 
     const trips = tripsResult.results ?? [];
@@ -120,9 +125,23 @@ export async function onRequestGet(context: { request: Request; env: Env }) {
     const totalActivities = tripStats.reduce((s, t) => s + t.activitiesCount, 0);
     const countries = [...new Set(tripStats.map(t => t.country).filter(Boolean))];
 
+    // Parse visited countries
+    let visitedCountries: string[] = [];
+    try {
+      visitedCountries = JSON.parse(userRow?.visited_countries || '[]');
+    } catch { /* ignore */ }
+
+    // Merge trip countries + manually visited countries
+    const allVisited = [...new Set([
+      ...tripStats.map(t => t.country).filter(Boolean),
+      ...visitedCountries
+    ])].sort();
+
     return json({
       ok: true,
       trips: tripStats,
+      visitedCountries,
+      allVisited,
       allTime: { totalTrips, totalDays, totalKm, totalActivities, countries }
     });
   } catch (err) {

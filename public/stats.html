@@ -14,6 +14,8 @@
 
   <link href="/output.css" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
 </head>
 
 <body class="min-h-full bg-slate-300 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-x-hidden">
@@ -89,6 +91,26 @@
 
     <!-- ALL-TIME TOTALS -->
     <div id="alltime-stats" class="mb-6 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3"></div>
+
+    <!-- WORLD MAP -->
+    <div class="mb-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-4 sm:p-5">
+      <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+        <h3 class="text-base font-semibold">Countries visited</h3>
+        <div class="flex items-center gap-2 flex-wrap">
+          <select id="add-country-select"
+            class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-sm outline-none focus:border-primary-500">
+            <option value="">+ Add country visited</option>
+          </select>
+        </div>
+      </div>
+      <!-- Map -->
+      <div id="world-map" class="w-full overflow-hidden rounded-xl bg-slate-200 dark:bg-slate-800" style="height:380px;">
+        <div class="flex items-center justify-center h-full text-slate-400 text-sm">Loading map…</div>
+      </div>
+      <div class="mt-2 text-xs" id="map-legend">
+        <button onclick="openVisitedCountriesModal()" class="text-primary-600 dark:text-primary-400 hover:underline font-medium" id="visited-count-link"></button>
+      </div>
+    </div>
 
     <!-- YEAR FILTER -->
     <div class="mb-3 flex items-center gap-3 flex-wrap">

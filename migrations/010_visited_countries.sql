@@ -1,0 +1,1 @@
+ALTER TABLE users ADD COLUMN visited_countries TEXT NOT NULL DEFAULT '[]';

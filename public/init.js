@@ -515,6 +515,251 @@ let _statsYear = '';
 let _statsCountry = '';
 let _statsSort = { key: '', dir: 'desc' };
 
+let _visitedCountries = [];
+
+async function loadVisitedCountries() {
+  try {
+    const data = await apiGet(API.GET_VISITED_COUNTRIES);
+    _visitedCountries = data.countries || [];
+  } catch (err) {
+    console.error('Failed to load visited countries:', err);
+    _visitedCountries = [];
+  }
+}
+
+async function addVisitedCountry(country) {
+  if (!country || _visitedCountries.includes(country)) return;
+  _visitedCountries = [..._visitedCountries, country].sort();
+  await saveVisitedCountries();
+  renderVisitedPills();
+  renderWorldMap();
+}
+
+async function removeVisitedCountry(country) {
+  _visitedCountries = _visitedCountries.filter(c => c !== country);
+  await saveVisitedCountries();
+  renderVisitedPills();
+  renderWorldMap();
+}
+
+async function saveVisitedCountries() {
+  try {
+    await apiPost(API.SAVE_VISITED_COUNTRIES, { countries: _visitedCountries });
+  } catch (err) {
+    console.error('Failed to save visited countries:', err);
+    showToast('Failed to save visited countries.', 'error');
+  }
+}
+
+function renderVisitedPills() {
+  const tripCountries = new Set(_statsData?.allTime?.countries || []);
+  const all = [...new Set([...tripCountries, ..._visitedCountries])].sort();
+
+  const countLink = document.getElementById('visited-count-link');
+  if (countLink) {
+    countLink.textContent = all.length
+      ? `${all.length} countr${all.length === 1 ? 'y' : 'ies'} visited — manage list`
+      : 'No countries yet — add from the selector above';
+    countLink.onclick = all.length ? openVisitedCountriesModal : null;
+  }
+}
+
+function openVisitedCountriesModal() {
+  const tripCountries = new Set(_statsData?.allTime?.countries || []);
+  const all = [...new Set([...tripCountries, ..._visitedCountries])].sort();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4';
+  overlay.innerHTML = `
+    <div class="w-full max-w-md rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xl max-h-[80vh] flex flex-col">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold">Countries visited (${all.length})</h2>
+        <button id="close-visited-modal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="overflow-y-auto flex-1 space-y-1.5" id="visited-modal-list"></div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+  refreshIcons();
+
+  overlay.querySelector('#close-visited-modal').addEventListener('click', () => overlay.remove());
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+
+  const renderList = () => {
+    const tripCountries = new Set(_statsData?.allTime?.countries || []);
+    const all = [...new Set([...tripCountries, ..._visitedCountries])].sort();
+    const list = overlay.querySelector('#visited-modal-list');
+    list.innerHTML = all.map(c => {
+      const isFromTrip = tripCountries.has(c);
+      const isManual = _visitedCountries.includes(c);
+      return `
+        <div class="flex items-center justify-between rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 px-4 py-2.5">
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-medium">${escapeHtml(c)}</span>
+            ${isFromTrip ? `<span class="text-xs text-slate-400 dark:text-slate-500">trip</span>` : ''}
+          </div>
+          ${isManual && !isFromTrip ? `
+            <button onclick="removeVisitedCountryFromModal('${escapeHtml(c)}')" class="text-slate-400 hover:text-red-400 transition">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          ` : `<span class="text-slate-200 dark:text-slate-700"><i data-lucide="lock" class="w-3.5 h-3.5"></i></span>`}
+        </div>
+      `;
+    }).join('') || '<p class="text-center text-slate-400 py-4 text-sm">No countries yet.</p>';
+    refreshIcons();
+  };
+
+  renderList();
+  window._visitedModalRender = renderList;
+}
+
+async function removeVisitedCountryFromModal(country) {
+  await removeVisitedCountry(country);
+  if (window._visitedModalRender) window._visitedModalRender();
+}
+
+window.openVisitedCountriesModal = openVisitedCountriesModal;
+window.removeVisitedCountryFromModal = removeVisitedCountryFromModal;
+
+function populateCountrySelector() {
+  const select = document.getElementById('add-country-select');
+  if (!select) return;
+
+  const countries = [
+    'Afghanistan','Albania','Algeria','Andorra','Angola','Antigua and Barbuda','Argentina','Armenia','Australia','Austria',
+    'Azerbaijan','Bahamas','Bahrain','Bangladesh','Barbados','Belarus','Belgium','Belize','Benin','Bhutan','Bolivia',
+    'Bosnia and Herzegovina','Botswana','Brazil','Brunei','Bulgaria','Burkina Faso','Burundi','Cabo Verde','Cambodia',
+    'Cameroon','Canada','Central African Republic','Chad','Chile','China','Colombia','Comoros','Congo','Costa Rica',
+    'Croatia','Cuba','Cyprus','Czech Republic','Denmark','Djibouti','Dominica','Dominican Republic','Ecuador','Egypt',
+    'El Salvador','Equatorial Guinea','Eritrea','Estonia','Eswatini','Ethiopia','Fiji','Finland','France','Gabon',
+    'Gambia','Georgia','Germany','Ghana','Greece','Grenada','Guatemala','Guinea','Guinea-Bissau','Guyana','Haiti',
+    'Honduras','Hungary','Iceland','India','Indonesia','Iran','Iraq','Ireland','Israel','Italy','Jamaica','Japan',
+    'Jordan','Kazakhstan','Kenya','Kiribati','Kuwait','Kyrgyzstan','Laos','Latvia','Lebanon','Lesotho','Liberia',
+    'Libya','Liechtenstein','Lithuania','Luxembourg','Madagascar','Malawi','Malaysia','Maldives','Mali','Malta',
+    'Marshall Islands','Mauritania','Mauritius','Mexico','Micronesia','Moldova','Monaco','Mongolia','Montenegro',
+    'Morocco','Mozambique','Myanmar','Namibia','Nauru','Nepal','Netherlands','New Zealand','Nicaragua','Niger',
+    'Nigeria','North Korea','North Macedonia','Norway','Oman','Pakistan','Palau','Palestine','Panama',
+    'Papua New Guinea','Paraguay','Peru','Philippines','Poland','Portugal','Qatar','Romania','Russia','Rwanda',
+    'Saint Kitts and Nevis','Saint Lucia','Saint Vincent and the Grenadines','Samoa','San Marino',
+    'Sao Tome and Principe','Saudi Arabia','Senegal','Serbia','Seychelles','Sierra Leone','Singapore','Slovakia',
+    'Slovenia','Solomon Islands','Somalia','South Africa','South Korea','South Sudan','Spain','Sri Lanka','Sudan',
+    'Suriname','Sweden','Switzerland','Syria','Taiwan','Tajikistan','Tanzania','Thailand','Timor-Leste','Togo',
+    'Tonga','Trinidad and Tobago','Tunisia','Turkey','Turkmenistan','Tuvalu','Uganda','Ukraine',
+    'United Arab Emirates','United Kingdom','United States','Uruguay','Uzbekistan','Vanuatu','Vatican City',
+    'Venezuela','Vietnam','Yemen','Zambia','Zimbabwe'
+  ];
+
+  const all = [...new Set([...countries, ...(_statsData?.allTime?.countries || [])])].sort();
+  select.innerHTML = '<option value="">+ Add country visited</option>' +
+    all.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+
+  select.onchange = () => {
+    if (select.value) {
+      addVisitedCountry(select.value);
+      select.value = '';
+    }
+  };
+}
+
+// Country name → ISO 3166-1 numeric code mapping for TopoJSON
+const COUNTRY_NAME_TO_ID = {
+  'Afghanistan':4,'Albania':8,'Algeria':12,'Andorra':20,'Angola':24,'Antigua and Barbuda':28,
+  'Argentina':32,'Armenia':51,'Australia':36,'Austria':40,'Azerbaijan':31,'Bahamas':44,'Bahrain':48,
+  'Bangladesh':50,'Barbados':52,'Belarus':112,'Belgium':56,'Belize':84,'Benin':204,'Bhutan':64,
+  'Bolivia':68,'Bosnia and Herzegovina':70,'Botswana':72,'Brazil':76,'Brunei':96,'Bulgaria':100,
+  'Burkina Faso':854,'Burundi':108,'Cabo Verde':132,'Cambodia':116,'Cameroon':120,'Canada':124,
+  'Central African Republic':140,'Chad':148,'Chile':152,'China':156,'Colombia':170,'Comoros':174,
+  'Congo':180,'Costa Rica':188,'Croatia':191,'Cuba':192,'Cyprus':196,'Czech Republic':203,
+  'Denmark':208,'Djibouti':262,'Dominica':212,'Dominican Republic':214,'Ecuador':218,'Egypt':818,
+  'El Salvador':222,'Equatorial Guinea':226,'Eritrea':232,'Estonia':233,'Eswatini':748,'Ethiopia':231,
+  'Fiji':242,'Finland':246,'France':250,'Gabon':266,'Gambia':270,'Georgia':268,'Germany':276,
+  'Ghana':288,'Greece':300,'Grenada':308,'Guatemala':320,'Guinea':324,'Guinea-Bissau':624,
+  'Guyana':328,'Haiti':332,'Honduras':340,'Hungary':348,'Iceland':352,'India':356,'Indonesia':360,
+  'Iran':364,'Iraq':368,'Ireland':372,'Israel':376,'Italy':380,'Jamaica':388,'Japan':392,
+  'Jordan':400,'Kazakhstan':398,'Kenya':404,'Kiribati':296,'Kuwait':414,'Kyrgyzstan':417,'Laos':418,
+  'Latvia':428,'Lebanon':422,'Lesotho':426,'Liberia':430,'Libya':434,'Liechtenstein':438,
+  'Lithuania':440,'Luxembourg':442,'Madagascar':450,'Malawi':454,'Malaysia':458,'Maldives':462,
+  'Mali':466,'Malta':470,'Marshall Islands':584,'Mauritania':478,'Mauritius':480,'Mexico':484,
+  'Micronesia':583,'Moldova':498,'Monaco':492,'Mongolia':496,'Montenegro':499,'Morocco':504,
+  'Mozambique':508,'Myanmar':104,'Namibia':516,'Nauru':520,'Nepal':524,'Netherlands':528,
+  'New Zealand':554,'Nicaragua':558,'Niger':562,'Nigeria':566,'North Korea':408,'North Macedonia':807,
+  'Norway':578,'Oman':512,'Pakistan':586,'Palau':585,'Palestine':275,'Panama':591,
+  'Papua New Guinea':598,'Paraguay':600,'Peru':604,'Philippines':608,'Poland':616,'Portugal':620,
+  'Qatar':634,'Romania':642,'Russia':643,'Rwanda':646,'Saint Kitts and Nevis':659,'Saint Lucia':662,
+  'Saint Vincent and the Grenadines':670,'Samoa':882,'San Marino':674,'Sao Tome and Principe':678,
+  'Saudi Arabia':682,'Senegal':686,'Serbia':688,'Seychelles':690,'Sierra Leone':694,'Singapore':702,
+  'Slovakia':703,'Slovenia':705,'Solomon Islands':90,'Somalia':706,'South Africa':710,
+  'South Korea':410,'South Sudan':728,'Spain':724,'Sri Lanka':144,'Sudan':729,'Suriname':740,
+  'Sweden':752,'Switzerland':756,'Syria':760,'Taiwan':158,'Tajikistan':762,'Tanzania':834,
+  'Thailand':764,'Timor-Leste':626,'Togo':768,'Tonga':776,'Trinidad and Tobago':780,'Tunisia':788,
+  'Turkey':792,'Turkmenistan':795,'Tuvalu':798,'Uganda':800,'Ukraine':804,
+  'United Arab Emirates':784,'United Kingdom':826,'United States':840,'Uruguay':858,
+  'Uzbekistan':860,'Vanuatu':548,'Vatican City':336,'Venezuela':862,'Vietnam':704,'Yemen':887,
+  'Zambia':894,'Zimbabwe':716
+};
+
+async function renderWorldMap() {
+  const container = document.getElementById('world-map');
+  if (!container) return;
+
+  const tripCountries = new Set(_statsData?.allTime?.countries || []);
+  const manualCountries = new Set(_visitedCountries);
+  const allVisited = new Set([...tripCountries, ...manualCountries]);
+
+  const visitedIds = new Set(
+    [...allVisited].map(c => COUNTRY_NAME_TO_ID[c]).filter(Boolean)
+  );
+
+  container.innerHTML = '<div class="flex items-center justify-center h-full text-slate-400 text-sm">Loading map…</div>';
+
+  try {
+    const world = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json').then(r => r.json());
+
+    const isDark = document.documentElement.classList.contains('dark');
+    const width = container.clientWidth;
+    const height = 380;
+
+    container.innerHTML = '';
+    const svg = d3.select(container)
+      .append('svg')
+      .attr('width', '100%')
+      .attr('height', height)
+      .attr('viewBox', `0 0 ${width} ${height}`)
+      .attr('preserveAspectRatio', 'xMidYMid meet');
+
+    const projection = d3.geoNaturalEarth1()
+      .scale(width / 7.2)
+      .translate([width / 2, height / 2 + 30]);
+
+    const path = d3.geoPath().projection(projection);
+    const countries = topojson.feature(world, world.objects.countries);
+
+    svg.append('rect')
+      .attr('width', width)
+      .attr('height', height)
+      .attr('fill', isDark ? '#1e293b' : '#e2e8f0');
+
+    svg.selectAll('path')
+      .data(countries.features)
+      .enter()
+      .append('path')
+      .attr('d', path)
+      .attr('fill', d => visitedIds.has(Number(d.id)) ? '#6366f1' : (isDark ? '#334155' : '#cbd5e1'))
+      .attr('stroke', isDark ? '#1e293b' : '#f8fafc')
+      .attr('stroke-width', 0.5);
+
+  } catch (err) {
+    console.error('Map error:', err);
+    container.innerHTML = '<div class="flex items-center justify-center h-full text-slate-400 text-sm">Failed to load map.</div>';
+  }
+}
+
+window.addVisitedCountry = addVisitedCountry;
+window.removeVisitedCountry = removeVisitedCountry;
+
 async function loadStats() {
   const table = document.getElementById('stats-table');
   if (!table) return;
@@ -524,6 +769,7 @@ async function loadStats() {
   try {
     const data = await apiGet(API.GET_STATS);
     _statsData = data;
+    await loadVisitedCountries();
 
     // Restore saved currency preference
     const savedCurrency = localStorage.getItem('cloudtrips_stats_currency');
@@ -532,11 +778,16 @@ async function loadStats() {
       select.value = savedCurrency;
       if (savedCurrency) {
         await applyStatsCurrency();
-        return;
+      } else {
+        renderStats();
       }
+    } else {
+      renderStats();
     }
 
-    renderStats();
+    populateCountrySelector();
+    renderVisitedPills();
+    renderWorldMap();
 
     // Load error log — will silently hide if user is not admin
     loadErrors();
