@@ -585,7 +585,7 @@ function renderHeaderNav(current) {
     const printItem = document.createElement('button');
     printItem.type = 'button';
     printItem.className = 'flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition';
-    printItem.innerHTML = '<i data-lucide="printer" class="h-4 w-4 text-slate-500 dark:text-slate-400"></i>Print / PDF';
+    printItem.innerHTML = '<i data-lucide="printer" class="h-4 w-4 text-slate-500 dark:text-slate-400"></i>Print / Save as PDF';
     printItem.onclick = () => { closeDropdown(); window.openPrintView(); };
     dropdown.appendChild(printItem);
   }

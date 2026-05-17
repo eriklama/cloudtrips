@@ -139,7 +139,7 @@ function openExportDropdown(triggerBtn) {
     },
     {
       icon: 'printer',
-      label: 'Print / PDF',
+      label: 'Print / Save as PDF',
       onClick: () => { closeExportDropdown(); openPrintView(); }
     }
   ];
