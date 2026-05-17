@@ -562,7 +562,7 @@ function renderHeaderNav(current) {
   hamburger.setAttribute('aria-label', 'Navigation menu');
 
   const dropdown = document.createElement('div');
-  dropdown.className = 'hidden absolute right-0 top-full mt-2 w-48 rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 shadow-xl z-50 overflow-hidden';
+  dropdown.className = 'hidden fixed top-auto mt-2 w-56 rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 shadow-xl z-50 overflow-hidden';
 
   items.forEach(({ label, icon, onClick }) => {
     const item = document.createElement('button');
@@ -585,7 +585,7 @@ function renderHeaderNav(current) {
     const printItem = document.createElement('button');
     printItem.type = 'button';
     printItem.className = 'flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition';
-    printItem.innerHTML = '<i data-lucide="printer" class="h-4 w-4 text-slate-500 dark:text-slate-400"></i>Print / To PDF';
+    printItem.innerHTML = '<i data-lucide="printer" class="h-4 w-4 text-slate-500 dark:text-slate-400"></i>Print / Save as PDF';
     printItem.onclick = () => { closeDropdown(); window.openPrintView(); };
     dropdown.appendChild(printItem);
   }
@@ -603,6 +603,10 @@ function renderHeaderNav(current) {
   function openDropdown() {
     dropdown.classList.remove('hidden');
     hamburger.innerHTML = '<i data-lucide="x" class="h-5 w-5"></i>';
+    // Position relative to hamburger button
+    const rect = hamburger.getBoundingClientRect();
+    dropdown.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+    dropdown.style.right = (window.innerWidth - rect.right) + 'px';
     refreshIcons();
     setTimeout(() => { document.addEventListener('click', outsideClickHandler); }, 0);
   }
@@ -624,7 +628,7 @@ function renderHeaderNav(current) {
   });
 
   mobileWrapper.appendChild(hamburger);
-  mobileWrapper.appendChild(dropdown);
+  document.body.appendChild(dropdown);
 
   nav.appendChild(desktopRow);
   nav.appendChild(mobileWrapper);
