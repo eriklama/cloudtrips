@@ -583,6 +583,13 @@ function renderHeaderNav(current) {
     csvItem.onclick = () => { closeDropdown(); window.exportCsv(); };
     dropdown.appendChild(csvItem);
 
+    const pdfItem = document.createElement('button');
+    pdfItem.type = 'button';
+    pdfItem.className = 'flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition';
+    pdfItem.innerHTML = '<i data-lucide="file-down" class="h-4 w-4 text-slate-500 dark:text-slate-400"></i>Download PDF';
+    pdfItem.onclick = () => { closeDropdown(); window.downloadPdf(); };
+    dropdown.appendChild(pdfItem);
+
     const printItem = document.createElement('button');
     printItem.type = 'button';
     printItem.className = 'flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition';

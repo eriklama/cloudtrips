@@ -124,7 +124,7 @@ function downloadText(content, filename, mimeType) {
  * ========================= */
 
 function openExportDropdown(triggerBtn) {
-  // Close any existing export dropdowns
+  // Close any existing export dropdown
   document.getElementById('export-dropdown')?.remove();
 
   const dropdown = document.createElement('div');
@@ -138,8 +138,13 @@ function openExportDropdown(triggerBtn) {
       onClick: () => { closeExportDropdown(); exportCsv(); }
     },
     {
+      icon: 'file-down',
+      label: 'Download PDF',
+      onClick: () => { closeExportDropdown(); downloadPdf(); }
+    },
+    {
       icon: 'printer',
-      label: 'Print / To PDF',
+      label: 'Print / Save as PDF',
       onClick: () => { closeExportDropdown(); openPrintView(); }
     }
   ];
@@ -185,3 +190,56 @@ function closeExportDropdownOutside(e) {
 window.exportCsv = exportCsv;
 window.openExportDropdown = openExportDropdown;
 window.closeExportDropdown = closeExportDropdown;
+
+/* =========================
+ * PDF DOWNLOAD
+ * ========================= */
+
+async function downloadPdf() {
+  if (!state.currentTrip) {
+    showToast('Trip not loaded.', 'error');
+    return;
+  }
+
+  const tripId = state.currentTrip.id;
+  const token = getShareToken();
+
+  showToast('Generating PDF…', 'info');
+
+  try {
+    const url = token
+      ? `/api/exportPdf?id=${encodeURIComponent(tripId)}&token=${encodeURIComponent(token)}`
+      : `/api/exportPdf?id=${encodeURIComponent(tripId)}`;
+
+    const authToken = getAuthToken();
+    const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
+
+    const response = await fetch(url, { headers });
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => null);
+      throw new Error(data?.error || `PDF generation failed (${response.status})`);
+    }
+
+    const blob = await response.blob();
+    const filename = `${(state.currentTrip.name || 'trip').replace(/[^a-z0-9]/gi, '_').toLowerCase()}_itinerary.pdf`;
+    downloadBlob(blob, filename);
+    showToast('PDF downloaded.', 'success');
+  } catch (err) {
+    console.error(err);
+    showToast(err?.message || 'Failed to generate PDF.', 'error');
+  }
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 100);
+}
+
+window.downloadPdf = downloadPdf;
