@@ -845,7 +845,7 @@ function renderStats() {
     return total > 0 ? formatCurrency(total, convertTo) : '—';
   };
 
-  // Total cost all-time
+  // Total cost all-times
   const allCosts = trips.reduce((acc, t) => {
     Object.entries(t.costsByCurrency).forEach(([c, v]) => {
       acc[c] = (acc[c] || 0) + v;
