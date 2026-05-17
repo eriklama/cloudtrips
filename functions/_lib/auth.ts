@@ -6,6 +6,8 @@ export interface Env {
   PASSWORD_PEPPER?: string;
   RATE_LIMIT_KV: KVNamespace;
   BREVO_API_KEY: string;
+  BREVO_SENDER_EMAIL: string;
+  ADMIN_EMAIL?: string;
 }
 
 export interface AuthUser {

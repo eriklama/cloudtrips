@@ -207,6 +207,5 @@ Share tokens are hashed before storage. The raw token travels in the URL only.
 
 ## Known limitations
 
-- `saveTrip` replaces all activities on every save (DELETE + bulk INSERT). A future improvement would diff and only update changed rows.
 - No pagination on the trips list — all trips are fetched at once.
 - No per-trip activity count limit.
