@@ -562,7 +562,7 @@ function renderHeaderNav(current) {
   hamburger.setAttribute('aria-label', 'Navigation menu');
 
   const dropdown = document.createElement('div');
-  dropdown.className = 'hidden fixed top-auto mt-2 w-56 rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 shadow-xl z-50 overflow-hidden';
+  dropdown.className = 'hidden fixed top-auto mt-2 w-56 rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 shadow-xl z-[200] overflow-hidden';
 
   items.forEach(({ label, icon, onClick }) => {
     const item = document.createElement('button');
