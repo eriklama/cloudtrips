@@ -535,7 +535,7 @@ function renderHeaderNav(current) {
     exportBtn.type = 'button';
     exportBtn.className = btnClass;
     exportBtn.innerHTML = '<i data-lucide="download" class="h-4 w-4"></i>Export<i data-lucide="chevron-down" class="h-3 w-3 ml-0.5"></i>';
-    exportBtn.onclick = (e) => { e.stopPropagation(); openExportDropdown(exportBtn); };
+    exportBtn.onclick = (e) => { e.stopPropagation(); window.openExportDropdown(exportBtn); };
     exportWrapper.appendChild(exportBtn);
     desktopRow.appendChild(exportWrapper);
   }
@@ -579,14 +579,14 @@ function renderHeaderNav(current) {
     csvItem.type = 'button';
     csvItem.className = 'flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition';
     csvItem.innerHTML = '<i data-lucide="file-spreadsheet" class="h-4 w-4 text-slate-500 dark:text-slate-400"></i>Export CSV';
-    csvItem.onclick = () => { closeDropdown(); exportCsv(); };
+    csvItem.onclick = () => { closeDropdown(); window.exportCsv(); };
     dropdown.appendChild(csvItem);
 
     const printItem = document.createElement('button');
     printItem.type = 'button';
     printItem.className = 'flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition';
     printItem.innerHTML = '<i data-lucide="printer" class="h-4 w-4 text-slate-500 dark:text-slate-400"></i>Print / PDF';
-    printItem.onclick = () => { closeDropdown(); openPrintView(); };
+    printItem.onclick = () => { closeDropdown(); window.openPrintView(); };
     dropdown.appendChild(printItem);
   }
 
