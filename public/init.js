@@ -537,6 +537,9 @@ async function loadStats() {
     }
 
     renderStats();
+
+    // Load error log — will silently hide if user is not admin
+    loadErrors();
   } catch (err) {
     console.error(err);
     const table = document.getElementById('stats-table');
@@ -720,6 +723,66 @@ function sortStatsBy(key) {
   renderStats();
 }
 
+async function loadErrors() {
+  const container = document.getElementById('error-log');
+  const section = container?.closest('.rounded-2xl');
+  if (!container) return;
+
+  container.innerHTML = '<div class="text-center py-4 text-slate-400">Loading…</div>';
+
+  try {
+    const data = await apiGet('/api/getErrors?limit=50');
+    const errors = data.errors || [];
+
+    if (!errors.length) {
+      container.innerHTML = '<div class="text-center py-4 text-slate-400">No errors logged. 🎉</div>';
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="overflow-x-auto">
+        <table class="min-w-full border-separate border-spacing-y-1 text-xs">
+          <thead>
+            <tr class="text-left text-slate-400 dark:text-slate-500">
+              <th class="px-3 py-1 font-medium">Time</th>
+              <th class="px-3 py-1 font-medium">Endpoint</th>
+              <th class="px-3 py-1 font-medium">Method</th>
+              <th class="px-3 py-1 font-medium text-center">Status</th>
+              <th class="px-3 py-1 font-medium">Message</th>
+              <th class="px-3 py-1 font-medium">User</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${errors.map(e => `
+              <tr class="bg-white dark:bg-slate-950/60 rounded-xl">
+                <td class="rounded-l-xl px-3 py-2 text-slate-400 whitespace-nowrap">${escapeHtml(e.created_at?.slice(0, 19).replace('T', ' ') || '—')}</td>
+                <td class="px-3 py-2 font-mono text-slate-600 dark:text-slate-300 whitespace-nowrap">${escapeHtml(e.endpoint || '—')}</td>
+                <td class="px-3 py-2 text-slate-500">${escapeHtml(e.method || '—')}</td>
+                <td class="px-3 py-2 text-center">
+                  <span class="inline-flex items-center rounded-full px-2 py-0.5 font-medium ${e.status >= 500 ? 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300'}">
+                    ${escapeHtml(String(e.status))}
+                  </span>
+                </td>
+                <td class="px-3 py-2 text-slate-600 dark:text-slate-300 max-w-xs truncate">${escapeHtml(e.message || '—')}</td>
+                <td class="rounded-r-xl px-3 py-2 text-slate-400 font-mono truncate max-w-[100px]">${escapeHtml(e.user_id?.slice(0, 8) || '—')}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="mt-2 text-xs text-slate-400 text-right">${errors.length} most recent error${errors.length === 1 ? '' : 's'}</div>
+    `;
+  } catch (err) {
+    // 403 = not admin — show a subtle not-authorised message
+    if (err?.message?.includes('403') || err?.message?.includes('Forbidden')) {
+      container.innerHTML = '<div class="text-center py-4 text-slate-400 text-xs">Error log is only visible to the admin account.</div>';
+      return;
+    }
+    container.innerHTML = `<div class="text-center py-4 text-red-400">Failed to load errors: ${escapeHtml(err?.message || 'unknown error')}</div>`;
+  }
+}
+
+window.loadErrors = loadErrors;
 window.applyStatsCurrency = applyStatsCurrency;
 window.setStatsYear = setStatsYear;
 window.setStatsCountry = setStatsCountry;

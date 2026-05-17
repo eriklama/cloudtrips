@@ -27,10 +27,17 @@ type ErrorRow = {
 export async function onRequestGet(context: { request: Request; env: Env }) {
   const { request, env } = context;
 
+  let user: { id: string; email: string };
   try {
-    await requireUser(context);
+    user = await requireUser(context) as { id: string; email: string };
   } catch {
     return error('Unauthorized.', 401);
+  }
+
+  // Admin-only — check against ADMIN_EMAIL env var
+  const adminEmail = (context as any).env?.ADMIN_EMAIL || '';
+  if (!adminEmail || user.email !== adminEmail) {
+    return error('Forbidden.', 403);
   }
 
   const url = new URL(request.url);
