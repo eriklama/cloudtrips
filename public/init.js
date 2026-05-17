@@ -860,12 +860,14 @@ async function renderWorldMap() {
     const height = 380;
 
     container.innerHTML = '';
+
     const svg = d3.select(container)
       .append('svg')
       .attr('width', '100%')
       .attr('height', height)
       .attr('viewBox', `0 0 ${width} ${height}`)
-      .attr('preserveAspectRatio', 'xMidYMid meet');
+      .attr('preserveAspectRatio', 'xMidYMid meet')
+      .style('cursor', 'grab');
 
     const projection = d3.geoNaturalEarth1()
       .scale(width / 7.2)
@@ -874,12 +876,16 @@ async function renderWorldMap() {
     const path = d3.geoPath().projection(projection);
     const countries = topojson.feature(world, world.objects.countries);
 
+    // Background rect
     svg.append('rect')
       .attr('width', width)
       .attr('height', height)
       .attr('fill', isDark ? '#1e293b' : '#e2e8f0');
 
-    svg.selectAll('path')
+    // Group for zoom/pan
+    const g = svg.append('g');
+
+    g.selectAll('path')
       .data(countries.features)
       .enter()
       .append('path')
@@ -887,6 +893,38 @@ async function renderWorldMap() {
       .attr('fill', d => visitedIds.has(Number(d.id)) ? '#6366f1' : (isDark ? '#334155' : '#cbd5e1'))
       .attr('stroke', isDark ? '#1e293b' : '#f8fafc')
       .attr('stroke-width', 0.5);
+
+    // Zoom behaviour
+    const zoom = d3.zoom()
+      .scaleExtent([1, 8])
+      .translateExtent([[0, 0], [width, height]])
+      .on('zoom', (event) => {
+        g.attr('transform', event.transform);
+        svg.style('cursor', event.transform.k > 1 ? 'grab' : 'default');
+      });
+
+    svg.call(zoom);
+
+    // Double-click to reset
+    svg.on('dblclick.zoom', () => {
+      svg.transition().duration(400).call(zoom.transform, d3.zoomIdentity);
+    });
+
+    // Reset button
+    const resetBtn = document.createElement('button');
+    resetBtn.textContent = 'Reset zoom';
+    resetBtn.className = 'absolute bottom-2 right-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 py-1 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition opacity-0';
+    resetBtn.style.transition = 'opacity 0.2s';
+    container.style.position = 'relative';
+    container.appendChild(resetBtn);
+
+    zoom.on('zoom.btn', (event) => {
+      resetBtn.style.opacity = event.transform.k > 1 ? '1' : '0';
+    });
+
+    resetBtn.addEventListener('click', () => {
+      svg.transition().duration(400).call(zoom.transform, d3.zoomIdentity);
+    });
 
   } catch (err) {
     console.error('Map error:', err);
