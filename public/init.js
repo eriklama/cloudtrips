@@ -759,6 +759,9 @@ async function renderWorldMap() {
 
 window.addVisitedCountry = addVisitedCountry;
 window.removeVisitedCountry = removeVisitedCountry;
+window.populateCountrySelector = populateCountrySelector;
+window.renderVisitedPills = renderVisitedPills;
+window.renderWorldMap = renderWorldMap;
 
 async function loadStats() {
   const table = document.getElementById('stats-table');
@@ -845,7 +848,7 @@ function renderStats() {
     return total > 0 ? formatCurrency(total, convertTo) : '—';
   };
 
-  // Total cost all-times
+  // Total cost all-time
   const allCosts = trips.reduce((acc, t) => {
     Object.entries(t.costsByCurrency).forEach(([c, v]) => {
       acc[c] = (acc[c] || 0) + v;
