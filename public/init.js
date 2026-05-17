@@ -816,7 +816,9 @@ async function init() {
       // Set after renderHeaderNav so nav row is included in height
       requestAnimationFrame(() => {
         const header = document.querySelector('header');
-        if (header) document.documentElement.style.setProperty('--header-height', header.offsetHeight + 'px');
+        const nav = document.getElementById('nav-actions')?.closest('div');
+        const totalHeight = (header?.offsetHeight || 0);
+        document.documentElement.style.setProperty('--header-height', totalHeight + 'px');
       });
     }
 
