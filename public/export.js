@@ -124,7 +124,7 @@ function downloadText(content, filename, mimeType) {
  * ========================= */
 
 function openExportDropdown(triggerBtn) {
-  // Close any existing export dropdown
+  // Close any existing export dropdowns
   document.getElementById('export-dropdown')?.remove();
 
   const dropdown = document.createElement('div');
@@ -139,7 +139,7 @@ function openExportDropdown(triggerBtn) {
     },
     {
       icon: 'printer',
-      label: 'Print / Save as PDF',
+      label: 'Print / To PDF',
       onClick: () => { closeExportDropdown(); openPrintView(); }
     }
   ];
