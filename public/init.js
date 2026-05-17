@@ -562,7 +562,8 @@ function renderHeaderNav(current) {
   hamburger.setAttribute('aria-label', 'Navigation menu');
 
   const dropdown = document.createElement('div');
-  dropdown.className = 'hidden fixed top-auto mt-2 w-56 rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 shadow-xl z-[200] overflow-hidden';
+  dropdown.className = 'hidden fixed top-auto mt-2 w-56 rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 shadow-xl overflow-hidden';
+  dropdown.style.zIndex = '200';
 
   items.forEach(({ label, icon, onClick }) => {
     const item = document.createElement('button');
@@ -619,7 +620,7 @@ function renderHeaderNav(current) {
   }
 
   function outsideClickHandler(e) {
-    if (!mobileWrapper.contains(e.target)) closeDropdown();
+    if (!mobileWrapper.contains(e.target) && !dropdown.contains(e.target)) closeDropdown();
   }
 
   hamburger.addEventListener('click', (e) => {
