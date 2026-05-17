@@ -613,8 +613,11 @@ function renderHeaderNav(current) {
     hamburger.innerHTML = '<i data-lucide="x" class="h-5 w-5"></i>';
     // Position relative to hamburger button
     const rect = hamburger.getBoundingClientRect();
+    const menuWidth = 224; // w-56
+    const rightOffset = window.innerWidth - rect.right;
     dropdown.style.top = (rect.bottom + window.scrollY + 4) + 'px';
-    dropdown.style.right = (window.innerWidth - rect.right) + 'px';
+    dropdown.style.right = Math.max(4, rightOffset) + 'px';
+    dropdown.style.maxWidth = (window.innerWidth - Math.max(4, rightOffset) - 4) + 'px';
     refreshIcons();
     setTimeout(() => { document.addEventListener('click', outsideClickHandler); }, 0);
   }
@@ -894,10 +897,16 @@ async function renderWorldMap() {
       .attr('stroke', isDark ? '#1e293b' : '#f8fafc')
       .attr('stroke-width', 0.5);
 
-    // Zoom behaviour
+    // Zoom behaviour — pinch on mobile, scroll on desktop
     const zoom = d3.zoom()
       .scaleExtent([1, 8])
       .translateExtent([[0, 0], [width, height]])
+      .filter(event => {
+        // Allow scroll wheel and pinch (multi-touch), block single-finger touch
+        if (event.type === 'touchstart') return event.touches.length >= 2;
+        if (event.type === 'touchmove') return event.touches.length >= 2;
+        return !event.ctrlKey;
+      })
       .on('zoom', (event) => {
         g.attr('transform', event.transform);
         svg.style('cursor', event.transform.k > 1 ? 'grab' : 'default');
