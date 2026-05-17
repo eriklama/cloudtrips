@@ -144,7 +144,7 @@ function openExportDropdown(triggerBtn) {
     },
     {
       icon: 'printer',
-      label: 'Print / Save as PDF',
+      label: 'Print',
       onClick: () => { closeExportDropdown(); openPrintView(); }
     }
   ];
