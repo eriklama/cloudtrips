@@ -11,6 +11,7 @@ const API = {
   SAVE_VISITED_COUNTRIES: '/api/saveVisitedCountries',
   GET_USER_SETTINGS: '/api/getUserSettings',
   SAVE_USER_SETTINGS: '/api/saveUserSettings',
+  GET_PDF_USAGE: '/api/getPdfUsage',
   SAVE_TRIP_META: '/api/saveTripMeta',
   DUPLICATE_TRIP: '/api/duplicateTrip',
   UPSERT_ACTIVITY: '/api/upsertActivity',

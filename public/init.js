@@ -937,7 +937,17 @@ async function renderWorldMap() {
 
   } catch (err) {
     console.error('Map error:', err);
-    container.innerHTML = '<div class="flex items-center justify-center h-full text-slate-400 text-sm">Failed to load map.</div>';
+    container.innerHTML = `
+      <div class="flex flex-col items-center justify-center h-full gap-3 text-slate-400">
+        <i data-lucide="map-off" class="h-8 w-8 text-slate-300 dark:text-slate-600"></i>
+        <p class="text-sm">Map couldn't load — check your connection.</p>
+        <button onclick="renderWorldMap()"
+          class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+          <i data-lucide="refresh-cw" class="h-3.5 w-3.5"></i>
+          Try again
+        </button>
+      </div>`;
+    refreshIcons();
   }
 }
 
@@ -957,6 +967,28 @@ async function loadStats() {
     const data = await apiGet(API.GET_STATS);
     _statsData = data;
     await loadVisitedCountries();
+
+    // Empty state — no trips yet
+    if (!data.trips?.length) {
+      table.innerHTML = `<tr><td colspan="7" class="px-3 py-8 text-center text-slate-500 dark:text-slate-400">No trips yet — <a href="/" class="text-primary-500 hover:underline">add your first trip</a> to see stats here.</td></tr>`;
+
+      const alltimeEl = document.getElementById('alltime-stats');
+      if (alltimeEl) alltimeEl.innerHTML = [
+        'Trips', 'Days travelling', 'Total distance', 'Activities', 'Countries', 'Total spend'
+      ].map(label => `
+        <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-4 py-3 opacity-40">
+          <div class="mb-1 text-xs text-slate-500 dark:text-slate-400">${label}</div>
+          <div class="text-sm font-semibold text-slate-900 dark:text-slate-100">—</div>
+        </div>`).join('');
+
+      const worldMap = document.getElementById('world-map');
+      if (worldMap) worldMap.innerHTML = '<div class="flex items-center justify-center h-full text-slate-400 text-sm">Add trips to see your visited countries on the map.</div>';
+
+      populateCountrySelector();
+      renderVisitedPills();
+      loadErrors();
+      return;
+    }
 
     renderStats();
     populateCountrySelector();
@@ -1155,15 +1187,42 @@ async function loadErrors() {
   if (!container) return;
 
   try {
-    const data = await apiGet('/api/getErrors?limit=50');
-    const errors = data.errors || [];
+    const [errData, usageData] = await Promise.all([
+      apiGet('/api/getErrors?limit=50'),
+      apiGet('/api/getPdfUsage').catch(() => null)
+    ]);
+
+    // PDF usage banner — admin only
+    let usageHtml = '';
+    if (usageData?.usage?.length) {
+      const thisMonth = usageData.usage[0];
+      const pct = Math.round((thisMonth.count / usageData.limit) * 100);
+      const color = pct >= 90 ? 'red' : pct >= 70 ? 'amber' : 'emerald';
+      usageHtml = `
+        <div class="mb-4 flex items-center justify-between gap-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 px-4 py-3">
+          <div class="flex items-center gap-2">
+            <i data-lucide="file-down" class="h-4 w-4 text-slate-400"></i>
+            <span class="text-sm font-medium text-slate-700 dark:text-slate-200">Browserless PDF usage</span>
+            <span class="text-xs text-slate-400">${escapeHtml(thisMonth.month)}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="h-2 w-24 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+              <div class="h-full rounded-full bg-${color}-500 transition-all" style="width:${pct}%"></div>
+            </div>
+            <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">${thisMonth.count} <span class="font-normal text-slate-400">/ ${usageData.limit}</span></span>
+          </div>
+        </div>`;
+    }
+
+    const errors = errData.errors || [];
 
     if (!errors.length) {
-      container.innerHTML = '<div class="text-center py-4 text-slate-400">No errors logged. 🎉</div>';
+      container.innerHTML = usageHtml + '<div class="text-center py-4 text-slate-400">No errors logged. 🎉</div>';
+      refreshIcons();
       return;
     }
 
-    container.innerHTML = `
+    container.innerHTML = usageHtml + `
       <div class="overflow-x-auto">
         <table class="min-w-full border-separate border-spacing-y-1 text-xs">
           <thead>
@@ -1196,6 +1255,7 @@ async function loadErrors() {
       </div>
       <div class="mt-2 text-xs text-slate-400 text-right">${errors.length} most recent error${errors.length === 1 ? '' : 's'}</div>
     `;
+    refreshIcons();
   } catch (err) {
     if (err?.message?.includes('403') || err?.message?.includes('Forbidden')) {
       container.innerHTML = '<div class="text-center py-4 text-slate-400 text-xs">Error log is only visible to the admin account.</div>';

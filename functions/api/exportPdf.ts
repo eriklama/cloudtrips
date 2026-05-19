@@ -286,7 +286,7 @@ function buildHtml(trip: TripRow, activities: ActivityRow[], publicMode: boolean
  * HANDLER
  * ========================= */
 
-export async function onRequestGet(context: { request: Request; env: Env & { BROWSERLESS_API_KEY: string } }) {
+export async function onRequestGet(context: { request: Request; env: Env & { BROWSERLESS_API_KEY: string; RATE_LIMIT_KV: KVNamespace } }) {
   const { request, env } = context;
 
   const params = new URL(request.url).searchParams;
@@ -334,6 +334,17 @@ export async function onRequestGet(context: { request: Request; env: Env & { BRO
 
   // Build HTML
   const html = buildHtml(trip, activities, publicMode);
+
+  // Track Browserless usage in KV
+  try {
+    const now = new Date();
+    const monthKey = `browserless_usage_${now.getUTCFullYear()}_${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+    const existing = await env.RATE_LIMIT_KV.get(monthKey);
+    const count = existing ? parseInt(existing, 10) + 1 : 1;
+    await env.RATE_LIMIT_KV.put(monthKey, String(count), { expirationTtl: 60 * 60 * 24 * 40 }); // keep ~40 days
+  } catch (e) {
+    console.warn('Usage tracking failed (non-fatal):', e);
+  }
 
   // Call Browserless
   const browserlessUrl = `https://production-sfo.browserless.io/pdf?token=${encodeURIComponent(env.BROWSERLESS_API_KEY)}`;
