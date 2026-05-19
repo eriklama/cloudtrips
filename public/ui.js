@@ -129,15 +129,35 @@ function renderTripCard(trip) {
     ? `${formatDayLabel(trip.startDate)}${trip.endDate ? ' → ' + formatDayLabel(trip.endDate) : ''}`
     : 'Add activities to see timeline';
 
+  const sharedBadge = trip.isShared ? `
+    <span class="inline-flex items-center gap-1 rounded-full bg-violet-500/10 border border-violet-500/20 px-2.5 py-1 text-xs font-medium text-violet-400">
+      <i data-lucide="users" class="h-3 w-3"></i>
+      Shared by ${escapeHtml(trip.ownerEmail || 'someone')}
+    </span>
+  ` : '';
+
+  const ownerActions = !trip.isShared ? `
+    <button onclick="duplicateTrip('${escapeHtml(trip.id)}')" title="Duplicate trip" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800">
+      <i data-lucide="copy" class="h-4 w-4"></i>
+    </button>
+    <button onclick="renameTrip('${escapeHtml(trip.id)}')" title="Rename trip" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800">
+      <i data-lucide="pencil" class="h-4 w-4"></i>
+    </button>
+    <button onclick="deleteTrip('${escapeHtml(trip.id)}')" title="Delete trip" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 hover:bg-red-100 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20">
+      <i data-lucide="trash-2" class="h-4 w-4"></i>
+    </button>
+  ` : '';
+
   return `
-    <article class="group rounded-3xl border border-slate-200 bg-white p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-primary-200 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-primary-500/30">
+    <article class="group rounded-3xl border ${trip.isShared ? 'border-violet-500/20 dark:border-violet-500/20' : 'border-slate-200 dark:border-slate-800'} bg-white p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-primary-200 dark:bg-slate-900 dark:hover:border-primary-500/30">
       <div class="mb-4 flex items-start justify-between gap-3">
         <div class="flex items-center gap-3">
-          <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
-            <i data-lucide="map" class="h-5 w-5"></i>
+          <div class="flex h-11 w-11 items-center justify-center rounded-2xl ${trip.isShared ? 'bg-violet-500/10 text-violet-400' : 'bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300'}">
+            <i data-lucide="${trip.isShared ? 'users' : 'map'}" class="h-5 w-5"></i>
           </div>
           <div>
             <h3 class="text-lg font-semibold tracking-tight">${escapeHtml(trip.name)}</h3>
+            ${sharedBadge}
           </div>
         </div>
       </div>
@@ -164,18 +184,7 @@ function renderTripCard(trip) {
           <i data-lucide="arrow-right" class="h-4 w-4"></i>
           Open
         </button>
-
-        <button onclick="duplicateTrip('${escapeHtml(trip.id)}')" title="Duplicate trip" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800">
-          <i data-lucide="copy" class="h-4 w-4"></i>
-        </button>
-
-        <button onclick="renameTrip('${escapeHtml(trip.id)}')" title="Rename trip" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800">
-          <i data-lucide="pencil" class="h-4 w-4"></i>
-        </button>
-
-        <button onclick="deleteTrip('${escapeHtml(trip.id)}')" title="Delete trip" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 hover:bg-red-100 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20">
-          <i data-lucide="trash-2" class="h-4 w-4"></i>
-        </button>
+        ${ownerActions}
       </div>
     </article>
   `;

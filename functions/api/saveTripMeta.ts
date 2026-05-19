@@ -1,6 +1,7 @@
 import { requireUser } from '../_lib/auth';
 import type { Env } from '../_lib/auth';
 import { error, json, methodNotAllowed } from '../_lib/http';
+import { canAccessTrip } from '../_lib/members';
 
 export async function onRequestPost(context: { request: Request; env: Env }) {
   const { request, env } = context;
@@ -28,15 +29,20 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
 
   try {
     if (id) {
+      // Check ownership or membership
+      const { access } = await canAccessTrip(env, id, user.id);
+      if (!access) return error('Trip not found.', 404);
+
       const result = await env.DB
-        .prepare(`UPDATE trips SET name = ?, notes = ?, country = ? WHERE id = ? AND user_id = ?`)
-        .bind(name, notes, country, id, user.id)
+        .prepare(`UPDATE trips SET name = ?, notes = ?, country = ? WHERE id = ?`)
+        .bind(name, notes, country, id)
         .run();
 
       if (!result.meta?.changes) return error('Trip not found.', 404);
 
       return json({ ok: true, trip: { id, name, notes, country } });
     } else {
+      // Create new trip — only the actual user owns it
       const tripId = crypto.randomUUID();
       await env.DB
         .prepare(`

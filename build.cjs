@@ -30,6 +30,7 @@ const VERSIONED_FILES = [
   'trips.js',
   'activities.js',
   'share.js',
+  'members.js',
   'export.js',
   'init.js'
 ];

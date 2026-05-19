@@ -11,6 +11,8 @@ type TripSummaryRow = {
   activities_count: number;
   start_date: string | null;
   end_date: string | null;
+  is_shared: number; // 0 = owned, 1 = shared with me
+  owner_email: string | null;
 };
 
 export async function onRequestGet(context: { request: Request; env: Env }) {
@@ -40,15 +42,21 @@ export async function onRequestGet(context: { request: Request; env: Env }) {
               WHEN a.end_date != '' THEN a.end_date
               ELSE a.start_date
             END
-          )                                    AS end_date
+          )                                    AS end_date,
+          CASE WHEN t.user_id = ? THEN 0 ELSE 1 END AS is_shared,
+          ou.email                             AS owner_email
         FROM trips t
-        LEFT JOIN activities a
-          ON a.trip_id = t.id
+        LEFT JOIN activities a ON a.trip_id = t.id
+        LEFT JOIN users ou ON ou.id = t.user_id
         WHERE t.user_id = ?
+           OR EXISTS (
+             SELECT 1 FROM trip_members tm
+             WHERE tm.trip_id = t.id AND tm.user_id = ?
+           )
         GROUP BY t.id
         ORDER BY COALESCE(t.created_at, '') DESC, t.name ASC
       `)
-      .bind(user.id)
+      .bind(user.id, user.id, user.id)
       .all<TripSummaryRow>();
 
     const rows = Array.isArray(result?.results) ? result.results : [];
@@ -60,7 +68,9 @@ export async function onRequestGet(context: { request: Request; env: Env }) {
       country: row.country ?? '',
       activitiesCount: Number(row.activities_count ?? 0),
       startDate: row.start_date ?? '',
-      endDate: row.end_date ?? ''
+      endDate: row.end_date ?? '',
+      isShared: Boolean(row.is_shared),
+      ownerEmail: row.is_shared ? (row.owner_email ?? '') : null
     }));
 
     return json({ ok: true, trips });

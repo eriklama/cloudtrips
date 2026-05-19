@@ -6,6 +6,7 @@ import {
   getShareTokenFromRequest,
   touchShareUsage
 } from '../_lib/share';
+import { isTripMember } from '../_lib/members';
 
 type TripRow = {
   id: string;
@@ -106,35 +107,40 @@ export async function onRequestGet(context: {
   const token = getShareTokenFromRequest(request);
 
   try {
-    // 1) Logged-in owner path
+    // 1) Logged-in user path (owner or member)
     const user = await tryGetUser(context);
     if (user) {
-      const ownedTrip = await env.DB
+      const trip = await env.DB
         .prepare(`
           SELECT id, user_id, name, notes, country, created_at
           FROM trips
-          WHERE id = ? AND user_id = ?
+          WHERE id = ?
           LIMIT 1
         `)
-        .bind(tripId, user.id)
+        .bind(tripId)
         .first<TripRow>();
 
-      if (ownedTrip) {
-        const { activities, totalCount, hasMore } = await fetchActivities(env, tripId, page);
-        return json({
-          ok: true,
-          trip: {
-            id: ownedTrip.id,
-            name: ownedTrip.name,
-            notes: ownedTrip.notes ?? '',
-            country: ownedTrip.country ?? '',
-            activities,
-            created_at: ownedTrip.created_at ?? null
-          },
-          pagination: { page, totalCount, hasMore },
-          readOnly: false,
-          access: 'owner'
-        });
+      if (trip) {
+        const isOwner = trip.user_id === user.id;
+        const isMember = !isOwner && await isTripMember(env, tripId, user.id);
+
+        if (isOwner || isMember) {
+          const { activities, totalCount, hasMore } = await fetchActivities(env, tripId, page);
+          return json({
+            ok: true,
+            trip: {
+              id: trip.id,
+              name: trip.name,
+              notes: trip.notes ?? '',
+              country: trip.country ?? '',
+              activities,
+              created_at: trip.created_at ?? null
+            },
+            pagination: { page, totalCount, hasMore },
+            readOnly: false,
+            access: isOwner ? 'owner' : 'member'
+          });
+        }
       }
     }
 

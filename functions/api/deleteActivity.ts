@@ -1,6 +1,7 @@
 import { requireUser } from '../_lib/auth';
 import type { Env } from '../_lib/auth';
 import { error, json, methodNotAllowed } from '../_lib/http';
+import { canAccessTrip } from '../_lib/members';
 
 export async function onRequestPost(context: { request: Request; env: Env }) {
   const { request, env } = context;
@@ -22,11 +23,21 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
   const activityId = String(body?.activityId || '').trim();
   if (!activityId) return error('activityId is required.', 400);
 
+  // Get the activity's trip_id to check access
+  const activity = await env.DB
+    .prepare(`SELECT trip_id FROM activities WHERE id = ? LIMIT 1`)
+    .bind(activityId)
+    .first<{ trip_id: string }>();
+
+  if (!activity) return error('Activity not found.', 404);
+
+  const { access } = await canAccessTrip(env, activity.trip_id, user.id);
+  if (!access) return error('Activity not found.', 404);
+
   try {
-    // user_id check ensures you can only delete your own activities
     const result = await env.DB
-      .prepare(`DELETE FROM activities WHERE id = ? AND user_id = ?`)
-      .bind(activityId, user.id)
+      .prepare(`DELETE FROM activities WHERE id = ?`)
+      .bind(activityId)
       .run();
 
     if (!result.meta?.changes) return error('Activity not found.', 404);

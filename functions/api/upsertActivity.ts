@@ -1,6 +1,7 @@
 import { requireUser } from '../_lib/auth';
 import type { Env } from '../_lib/auth';
 import { error, json, methodNotAllowed } from '../_lib/http';
+import { canAccessTrip } from '../_lib/members';
 
 export async function onRequestPost(context: { request: Request; env: Env }) {
   const { request, env } = context;
@@ -22,19 +23,14 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
   const tripId = String(body?.tripId || '').trim();
   if (!tripId) return error('tripId is required.', 400);
 
-  // Verify trip ownership
-  const trip = await env.DB
-    .prepare(`SELECT id FROM trips WHERE id = ? AND user_id = ? LIMIT 1`)
-    .bind(tripId, user.id)
-    .first<{ id: string }>();
-
-  if (!trip) return error('Trip not found.', 404);
+  // Verify trip ownership OR membership
+  const { access } = await canAccessTrip(env, tripId, user.id);
+  if (!access) return error('Trip not found.', 404);
 
   const a = body?.activity;
   if (!a) return error('activity is required.', 400);
 
   const id = String(a.id || crypto.randomUUID()).trim();
-
   const type = String(a.type || 'other').trim() || 'other';
   const name = String(a.name || '').trim();
   const location = String(a.location || '').trim();

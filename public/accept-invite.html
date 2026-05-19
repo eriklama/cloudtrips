@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <script>
+  (function() {
+    const theme = localStorage.getItem('cloudtrips_theme') || 'dark';
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+  })();
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Accept Invite — CloudTrips</title>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link href="/output.css" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="min-h-full bg-slate-300 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+<div class="min-h-screen bg-gradient-to-br from-slate-300 via-slate-200 to-slate-300 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 flex items-center justify-center p-4">
+
+  <div id="card" class="w-full max-w-sm rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 shadow-2xl text-center">
+    <div id="loading" class="">
+      <i data-lucide="loader" class="h-10 w-10 text-primary-500 mx-auto mb-4 animate-spin"></i>
+      <p class="text-slate-500 dark:text-slate-400">Processing your invite…</p>
+    </div>
+  </div>
+
+</div>
+
+<script src="/state.js"></script>
+<script src="/helpers.js"></script>
+<script src="/auth.js"></script>
+
+<script>
+async function getAuthToken() {
+  return localStorage.getItem('cloudtrips_auth_token') || '';
+}
+
+async function processInvite() {
+  const card = document.getElementById('card');
+  const token = new URLSearchParams(window.location.search).get('token');
+
+  if (!token) {
+    showError('Invalid invite link.', 'The link you followed is missing a token.');
+    return;
+  }
+
+  try {
+    const authToken = await getAuthToken();
+    const response = await fetch(`/api/acceptInvite?token=${encodeURIComponent(token)}`, {
+      headers: authToken ? { Authorization: `Bearer ${authToken}` } : {}
+    });
+
+    const data = await response.json();
+
+    if (data.requiresAuth) {
+      // Not logged in — redirect to login, then come back
+      localStorage.setItem('cloudtrips_pending_invite', token);
+      window.location.href = `/login.html?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+      return;
+    }
+
+    if (!response.ok || !data.ok) {
+      showError('Invite failed', data.error || 'Something went wrong.');
+      return;
+    }
+
+    // Success
+    card.innerHTML = `
+      <div>
+        <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/10 mx-auto mb-4">
+          <i data-lucide="check" class="h-7 w-7 text-emerald-500"></i>
+        </div>
+        <h1 class="text-xl font-semibold tracking-tight mb-2">You're in!</h1>
+        <p class="text-slate-500 dark:text-slate-400 mb-6">You now have access to <strong class="text-slate-900 dark:text-slate-100">${escapeHtml(data.tripName)}</strong>.</p>
+        <a href="/trip.html?id=${encodeURIComponent(data.tripId)}"
+          class="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary-600 px-6 py-3 text-sm font-medium text-white hover:bg-primary-500 transition">
+          <i data-lucide="arrow-right" class="h-4 w-4"></i>
+          Open trip
+        </a>
+      </div>
+    `;
+    if (window.lucide) lucide.createIcons();
+
+  } catch (err) {
+    showError('Something went wrong', err?.message || 'Please try again.');
+  }
+}
+
+function showError(title, message) {
+  const card = document.getElementById('card');
+  card.innerHTML = `
+    <div>
+      <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-red-500/10 mx-auto mb-4">
+        <i data-lucide="alert-triangle" class="h-7 w-7 text-red-500"></i>
+      </div>
+      <h1 class="text-xl font-semibold tracking-tight mb-2">${escapeHtml(title)}</h1>
+      <p class="text-slate-500 dark:text-slate-400 mb-6">${escapeHtml(message)}</p>
+      <a href="/" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-6 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+        Go home
+      </a>
+    </div>
+  `;
+  if (window.lucide) lucide.createIcons();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.lucide) lucide.createIcons();
+
+  // Check if returning from login with a pending invite
+  const pendingToken = localStorage.getItem('cloudtrips_pending_invite');
+  const urlToken = new URLSearchParams(window.location.search).get('token');
+
+  if (pendingToken && pendingToken === urlToken) {
+    localStorage.removeItem('cloudtrips_pending_invite');
+  }
+
+  processInvite();
+});
+</script>
+</body>
+</html>
