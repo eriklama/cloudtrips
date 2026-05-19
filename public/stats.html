@@ -12,6 +12,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Stats</title>
 
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link href="/output.css" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
@@ -117,7 +118,8 @@
       <div class="mt-2 flex items-center justify-between text-xs">
         <span class="text-slate-400 dark:text-slate-500 flex items-center gap-1">
           <i data-lucide="zoom-in" class="h-3 w-3"></i>
-          Scroll to zoom · drag to pan · double-click to reset
+          <span class="hidden sm:inline">Scroll to zoom · drag to pan · double-click to reset</span>
+          <span class="sm:hidden">Pinch to zoom · drag to pan · double-tap to reset</span>
         </span>
         <button onclick="openVisitedCountriesModal()" class="text-primary-600 dark:text-primary-400 hover:underline font-medium" id="visited-count-link"></button>
       </div>

@@ -8,6 +8,8 @@ import { error, json, methodNotAllowed } from '../_lib/http';
  * Returns aggregated stats across all trips for the authenticated user.
  * Per-trip: id, name, country, startDate, endDate, days, activitiesCount, totalKm, costsByCurrency
  * All-time: totalTrips, totalDays, totalKm, totalActivities, countries visited
+ *
+ * NOTE: "days" is the trip length = (last day - first day) + 1, not distinct active days.
  */
 
 type TripStatsRow = {
@@ -27,11 +29,6 @@ type CostRow = {
   total: number;
 };
 
-type DayRow = {
-  trip_id: string;
-  day_count: number;
-};
-
 export async function onRequestGet(context: { request: Request; env: Env }) {
   const { env } = context;
 
@@ -43,8 +40,8 @@ export async function onRequestGet(context: { request: Request; env: Env }) {
   }
 
   try {
-    const [tripsResult, costsResult, daysResult, userRow] = await Promise.all([
-      // Trip summaries
+    const [tripsResult, costsResult, userRow] = await Promise.all([
+      // Trip summaries — start_date = earliest activity start, end_date = latest activity end/start
       env.DB.prepare(`
         SELECT
           t.id,
@@ -73,17 +70,6 @@ export async function onRequestGet(context: { request: Request; env: Env }) {
         GROUP BY a.trip_id, a.currency
       `).bind(user.id).all<CostRow>(),
 
-      // Distinct days per trip
-      env.DB.prepare(`
-        SELECT
-          a.trip_id,
-          COUNT(DISTINCT DATE(a.start_date)) AS day_count
-        FROM activities a
-        INNER JOIN trips t ON t.id = a.trip_id
-        WHERE t.user_id = ? AND a.start_date != ''
-        GROUP BY a.trip_id
-      `).bind(user.id).all<DayRow>(),
-
       // User visited countries
       env.DB.prepare(`SELECT visited_countries FROM users WHERE id = ? LIMIT 1`)
         .bind(user.id)
@@ -92,18 +78,24 @@ export async function onRequestGet(context: { request: Request; env: Env }) {
 
     const trips = tripsResult.results ?? [];
     const costs = costsResult.results ?? [];
-    const days = daysResult.results ?? [];
 
-    // Index costs and days by trip_id
+    // Index costs by trip_id
     const costsByTrip: Record<string, Record<string, number>> = {};
     for (const row of costs) {
       if (!costsByTrip[row.trip_id]) costsByTrip[row.trip_id] = {};
       costsByTrip[row.trip_id][row.currency] = Number(row.total);
     }
 
-    const daysByTrip: Record<string, number> = {};
-    for (const row of days) {
-      daysByTrip[row.trip_id] = Number(row.day_count);
+    // Calculate trip length as (last day - first day) + 1
+    function tripLengthDays(startDate: string | null, endDate: string | null): number {
+      if (!startDate) return 0;
+      const start = new Date(startDate);
+      const end = endDate ? new Date(endDate) : start;
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) return 0;
+      // Use date-only comparison (strip time)
+      const startDay = Date.UTC(start.getFullYear(), start.getMonth(), start.getDate());
+      const endDay = Date.UTC(end.getFullYear(), end.getMonth(), end.getDate());
+      return Math.max(1, Math.round((endDay - startDay) / 86400000) + 1);
     }
 
     const tripStats = trips.map(t => ({
@@ -112,7 +104,7 @@ export async function onRequestGet(context: { request: Request; env: Env }) {
       country: t.country ?? '',
       startDate: t.start_date ?? '',
       endDate: t.end_date ?? '',
-      days: daysByTrip[t.id] ?? 0,
+      days: tripLengthDays(t.start_date, t.end_date),
       activitiesCount: Number(t.activities_count ?? 0),
       totalKm: Number(t.total_km ?? 0),
       costsByCurrency: costsByTrip[t.id] ?? {}

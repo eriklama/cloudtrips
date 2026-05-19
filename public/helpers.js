@@ -49,8 +49,8 @@ function uuid() {
 function sortActivities(activities) {
   return [...safeArray(activities)].sort((a, b) => {
     // Sort by sortOrder first if available
-    const aOrder = a?.sortOrder !== undefined ? a.sortOrder : Number.MAX_SAFE_INTEGER;
-    const bOrder = b?.sortOrder !== undefined ? b.sortOrder : Number.MAX_SAFE_INTEGER;
+    const aOrder = a?.sortOrder !== undefined ? a.sortOrder : (a?.sort_order !== undefined ? a.sort_order : Number.MAX_SAFE_INTEGER);
+    const bOrder = b?.sortOrder !== undefined ? b.sortOrder : (b?.sort_order !== undefined ? b.sort_order : Number.MAX_SAFE_INTEGER);
     if (aOrder !== bOrder) return aOrder - bOrder;
     // Fall back to startDate
     const aTime = a?.startDate ? new Date(a.startDate).getTime() : Number.MAX_SAFE_INTEGER;

@@ -12,6 +12,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Trip Costs</title>
 
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link href="/output.css" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -26,11 +27,9 @@
         padding: 10px;
       }
 
-      @media (max-width: 640px) {
-  .dark #cost-table tr {
-    background: rgb(15 23 42);
-  }
-}
+      .dark #cost-table tr {
+        background: rgb(15 23 42);
+      }
 
       #cost-table td {
         display: flex;
@@ -52,150 +51,150 @@
 <body class="min-h-full bg-slate-300 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-x-hidden">
 <div class="min-h-screen bg-gradient-to-br from-slate-300 via-slate-200 to-slate-300 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900">
 
-<!-- HEADER -->
-<header class="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
-  <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
+  <!-- HEADER -->
+  <header class="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
 
-    <!-- Title -->
-    <h1 id="costs-title" class="text-xl font-semibold tracking-tight">
-      Costs
-    </h1>
+      <!-- Title -->
+      <h1 id="costs-title" class="text-xl font-semibold tracking-tight">
+        Costs
+      </h1>
 
-    <!-- NAV + AUTH -->
-    <div class="flex items-center gap-2">
+      <!-- NAV + AUTH -->
+      <div class="flex items-center gap-2">
 
-      <!-- Dynamic nav -->
-      <div id="nav-actions" class="flex gap-2"></div>
+        <!-- Dynamic nav -->
+        <div id="nav-actions" class="flex gap-2"></div>
 
-      <!-- User -->
-      <span id="auth-user-email"
-        class="hidden sm:inline text-sm text-slate-500 dark:text-slate-500 dark:text-slate-400 truncate max-w-[160px]">
-      </span>
+        <!-- User -->
+        <span id="auth-user-email"
+          class="hidden sm:inline text-sm text-slate-500 dark:text-slate-400 truncate max-w-[160px]">
+        </span>
 
-      <!-- Settings -->
+        <!-- Settings -->
         <button onclick="openSettingsModal()"
           class="inline-flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
           aria-label="Settings">
           <i data-lucide="settings" class="w-4 h-4"></i>
         </button>
 
-      <!-- Logout -->
-      <button id="logout-button" onclick="logout()"
-        class="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
-        <i data-lucide="log-out" class="w-4 h-4"></i>
-      </button>
+        <!-- Logout -->
+        <button id="logout-button" onclick="logout()"
+          class="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+        </button>
 
-    </div>
-
-  </div>
-</header>
-
-<!-- MAIN -->
-<main class="max-w-6xl mx-auto px-4 py-6 sm:py-8 pb-20 overflow-x-hidden">
-
-  <!-- HERO -->
-  <section class="mb-4 sm:mb-6 flex flex-col gap-3 sm:gap-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-4 sm:p-6 shadow-soft lg:flex-row lg:items-center lg:justify-between">
-
-    <div>
-      <div class="mb-2 inline-flex items-center gap-2 rounded-full bg-primary-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary-300">
-        <i data-lucide="badge-euro" class="h-3.5 w-3.5"></i>
-        Trip costs
       </div>
 
-      <h2 id="costs-hero-title" class="text-xl sm:text-2xl font-semibold tracking-tight">
-        Costs
-      </h2>
-
-      <p class="mt-1 sm:mt-2 text-sm text-slate-500 dark:text-slate-500 dark:text-slate-400">
-        Track total spend and distance.
-      </p>
     </div>
+  </header>
 
-    <!-- CURRENCY CONVERTER -->
-    <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-      <div class="flex items-center gap-2">
-        <label for="convertCurrency" class="text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">Convert to</label>
-        <select id="convertCurrency" onchange="applyConversion()"
-          class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500">
-          <option value="">Original currencies</option>
-          <option value="EUR">EUR €</option>
-          <option value="USD">USD $</option>
-          <option value="GBP">GBP £</option>
-          <option value="CZK">CZK Kč</option>
-          <option value="CHF">CHF Fr</option>
-          <option value="PLN">PLN zł</option>
-          <option value="HUF">HUF Ft</option>
-          <option value="SEK">SEK kr</option>
-          <option value="NOK">NOK kr</option>
-          <option value="DKK">DKK kr</option>
-        </select>
-      </div>
-      <span id="conversion-status" class="text-xs text-slate-400 dark:text-slate-500"></span>
-    </div>
+  <!-- MAIN -->
+  <main class="max-w-6xl mx-auto px-4 py-6 sm:py-8 pb-20 overflow-x-hidden">
 
-  </section>
+    <!-- HERO -->
+    <section class="mb-4 sm:mb-6 flex flex-col gap-3 sm:gap-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-4 sm:p-6 shadow-soft lg:flex-row lg:items-center lg:justify-between">
 
-  <section class="grid gap-4 sm:gap-6 xl:grid-cols-[0.7fr_1.3fr]">
-
-    <!-- SUMMARY -->
-    <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-4 sm:p-5">
-
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 sm:mb-4">
-
-        <div class="text-base sm:text-lg font-semibold">
-          Total
+      <div>
+        <div class="mb-2 inline-flex items-center gap-2 rounded-full bg-primary-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary-300">
+          <i data-lucide="badge-euro" class="h-3.5 w-3.5"></i>
+          Trip costs
         </div>
 
-        <div class="flex flex-wrap gap-2 text-sm sm:text-lg font-semibold">
+        <h2 id="costs-hero-title" class="text-xl sm:text-2xl font-semibold tracking-tight">
+          Costs
+        </h2>
 
-          <div class="bg-slate-200 dark:bg-slate-800 px-3 py-1.5 rounded-lg whitespace-nowrap">
-            <span id="totalCost">0</span>
+        <p class="mt-1 sm:mt-2 text-sm text-slate-500 dark:text-slate-400">
+          Track total spend and distance.
+        </p>
+      </div>
+
+      <!-- CURRENCY CONVERTER -->
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div class="flex items-center gap-2">
+          <label for="convertCurrency" class="text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">Convert to</label>
+          <select id="convertCurrency" onchange="applyConversion()"
+            class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500">
+            <option value="">Original currencies</option>
+            <option value="EUR">EUR €</option>
+            <option value="USD">USD $</option>
+            <option value="GBP">GBP £</option>
+            <option value="CZK">CZK Kč</option>
+            <option value="CHF">CHF Fr</option>
+            <option value="PLN">PLN zł</option>
+            <option value="HUF">HUF Ft</option>
+            <option value="SEK">SEK kr</option>
+            <option value="NOK">NOK kr</option>
+            <option value="DKK">DKK kr</option>
+          </select>
+        </div>
+        <span id="conversion-status" class="text-xs text-slate-400 dark:text-slate-500"></span>
+      </div>
+
+    </section>
+
+    <section class="grid gap-4 sm:gap-6 xl:grid-cols-[0.7fr_1.3fr]">
+
+      <!-- SUMMARY -->
+      <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-4 sm:p-5">
+
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 sm:mb-4">
+
+          <div class="text-base sm:text-lg font-semibold">
+            Total
           </div>
 
-          <div class="bg-slate-200 dark:bg-slate-800 px-3 py-1.5 rounded-lg whitespace-nowrap">
-            <span id="totalKm">0 km</span>
+          <div class="flex flex-wrap gap-2 text-sm sm:text-lg font-semibold">
+
+            <div class="bg-slate-200 dark:bg-slate-800 px-3 py-1.5 rounded-lg whitespace-nowrap">
+              <span id="totalCost">0</span>
+            </div>
+
+            <div class="bg-slate-200 dark:bg-slate-800 px-3 py-1.5 rounded-lg whitespace-nowrap">
+              <span id="totalKm">0 km</span>
+            </div>
+
           </div>
+
+        </div>
+
+        <div id="cost-summary" class="space-y-2 text-sm break-words"></div>
+
+      </div>
+
+      <!-- TABLE -->
+      <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-4 sm:p-5">
+
+        <h3 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4">
+          Detailed costs
+        </h3>
+
+        <div class="overflow-x-auto">
+
+          <table class="min-w-full table-fixed border-separate border-spacing-y-2 text-sm">
+
+            <thead class="hidden sm:table-header-group">
+              <tr class="text-left text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                <th class="px-2 py-1">Activity</th>
+                <th class="px-2 py-1">Type</th>
+                <th class="px-2 py-1">Date</th>
+                <th class="px-2 py-1 text-right">Cost</th>
+                <th class="px-2 py-1 text-right">KM</th>
+              </tr>
+            </thead>
+
+            <tbody id="cost-table" class="text-slate-700 dark:text-slate-200"></tbody>
+
+          </table>
 
         </div>
 
       </div>
 
-      <div id="cost-summary" class="space-y-2 text-sm break-words"></div>
+    </section>
 
-    </div>
-
-    <!-- TABLE -->
-    <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-4 sm:p-5">
-
-      <h3 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4">
-        Detailed costs
-      </h3>
-
-      <div class="overflow-x-auto">
-
-        <table class="min-w-full table-fixed border-separate border-spacing-y-2 text-sm">
-
-          <thead class="hidden sm:table-header-group">
-            <tr class="text-left text-xs sm:text-sm text-slate-500 dark:text-slate-500 dark:text-slate-400">
-              <th class="px-2 py-1">Activity</th>
-              <th class="px-2 py-1">Type</th>
-              <th class="px-2 py-1">Date</th>
-              <th class="px-2 py-1 text-right">Cost</th>
-              <th class="px-2 py-1 text-right">KM</th>
-            </tr>
-          </thead>
-
-          <tbody id="cost-table" class="text-slate-700 dark:text-slate-200"></tbody>
-
-        </table>
-
-      </div>
-
-    </div>
-
-  </section>
-
-</main>
+  </main>
 
 </div>
 
