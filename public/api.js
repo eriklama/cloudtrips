@@ -99,8 +99,10 @@ async function fetchTrip(tripId, { forceRefresh = false, page = 1 } = {}) {
 
   const trip = normalizeFullTrip(data?.trip || data);
   trip._pagination = data.pagination || { page: 1, totalCount: trip.activities.length, hasMore: false };
+  trip._access = data.access || 'owner'; // 'owner', 'member', 'shared'
 
-  if (page === 1) {
+  // Only cache owner trips — member trips can be edited by others so cache would go stale
+  if (page === 1 && data.access === 'owner') {
     saveTripToCache(trip);
   }
 
@@ -159,4 +161,3 @@ async function deleteActivityById(activityId) {
 async function reorderActivities(tripId, updates) {
   return apiPost(API.REORDER_ACTIVITIES, { tripId, updates });
 }
-
