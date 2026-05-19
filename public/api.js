@@ -85,11 +85,7 @@ function apiDelete(url, payload) {
 }
 
 async function fetchTrip(tripId, { forceRefresh = false, page = 1 } = {}) {
-  if (!forceRefresh && page === 1) {
-    const cached = getTripFromCache(tripId);
-    if (cached) return cached;
-  }
-
+  // Cache disabled — trips can be edited by multiple users so cache goes stale
   const url = `${API.GET_TRIP}?id=${encodeURIComponent(tripId)}&page=${page}`;
   const data = await apiGet(url);
 
@@ -99,12 +95,7 @@ async function fetchTrip(tripId, { forceRefresh = false, page = 1 } = {}) {
 
   const trip = normalizeFullTrip(data?.trip || data);
   trip._pagination = data.pagination || { page: 1, totalCount: trip.activities.length, hasMore: false };
-  trip._access = data.access || 'owner'; // 'owner', 'member', 'shared'
-
-  // Only cache owner trips — member trips can be edited by others so cache would go stale
-  if (page === 1 && data.access === 'owner') {
-    saveTripToCache(trip);
-  }
+  trip._access = data.access || 'owner';
 
   return trip;
 }
