@@ -32,9 +32,6 @@
 <script src="/auth.js"></script>
 
 <script>
-async function getAuthToken() {
-  return localStorage.getItem('cloudtrips_auth_token') || '';
-}
 
 async function processInvite() {
   const card = document.getElementById('card');
@@ -50,9 +47,13 @@ async function processInvite() {
     try {
       data = await apiGet(`/api/acceptInvite?token=${encodeURIComponent(token)}`);
     } catch (err) {
-      // apiGet throws on non-2xx — check if it's an auth issue
+      // apiGet throws on non-2xx — check if it's an auth issue or already accepted
       if (err?.message?.includes('401') || err?.message?.includes('Unauthorized')) {
         data = { requiresAuth: true };
+      } else if (err?.message?.includes('409') || err?.message?.includes('already been accepted')) {
+        // Already accepted — just go home, the member row exists
+        window.location.href = '/';
+        return;
       } else {
         throw err;
       }
@@ -86,8 +87,8 @@ async function processInvite() {
       return;
     }
 
-    if (!response.ok || !data.ok) {
-      showError('Invite failed', data.error || 'Something went wrong.');
+    if (!data?.ok) {
+      showError('Invite failed', data?.error || 'Something went wrong.');
       return;
     }
 

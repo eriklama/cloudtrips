@@ -88,7 +88,8 @@ async function handleLoginSubmit(event) {
       body: JSON.stringify({ email, password })
     });
     setAuthSession(data.token, data.user);
-    window.location.href = '/';
+    const redirectUrl = new URLSearchParams(window.location.search).get('redirect');
+    window.location.href = redirectUrl || '/';
   } catch (err) {
     errorBox.textContent = err.message || 'Login failed.';
   } finally {
@@ -122,7 +123,8 @@ async function handleSignupSubmit(event) {
       body: JSON.stringify({ email, password })
     });
     setAuthSession(data.token, data.user);
-    window.location.href = '/';
+    const redirectUrl = new URLSearchParams(window.location.search).get('redirect');
+    window.location.href = redirectUrl || '/';
   } catch (err) {
     errorBox.textContent = err.message || 'Signup failed.';
   } finally {
@@ -144,4 +146,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     signupForm.addEventListener('submit', handleSignupSubmit);
     return;
   }
+
+  await requireAuth();
 });
