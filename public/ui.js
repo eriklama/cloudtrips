@@ -683,7 +683,7 @@ function openConfirmModal({
 }
 
 /* =========================
- * SHARE MODE MODAL
+ * SHARE MODE MODAL +
  * ========================= */
 
 function openShareModeModal() {
