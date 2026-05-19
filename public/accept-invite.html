@@ -28,6 +28,7 @@
 
 <script src="/state.js"></script>
 <script src="/helpers.js"></script>
+<script src="/api.js"></script>
 <script src="/auth.js"></script>
 
 <script>
@@ -45,17 +46,43 @@ async function processInvite() {
   }
 
   try {
-    const authToken = await getAuthToken();
-    const response = await fetch(`/api/acceptInvite?token=${encodeURIComponent(token)}`, {
-      headers: authToken ? { Authorization: `Bearer ${authToken}` } : {}
-    });
-
-    const data = await response.json();
+    let data;
+    try {
+      data = await apiGet(`/api/acceptInvite?token=${encodeURIComponent(token)}`);
+    } catch (err) {
+      // apiGet throws on non-2xx — check if it's an auth issue
+      if (err?.message?.includes('401') || err?.message?.includes('Unauthorized')) {
+        data = { requiresAuth: true };
+      } else {
+        throw err;
+      }
+    }
 
     if (data.requiresAuth) {
-      // Not logged in — redirect to login, then come back
+      // Not logged in — show signup/login options
       localStorage.setItem('cloudtrips_pending_invite', token);
-      window.location.href = `/login.html?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+      card.innerHTML = `
+        <div>
+          <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-500/10 mx-auto mb-4">
+            <i data-lucide="mail" class="h-7 w-7 text-primary-400"></i>
+          </div>
+          <h1 class="text-xl font-semibold tracking-tight mb-2">You've been invited!</h1>
+          <p class="text-slate-500 dark:text-slate-400 mb-6">Sign in or create an account to accept this invite and join the trip.</p>
+          <div class="flex flex-col gap-2">
+            <a href="/signup.html?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}"
+              class="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary-600 px-6 py-3 text-sm font-medium text-white hover:bg-primary-500 transition">
+              <i data-lucide="user-plus" class="h-4 w-4"></i>
+              Create account
+            </a>
+            <a href="/login.html?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}"
+              class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-6 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+              <i data-lucide="log-in" class="h-4 w-4"></i>
+              Sign in
+            </a>
+          </div>
+        </div>
+      `;
+      if (window.lucide) lucide.createIcons();
       return;
     }
 
