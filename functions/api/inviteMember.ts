@@ -24,6 +24,7 @@ export async function onRequestPost(context: { request: Request; env: Env & { BR
   if (!inviteEmail || !isValidEmail(inviteEmail)) return error('Valid email is required.', 400);
   if (inviteEmail === user.email.toLowerCase()) return error('You cannot invite yourself.', 400);
 
+  
   // Only owner can invite
   const isOwner = await isTripOwner(env, tripId, user.id);
   if (!isOwner) return error('Only the trip owner can invite members.', 403);
@@ -70,7 +71,7 @@ export async function onRequestPost(context: { request: Request; env: Env & { BR
   const inviteUrl = `https://cloudtrips.uk/accept-invite.html?token=${encodeURIComponent(token)}`;
 
   try {
-    await fetch('https://api.brevo.com/v3/smtp/email', {
+    const brevoRes = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -90,9 +91,12 @@ export async function onRequestPost(context: { request: Request; env: Env & { BR
         `
       })
     });
+    if (!brevoRes.ok) {
+      const body = await brevoRes.text().catch(() => '');
+      console.error(`Brevo error ${brevoRes.status}:`, body);
+    }
   } catch (err) {
-    console.error('Brevo error:', err);
-    // Don't fail the request if email fails — invite is created
+    console.error('Brevo fetch error:', err);
   }
 
   return json({ ok: true, message: `Invite sent to ${inviteEmail}.` });
