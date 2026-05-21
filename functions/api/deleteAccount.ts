@@ -38,6 +38,7 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
     // Delete in order — trips cascade to activities/members/shares via FK
     await env.DB.batch([
       env.DB.prepare(`DELETE FROM trip_members WHERE user_id = ?`).bind(user.id),
+      env.DB.prepare(`DELETE FROM trip_members WHERE invited_by = ?`).bind(user.id),
       env.DB.prepare(`DELETE FROM trip_invites WHERE invited_by = ?`).bind(user.id),
       env.DB.prepare(`DELETE FROM activities WHERE user_id = ?`).bind(user.id),
       env.DB.prepare(`DELETE FROM trip_shares WHERE created_by_user_id = ?`).bind(user.id),

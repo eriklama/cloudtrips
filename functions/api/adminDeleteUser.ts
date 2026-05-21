@@ -49,6 +49,7 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
   try {
     await env.DB.batch([
       env.DB.prepare(`DELETE FROM trip_members WHERE user_id = ?`).bind(userId),
+      env.DB.prepare(`DELETE FROM trip_members WHERE invited_by = ?`).bind(userId),
       env.DB.prepare(`DELETE FROM trip_invites WHERE invited_by = ?`).bind(userId),
       env.DB.prepare(`DELETE FROM activities WHERE user_id = ?`).bind(userId),
       env.DB.prepare(`DELETE FROM trip_shares WHERE created_by_user_id = ?`).bind(userId),
