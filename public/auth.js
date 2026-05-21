@@ -159,5 +159,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
+  // Skip requireAuth on verify-email page — it handles its own auth state
+  if (location.pathname.endsWith('/verify-email.html')) return;
+
   await requireAuth();
 });
