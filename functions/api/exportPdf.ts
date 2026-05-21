@@ -316,19 +316,22 @@ export async function onRequestGet(context: { request: Request; env: Env & { BRO
   // Per-user PDF quota check (authenticated users only, not share links)
   if (authedUser) {
     const userRow = await env.DB
-      .prepare(`SELECT pdf_exports_unlimited FROM users WHERE id = ? LIMIT 1`)
+      .prepare(`SELECT pdf_monthly_limit FROM users WHERE id = ? LIMIT 1`)
       .bind(authedUser.id)
-      .first<{ pdf_exports_unlimited: number }>();
+      .first<{ pdf_monthly_limit: number }>();
 
-    if (!userRow?.pdf_exports_unlimited) {
+    const limit = userRow?.pdf_monthly_limit ?? 5;
+
+    // 0 = unlimited — skip check
+    if (limit !== 0) {
       const now = new Date();
       const monthSuffix = `_${now.getUTCFullYear()}_${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
       const userMonthKey = `pdf_user_${authedUser.id}${monthSuffix}`;
       const userUsage = await env.RATE_LIMIT_KV.get(userMonthKey);
       const userCount = userUsage ? parseInt(userUsage, 10) : 0;
 
-      if (userCount >= 5) {
-        return error('You have used all 5 free PDF exports for this month. Upgrade to unlimited to continue.', 429);
+      if (userCount >= limit) {
+        return error(`You have used all ${limit} PDF exports for this month. Contact support to upgrade.`, 429);
       }
     }
   }

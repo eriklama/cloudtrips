@@ -205,13 +205,15 @@ function renderUserTable(search = '', page = 1) {
         </button>
       </td>
       <td class="px-3 py-2 text-center text-slate-600 dark:text-slate-300">
-        ${u.pdfUnlimited ? '∞' : `${u.pdfUsageThisMonth} / 5`}
+        ${u.pdfMonthlyLimit === 0 ? '∞' : `${u.pdfUsageThisMonth} / ${u.pdfMonthlyLimit}`}
       </td>
       <td class="px-3 py-2 text-center">
-        <button onclick="toggleUserField('${escapeHtml(u.id)}', 'pdf_exports_unlimited', ${!u.pdfUnlimited})"
-          class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium transition ${u.pdfUnlimited ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'}">
-          ${u.pdfUnlimited ? 'Unlimited' : 'Limited'}
-        </button>
+        <select onchange="setUserLimit('${escapeHtml(u.id)}', Number(this.value))"
+          class="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1 text-xs outline-none focus:border-primary-500">
+          <option value="5" ${u.pdfMonthlyLimit === 5 ? 'selected' : ''}>Free (5)</option>
+          <option value="100" ${u.pdfMonthlyLimit === 100 ? 'selected' : ''}>Paid (100)</option>
+          <option value="0" ${u.pdfMonthlyLimit === 0 ? 'selected' : ''}>Unlimited</option>
+        </select>
       </td>
       <td class="px-3 py-2 text-xs text-slate-400">${escapeHtml(u.createdAt?.slice(0, 10) || '—')}</td>
       <td class="rounded-r-xl px-3 py-2 text-center">
@@ -259,12 +261,28 @@ function goUsersPage(page) {
   renderUserTable(search, page);
 }
 
+async function setUserLimit(userId, limit) {
+  try {
+    await apiPost(API.SET_USER_UNLIMITED, { userId, field: 'pdf_monthly_limit', value: limit });
+    const u = _allUsers.find(x => x.id === userId);
+    if (u) u.pdfMonthlyLimit = limit;
+    const search = document.getElementById('user-search')?.value || '';
+    renderUserTable(search, _usersPage);
+    showToast('PDF limit updated.', 'success');
+  } catch (err) {
+    showToast(err?.message || 'Failed to update.', 'error');
+  }
+}
+
 async function toggleUserField(userId, field, value) {
   try {
     await apiPost(API.SET_USER_UNLIMITED, { userId, field, value });
     // Update in-memory and re-render without full reload
     const u = _allUsers.find(x => x.id === userId);
-    if (u) u[field === 'is_admin' ? 'isAdmin' : 'pdfUnlimited'] = value;
+    if (u) {
+      if (field === 'is_admin') u.isAdmin = value;
+      else if (field === 'pdf_monthly_limit') u.pdfMonthlyLimit = value;
+    }
     const search = document.getElementById('user-search')?.value || '';
     renderUserTable(search, _usersPage);
     showToast('Updated successfully.', 'success');

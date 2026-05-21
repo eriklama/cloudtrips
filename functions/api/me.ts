@@ -7,9 +7,9 @@ export async function onRequestGet(context: { request: Request; env: Env & { RAT
     const user = await requireUser(context);
 
     const row = await context.env.DB
-      .prepare(`SELECT email_verified_at, is_admin, pdf_exports_unlimited FROM users WHERE id = ? LIMIT 1`)
+      .prepare(`SELECT email_verified_at, is_admin, pdf_monthly_limit FROM users WHERE id = ? LIMIT 1`)
       .bind(user.id)
-      .first<{ email_verified_at: string | null; is_admin: number; pdf_exports_unlimited: number }>();
+      .first<{ email_verified_at: string | null; is_admin: number; pdf_monthly_limit: number }>();
 
     // Read per-user PDF usage for current month from KV
     const now = new Date();
@@ -24,9 +24,9 @@ export async function onRequestGet(context: { request: Request; env: Env & { RAT
         ...user,
         emailVerified: Boolean(row?.email_verified_at),
         isAdmin: Boolean(row?.is_admin),
-        pdfUnlimited: Boolean(row?.pdf_exports_unlimited),
-        pdfUsageThisMonth,
-        pdfQuota: 5
+        pdfMonthlyLimit: row?.pdf_monthly_limit ?? 5,
+        pdfUnlimited: (row?.pdf_monthly_limit ?? 5) === 0,
+        pdfUsageThisMonth
       }
     });
   } catch (err) {

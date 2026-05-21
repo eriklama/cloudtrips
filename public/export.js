@@ -133,11 +133,13 @@ function openExportDropdown(triggerBtn) {
 
   // Build PDF label with quota info
   const u = state.user;
-  const pdfLabel = u?.pdfUnlimited
-    ? 'Download PDF <span class="ml-1 text-xs text-slate-400">(unlimited)</span>'
-    : u?.pdfUsageThisMonth !== undefined
-      ? `Download PDF <span class="ml-1 text-xs ${u.pdfUsageThisMonth >= 5 ? 'text-rose-400' : 'text-slate-400'}">(${Math.max(0, 5 - u.pdfUsageThisMonth)}/5 left)</span>`
-      : 'Download PDF';
+  const limit = u?.pdfMonthlyLimit ?? 5;
+  const used = u?.pdfUsageThisMonth ?? 0;
+  const pdfLabel = !u
+    ? 'Download PDF'
+    : limit === 0
+      ? 'Download PDF <span class="ml-1 text-xs text-slate-400">(unlimited)</span>'
+      : `Download PDF <span class="ml-1 text-xs ${used >= limit ? 'text-rose-400' : 'text-slate-400'}">(${Math.max(0, limit - used)}/${limit} left)</span>`;
 
   const items = [
     {
@@ -236,7 +238,7 @@ async function downloadPdf() {
     const filename = `${(state.currentTrip.name || 'trip').replace(/[^a-z0-9]/gi, '_').toLowerCase()}_itinerary.pdf`;
     downloadBlob(blob, filename);
     // Update local quota counter immediately
-    if (state.user && !state.user.pdfUnlimited) {
+    if (state.user && (state.user.pdfMonthlyLimit ?? 5) !== 0) {
       state.user.pdfUsageThisMonth = (state.user.pdfUsageThisMonth || 0) + 1;
     }
     showToast('PDF downloaded.', 'success');

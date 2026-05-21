@@ -11,7 +11,7 @@ type UserRow = {
   id: string;
   email: string;
   is_admin: number;
-  pdf_exports_unlimited: number;
+  pdf_monthly_limit: number;
   email_verified_at: string | null;
   created_at: string | null;
 };
@@ -36,25 +36,23 @@ export async function onRequestGet(context: { request: Request; env: Env & { RAT
   try {
     const result = await env.DB
       .prepare(`
-        SELECT id, email, is_admin, pdf_exports_unlimited, email_verified_at, created_at
+        SELECT id, email, is_admin, pdf_monthly_limit, email_verified_at, created_at
         FROM users
         ORDER BY created_at DESC
       `)
       .all<UserRow>();
 
     const now = new Date();
-    const monthKey = `pdf_user_`;
     const monthSuffix = `_${now.getUTCFullYear()}_${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
 
-    // Fetch per-user PDF usage for this month
     const users = await Promise.all((result.results ?? []).map(async (u) => {
-      const kvKey = `${monthKey}${u.id}${monthSuffix}`;
+      const kvKey = `pdf_user_${u.id}${monthSuffix}`;
       const usage = await env.RATE_LIMIT_KV.get(kvKey);
       return {
         id: u.id,
         email: u.email,
         isAdmin: Boolean(u.is_admin),
-        pdfUnlimited: Boolean(u.pdf_exports_unlimited),
+        pdfMonthlyLimit: u.pdf_monthly_limit,
         emailVerified: Boolean(u.email_verified_at),
         pdfUsageThisMonth: usage ? parseInt(usage, 10) : 0,
         createdAt: u.created_at ?? ''
