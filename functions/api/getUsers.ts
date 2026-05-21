@@ -19,13 +19,12 @@ type UserRow = {
 export async function onRequestGet(context: { request: Request; env: Env }) {
   const { env } = context;
 
-  let user: AuthUser | undefined;
+  let user: AuthUser;
   try {
     user = await requireUser(context);
   } catch {
     return error('Unauthorized.', 401);
   }
-  if (!user) return error('Unauthorized.', 401);
 
   const adminRow = await env.DB
     .prepare(`SELECT is_admin FROM users WHERE id = ? LIMIT 1`)

@@ -421,7 +421,7 @@ export async function onRequestGet(context: { request: Request; env: Env & { BRO
   });
 }
 
-export function onRequest(context: { request: Request; env: Env & { BROWSERLESS_API_KEY: string } }) {
+export function onRequest(context: { request: Request; env: Env & { BROWSERLESS_API_KEY: string; RATE_LIMIT_KV: KVNamespace } }) {
   if (context.request.method !== 'GET') return methodNotAllowed(['GET']);
   return onRequestGet(context);
 }

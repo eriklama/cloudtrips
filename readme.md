@@ -41,6 +41,11 @@ A personal trip planner web app. Plan trips, track activities, manage costs, and
 - Activity reordering
 - Optimistic UI with rollback on failure
 - Rate limiting on login/signup (KV-backed)
+- Email verification (hard gate — unverified users cannot access the app)
+- Account deletion (self-service via Settings, or admin-initiated)
+- PDF export quota — 5 free exports/month per user, 100 for paid, unlimited for admin-granted accounts
+- Admin panel — user management, PDF usage tracking, error log
+- Trips list pagination (20/page)
 
 ---
 
@@ -63,14 +68,15 @@ cloudtrips/
 │   ├── sw.js                  # Service worker (cache-first static, network-only API)
 │   ├── manifest.json          # PWA web app manifest
 │   ├── robots.txt             # Search engine directives
-│   └── *.html                 # Pages (index, trip, timeline, costs, stats, print, auth pages, accept-invite)
+│   └── *.html                 # Pages (index, trip, timeline, costs, stats, print, login, signup, forgot, reset, accept-invite, verify-email, admin, privacy, terms)
 ├── functions/
 │   ├── _middleware.ts         # CORS headers for all routes
 │   ├── _lib/
 │   │   ├── auth.ts            # JWT helpers, requireUser, password hashing
 │   │   ├── share.ts           # Share token helpers
 │   │   ├── members.ts         # Trip membership helpers (isTripOwner, isTripMember, canAccessTrip)
-│   │   └── http.ts            # json(), error(), methodNotAllowed() helpers
+│   │   ├── http.ts            # json(), error(), methodNotAllowed() helpers
+│   │   └── sendVerificationEmail.ts  # Shared email verification helper
 │   └── api/
 │       ├── login.ts
 │       ├── signup.ts
@@ -99,6 +105,12 @@ cloudtrips/
 │       ├── getVisitedCountries.ts
 │       ├── saveVisitedCountries.ts
 │       ├── getStats.ts
+│       ├── verifyEmail.ts
+│       ├── resendVerification.ts
+│       ├── deleteAccount.ts
+│       ├── getUsers.ts
+│       ├── setUserUnlimited.ts
+│       ├── adminDeleteUser.ts
 │       ├── requestPasswordReset.ts
 │       └── resetPassword.ts
 ├── migrations/
@@ -113,7 +125,10 @@ cloudtrips/
 │   ├── 009_error_logs.sql
 │   ├── 010_visited_countries.sql
 │   ├── 011_user_settings.sql
-│   └── 012_trip_members.sql
+│   ├── 012_trip_members.sql
+│   ├── 013_email_verification.sql
+│   ├── 014_admin_pdf_quota.sql
+│   └── 015_pdf_monthly_limit.sql
 ├── src/
 │   └── input.css              # Tailwind source
 ├── build.cjs                  # Build script (Tailwind + cache-bust + deploy)
@@ -128,7 +143,8 @@ cloudtrips/
 
 ```sql
 users (
-  id, email, password_hash, settings, created_at
+  id, email, password_hash, settings, email_verified_at,
+  is_admin, pdf_monthly_limit, created_at
 )
 
 trips (
@@ -161,6 +177,10 @@ password_resets (
 
 visited_countries (
   user_id, countries
+)
+
+email_verifications (
+  id, user_id, token_hash, expires_at, used_at, created_at
 )
 
 error_logs (
@@ -256,9 +276,9 @@ npm run build
 CloudTrips is installable as a Progressive Web App on both desktop and mobile.
 
 - `public/manifest.json` — app name, icons, display mode
-- `public/sw.js` — service worker: cache-first for static assets, network-only for `/api/*`
+- `public/sw.js` — service worker: cache-first for JS/CSS only, HTML pages and API calls always go to network
 - Icons live in `public/icons/` (192×192 and 512×512 PNG + apple-touch-icon)
-- To update cached assets after a deploy, increment the cache version in `sw.js` (`cloudtrips-v1` → `cloudtrips-v2`)
+- To update cached JS/CSS after a deploy, increment the cache version in `sw.js` (e.g. `cloudtrips-v6` → `cloudtrips-v7`)
 
 ---
 
@@ -279,9 +299,39 @@ Owners can invite other registered users by email. Invited users get `editor` ro
 
 ---
 
+## PDF export tiers
+
+| Tier | Monthly limit | How to set |
+|---|---|---|
+| Free | 5 exports | Default for all new users |
+| Paid | 100 exports | Admin sets via admin panel |
+| Unlimited | No limit | Admin sets via admin panel |
+
+Usage tracked per-user in KV (`pdf_user_{id}_{YYYY_MM}`). Resets automatically each month.
+
+---
+
+## Admin panel
+
+Accessible at `/admin.html` — visible only to users with `is_admin = 1`. Link appears in Settings modal for admin accounts.
+
+Features: user list with search + pagination, per-user PDF tier toggle, admin flag toggle, user deletion, Browserless usage chart, error log.
+
+To promote a user to admin:
+```bash
+npx wrangler d1 execute trips --remote --command "UPDATE users SET is_admin = 1 WHERE email = 'you@example.com'"
+```
+
+---
+
+## Email verification
+
+New users must verify their email before accessing the app. Existing users were auto-verified at migration time. Unverified users are blocked at login and redirected to `/verify-email.html`. Verification tokens expire after 24 hours. Resend is rate-limited to once per 2 minutes.
+
+---
+
 ## Known limitations
 
-- No pagination on the trips list — all trips are fetched at once.
 - No per-trip activity count limit.
 - PDF export requires a valid `BROWSERLESS_API_KEY` — returns 503 if missing.
 - PDF export is limited to 1000 renders/month (tracked in KV, visible to admin via `GET /api/getPdfUsage`).
