@@ -1,5 +1,5 @@
 import { requireUser, tryGetUser } from '../_lib/auth';
-import type { Env } from '../_lib/auth';
+import type { Env, AuthUser } from '../_lib/auth';
 import { error, methodNotAllowed } from '../_lib/http';
 import { findValidShareByToken, getShareTokenFromRequest } from '../_lib/share';
 
@@ -298,7 +298,7 @@ export async function onRequestGet(context: { request: Request; env: Env & { BRO
 
   // Auth: owner or valid share token
   let publicMode = false;
-  let authedUser: { id: string; email: string } | null = null;
+  let authedUser: AuthUser | null = null;
 
   const shareToken = getShareTokenFromRequest(request);
   if (shareToken) {
@@ -307,7 +307,7 @@ export async function onRequestGet(context: { request: Request; env: Env & { BRO
     publicMode = share.mode === 'public';
   } else {
     try {
-      authedUser = await requireUser(context) as { id: string; email: string };
+      authedUser = await requireUser(context);
     } catch {
       return error('Unauthorized.', 401);
     }

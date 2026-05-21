@@ -20,13 +20,14 @@ type TripSummaryRow = {
 export async function onRequestGet(context: { request: Request; env: Env }) {
   const { env, request } = context;
 
-  let user: { id: string; email?: string };
+  let user: { id: string; email?: string } | undefined;
   try {
     user = await requireUser(context);
   } catch (err) {
     console.warn('Auth failed (getTrips):', err);
     return error('Unauthorized.', 401);
   }
+  if (!user) return error('Unauthorized.', 401);
 
   const url = new URL(request.url);
   const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));
