@@ -54,7 +54,7 @@
           <i data-lucide="settings" class="w-4 h-4"></i>
         </button>
 
-        <button id="logout-button" onclick="logout()" aria-label="Log out"
+        <button id="logout-button" onclick="logout()" aria-label="Logout"
           class="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
           <i data-lucide="log-out" class="w-4 h-4"></i>
           Logout
@@ -82,7 +82,7 @@
       </div>
 
       <select id="tripYearFilter"
-        onchange="filterTrips()"
+        onchange="filterTrips()" aria-label="Filter trips by year"
         class="rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition">
         <option value="">All years</option>
       </select>

@@ -14,7 +14,7 @@ function emptyState(title, message, icon) {
       <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-500 dark:text-slate-500 dark:bg-slate-800 dark:text-slate-400">
         <i data-lucide="${icon}" class="h-6 w-6"></i>
       </div>
-      <h3 class="text-lg font-semibold tracking-tight">${escapeHtml(title)}</h3>
+      <h2 class="text-lg font-semibold tracking-tight">${escapeHtml(title)}</h2>
       <p class="mt-2 text-sm text-slate-500 dark:text-slate-500 dark:text-slate-400">${escapeHtml(message)}</p>
     </div>
   `;
