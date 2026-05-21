@@ -6,7 +6,7 @@
  *   - print.html / accept-invite.html: network-first (dynamic content)
  * ========================= */
 
-const CACHE = 'cloudtrips-v1';
+const CACHE = 'cloudtrips-v2';
 
 const STATIC_ASSETS = [
   '/',
@@ -36,7 +36,8 @@ const STATIC_ASSETS = [
 // Pages that must always be fresh — skip caching these
 const NETWORK_FIRST = [
   '/print.html',
-  '/accept-invite.html'
+  '/accept-invite.html',
+  '/verify-email.html'
 ];
 
 /* ---------- INSTALL ---------- */
@@ -88,7 +89,8 @@ self.addEventListener('fetch', event => {
     caches.open(CACHE).then(cache =>
       cache.match(request).then(cached => {
         const networkFetch = fetch(request).then(response => {
-          if (response.ok) {
+          // Only cache clean successful responses — never cache redirects
+          if (response.ok && !response.redirected && response.type !== 'opaqueredirect') {
             cache.put(request, response.clone());
           }
           return response;
