@@ -2,132 +2,154 @@
 <html lang="en" class="h-full">
 <head>
   <script>
-    (function() {
-      const theme = localStorage.getItem('cloudtrips_theme') || 'dark';
-      document.documentElement.classList.toggle('dark', theme === 'dark');
-    })();
+  (function() {
+    const theme = localStorage.getItem('cloudtrips_theme') || 'dark';
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+  })();
   </script>
-
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>My Trips</title>
-  <meta name="description" content="Plan and track your trips with CloudTrips.">
-
+  <title>Accept Invite — CloudTrips</title>
+  <meta name="description" content="Accept your invitation to collaborate on a trip in CloudTrips.">
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#2563eb">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
   <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg">
   <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
   <link href="/output.css" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest" defer></script>
 </head>
+<body class="min-h-full bg-slate-300 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+<div class="min-h-screen bg-gradient-to-br from-slate-300 via-slate-200 to-slate-300 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 flex items-center justify-center p-4">
 
-<body class="min-h-full bg-slate-300 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-x-hidden">
-<div class="min-h-screen bg-gradient-to-br from-slate-300 via-slate-200 to-slate-300 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900">
-
-  <!-- HEADER -->
-  <header class="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
-    <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
-
-      <h1 class="text-xl font-semibold tracking-tight">
-        My Trips
-      </h1>
-
-      <!-- Auth section -->
-      <div class="flex items-center gap-3">
-        <span id="auth-user-email"
-          class="hidden sm:inline text-sm text-slate-500 dark:text-slate-400 truncate max-w-[180px]">
-        </span>
-
-        <button onclick="toggleTheme()" data-theme-toggle
-          class="inline-flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
-          aria-label="Toggle theme">
-          <i data-lucide="sun" class="w-4 h-4"></i>
-        </button>
-
-        <!-- Settings -->
-        <button onclick="openSettingsModal()"
-          class="inline-flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
-          aria-label="Settings">
-          <i data-lucide="settings" class="w-4 h-4"></i>
-        </button>
-
-        <button id="logout-button" onclick="logout()" aria-label="Logout"
-          class="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
-          <i data-lucide="log-out" class="w-4 h-4"></i>
-          Logout
-        </button>
-      </div>
-
+  <div id="card" class="w-full max-w-sm rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 shadow-2xl text-center">
+    <div id="loading" class="">
+      <i data-lucide="loader" class="h-10 w-10 text-primary-500 mx-auto mb-4 animate-spin"></i>
+      <p class="text-slate-500 dark:text-slate-400">Processing your invite…</p>
     </div>
-  </header>
-
-  <!-- MAIN -->
-  <main class="max-w-5xl mx-auto px-4 py-5 pb-24">
-
-    <!-- Quick stats strip -->
-    <div id="index-stats" class="hidden mb-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-    </div>
-
-    <!-- Search + Filter -->
-    <div class="mb-4 flex flex-col sm:flex-row gap-2">
-      <div class="relative flex-1">
-        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none"></i>
-        <input id="tripSearch"
-          placeholder="Search trips..."
-          oninput="filterTrips()"
-          class="w-full rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 pl-9 pr-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition" />
-      </div>
-
-      <select id="tripYearFilter"
-        onchange="filterTrips()" aria-label="Filter trips by year"
-        class="rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition">
-        <option value="">All years</option>
-      </select>
-    </div>
-
-    <!-- Add Trip -->
-    <div class="mb-6 flex flex-col sm:flex-row gap-2">
-      <input id="newTripName"
-        placeholder="Trip name"
-        class="flex-1 rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition" />
-
-      <button onclick="addTrip()"
-        class="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary-600 px-4 py-3 text-sm font-medium text-white hover:bg-primary-500 active:scale-[0.98] transition">
-        <i data-lucide="plus" class="w-4 h-4"></i>
-        Add
-      </button>
-    </div>
-
-    <!-- Trips -->
-    <div id="trip-list"
-      class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-    </div>
-
-  </main>
+  </div>
 
 </div>
 
 <script src="/state.js"></script>
 <script src="/helpers.js"></script>
-<script src="/ui.js"></script>
-<script src="/auth.js"></script>
 <script src="/api.js"></script>
-<script src="/trips.js"></script>
-<script src="/activities.js"></script>
-<script src="/init.js"></script>
+<script src="/auth.js"></script>
 
 <script>
-  (function() {
-    const btn = document.querySelector('[data-theme-toggle] i');
-    if (btn) {
-      btn.setAttribute('data-lucide',
-        localStorage.getItem('cloudtrips_theme') === 'light' ? 'moon' : 'sun');
-      if (window.lucide) lucide.createIcons();
+
+async function processInvite() {
+  const card = document.getElementById('card');
+  const token = new URLSearchParams(window.location.search).get('token');
+
+  if (!token) {
+    showError('Invalid invite link.', 'The link you followed is missing a token.');
+    return;
+  }
+
+  try {
+    let data;
+    try {
+      data = await apiGet(`/api/acceptInvite?token=${encodeURIComponent(token)}`);
+    } catch (err) {
+      // apiGet throws on non-2xx — check if it's an auth issue or already accepted
+      if (err?.message?.includes('401') || err?.message?.includes('Unauthorized')) {
+        data = { requiresAuth: true };
+      } else if (err?.message?.includes('409') || err?.message?.includes('already been accepted')) {
+        // Already accepted — just go home, the member row exists
+        window.location.href = '/';
+        return;
+      } else {
+        throw err;
+      }
     }
-  })();
+
+    if (data.requiresAuth) {
+      // Not logged in — show signup/login options
+      localStorage.setItem('cloudtrips_pending_invite', token);
+      card.innerHTML = `
+        <div>
+          <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-500/10 mx-auto mb-4">
+            <i data-lucide="mail" class="h-7 w-7 text-primary-400"></i>
+          </div>
+          <h1 class="text-xl font-semibold tracking-tight mb-2">You've been invited!</h1>
+          <p class="text-slate-500 dark:text-slate-400 mb-6">Sign in or create an account to accept this invite and join the trip.</p>
+          <div class="flex flex-col gap-2">
+            <a href="/signup.html?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}"
+              class="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary-600 px-6 py-3 text-sm font-medium text-white hover:bg-primary-500 transition">
+              <i data-lucide="user-plus" class="h-4 w-4"></i>
+              Create account
+            </a>
+            <a href="/login.html?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}"
+              class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-6 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+              <i data-lucide="log-in" class="h-4 w-4"></i>
+              Sign in
+            </a>
+          </div>
+        </div>
+      `;
+      if (window.lucide) lucide.createIcons();
+      return;
+    }
+
+    if (!data?.ok) {
+      showError('Invite failed', data?.error || 'Something went wrong.');
+      return;
+    }
+
+    // Success
+    card.innerHTML = `
+      <div>
+        <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/10 mx-auto mb-4">
+          <i data-lucide="check" class="h-7 w-7 text-emerald-500"></i>
+        </div>
+        <h1 class="text-xl font-semibold tracking-tight mb-2">You're in!</h1>
+        <p class="text-slate-500 dark:text-slate-400 mb-6">You now have access to <strong class="text-slate-900 dark:text-slate-100">${escapeHtml(data.tripName)}</strong>.</p>
+        <a href="/trip.html?id=${encodeURIComponent(data.tripId)}"
+          class="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary-600 px-6 py-3 text-sm font-medium text-white hover:bg-primary-500 transition">
+          <i data-lucide="arrow-right" class="h-4 w-4"></i>
+          Open trip
+        </a>
+      </div>
+    `;
+    if (window.lucide) lucide.createIcons();
+
+  } catch (err) {
+    showError('Something went wrong', err?.message || 'Please try again.');
+  }
+}
+
+function showError(title, message) {
+  const card = document.getElementById('card');
+  card.innerHTML = `
+    <div>
+      <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-red-500/10 mx-auto mb-4">
+        <i data-lucide="alert-triangle" class="h-7 w-7 text-red-500"></i>
+      </div>
+      <h1 class="text-xl font-semibold tracking-tight mb-2">${escapeHtml(title)}</h1>
+      <p class="text-slate-500 dark:text-slate-400 mb-6">${escapeHtml(message)}</p>
+      <a href="/" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-6 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+        Go home
+      </a>
+    </div>
+  `;
+  if (window.lucide) lucide.createIcons();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.lucide) lucide.createIcons();
+
+  // Check if returning from login with a pending invite
+  const pendingToken = localStorage.getItem('cloudtrips_pending_invite');
+  const urlToken = new URLSearchParams(window.location.search).get('token');
+
+  if (pendingToken && pendingToken === urlToken) {
+    localStorage.removeItem('cloudtrips_pending_invite');
+  }
+
+  processInvite();
+});
 </script>
 </body>
 </html>
