@@ -84,6 +84,7 @@ cloudtrips/
 │       ├── deleteActivity.ts
 │       ├── reorderActivities.ts
 │       ├── shareTrip.ts
+│       ├── getErrors.ts
 │       ├── getShares.ts
 │       ├── revokeShare.ts
 │       ├── disableShare.ts
@@ -158,6 +159,10 @@ password_resets (
   id, user_id, token_hash, expires_at, used_at, created_at
 )
 
+visited_countries (
+  user_id, countries
+)
+
 error_logs (
   id, message, stack, url, user_id, created_at
 )
@@ -224,7 +229,9 @@ node build.cjs
 
 This runs Tailwind, injects cache-busting `?v=TIMESTAMP` into all script tags, then deploys via `wrangler pages deploy public`. Use `--dry` to build without deploying.
 
-Or push to `main` — Cloudflare auto-deploys via GitHub integration (without cache-busting).
+> **Cloudflare Pages build settings:** set the build command to `node build.cjs --dry` — this runs Tailwind and cache-busting but skips the deploy step, since Cloudflare handles deployment itself.
+
+> ⚠️ Pushing to `main` triggers a Cloudflare auto-deploy via GitHub integration, but **without cache-busting** — users may get stale JS from the service worker or browser cache. Always use `node build.cjs` for production releases.
 
 ### Run database migrations
 
@@ -277,3 +284,4 @@ Owners can invite other registered users by email. Invited users get `editor` ro
 - No pagination on the trips list — all trips are fetched at once.
 - No per-trip activity count limit.
 - PDF export requires a valid `BROWSERLESS_API_KEY` — returns 503 if missing.
+- PDF export is limited to 1000 renders/month (tracked in KV, visible to admin via `GET /api/getPdfUsage`).
