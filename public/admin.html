@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <script>
+  (function() {
+    const theme = localStorage.getItem('cloudtrips_theme') || 'dark';
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+  })();
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin · CloudTrips</title>
+  <meta name="description" content="CloudTrips admin panel.">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg">
+  <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
+  <link href="/output.css" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest" defer></script>
+</head>
+<body class="min-h-full bg-slate-300 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-x-hidden">
+<div class="min-h-screen bg-gradient-to-br from-slate-300 via-slate-200 to-slate-300 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900">
+
+  <!-- HEADER -->
+  <header class="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <a href="/" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
+          <i data-lucide="arrow-left" class="w-5 h-5"></i>
+        </a>
+        <h1 class="text-xl font-semibold tracking-tight">Admin panel</h1>
+      </div>
+      <div class="flex items-center gap-2">
+        <span id="auth-user-email" class="hidden sm:inline text-sm text-slate-500 dark:text-slate-400 truncate max-w-[160px]"></span>
+        <button id="logout-button" onclick="logout()" aria-label="Logout"
+          class="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+          Logout
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-6 pb-20 space-y-6">
+
+    <!-- PDF USAGE -->
+    <section class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-base font-semibold">Browserless PDF usage</h2>
+        <button onclick="loadPdfUsage()" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+          <i data-lucide="refresh-cw" class="h-3.5 w-3.5"></i> Refresh
+        </button>
+      </div>
+      <div id="pdf-usage" class="text-sm text-slate-400 text-center py-4">Loading…</div>
+    </section>
+
+    <!-- USER MANAGEMENT -->
+    <section class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-base font-semibold">Users</h2>
+        <button onclick="loadUsers()" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+          <i data-lucide="refresh-cw" class="h-3.5 w-3.5"></i> Refresh
+        </button>
+      </div>
+      <div id="user-table" class="text-sm text-slate-400 text-center py-4">Loading…</div>
+    </section>
+
+    <!-- ERROR LOG -->
+    <section class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-base font-semibold">Error log</h2>
+        <button onclick="loadErrors(200)" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+          <i data-lucide="refresh-cw" class="h-3.5 w-3.5"></i> Refresh
+        </button>
+      </div>
+      <div id="error-log" class="text-sm text-slate-400 text-center py-4">Loading…</div>
+    </section>
+
+  </main>
+</div>
+
+<script src="/state.js"></script>
+<script src="/helpers.js"></script>
+<script src="/ui.js"></script>
+<script src="/auth.js"></script>
+<script src="/api.js"></script>
+<script src="/init.js"></script>
+
+<script>
+/* =========================
+ * ADMIN PAGE
+ * ========================= */
+
+async function loadPdfUsage() {
+  const el = document.getElementById('pdf-usage');
+  el.innerHTML = '<div class="text-center py-4 text-slate-400 text-xs">Loading…</div>';
+  try {
+    const data = await apiGet(API.GET_PDF_USAGE);
+    if (!data.usage?.length) {
+      el.innerHTML = '<div class="text-center py-4 text-slate-400">No usage recorded yet.</div>';
+      return;
+    }
+    el.innerHTML = `
+      <div class="overflow-x-auto">
+        <table class="min-w-full border-separate border-spacing-y-1 text-sm">
+          <thead>
+            <tr class="text-left text-xs text-slate-400 dark:text-slate-500">
+              <th class="px-3 py-1 font-medium">Month</th>
+              <th class="px-3 py-1 font-medium text-right">Renders</th>
+              <th class="px-3 py-1 font-medium">Usage</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.usage.map(u => {
+              const pct = Math.round((u.count / data.limit) * 100);
+              const color = pct >= 90 ? 'red' : pct >= 70 ? 'amber' : 'emerald';
+              return `
+                <tr class="bg-white dark:bg-slate-950/60">
+                  <td class="rounded-l-xl px-3 py-2 font-medium">${escapeHtml(u.month)}</td>
+                  <td class="px-3 py-2 text-right">${u.count} / ${data.limit}</td>
+                  <td class="rounded-r-xl px-3 py-2 w-40">
+                    <div class="flex items-center gap-2">
+                      <div class="h-2 flex-1 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                        <div class="h-full rounded-full bg-${color}-500" style="width:${pct}%"></div>
+                      </div>
+                      <span class="text-xs text-slate-400">${pct}%</span>
+                    </div>
+                  </td>
+                </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  } catch (err) {
+    el.innerHTML = `<div class="text-center py-4 text-red-400">${escapeHtml(err?.message || 'Failed to load.')}</div>`;
+  }
+}
+
+async function loadUsers() {
+  const el = document.getElementById('user-table');
+  el.innerHTML = '<div class="text-center py-4 text-slate-400 text-xs">Loading…</div>';
+  try {
+    const data = await apiGet(API.GET_USERS);
+    const users = data.users || [];
+    if (!users.length) {
+      el.innerHTML = '<div class="text-center py-4 text-slate-400">No users found.</div>';
+      return;
+    }
+    el.innerHTML = `
+      <div class="overflow-x-auto">
+        <table class="min-w-full border-separate border-spacing-y-1 text-sm">
+          <thead>
+            <tr class="text-left text-xs text-slate-400 dark:text-slate-500">
+              <th class="px-3 py-1 font-medium">Email</th>
+              <th class="px-3 py-1 font-medium text-center">Verified</th>
+              <th class="px-3 py-1 font-medium text-center">Admin</th>
+              <th class="px-3 py-1 font-medium text-center">PDF exports this month</th>
+              <th class="px-3 py-1 font-medium text-center">Unlimited PDF</th>
+              <th class="px-3 py-1 font-medium">Joined</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${users.map(u => `
+              <tr class="bg-white dark:bg-slate-950/60">
+                <td class="rounded-l-xl px-3 py-2 font-medium text-slate-700 dark:text-slate-200">${escapeHtml(u.email)}</td>
+                <td class="px-3 py-2 text-center">
+                  ${u.emailVerified
+                    ? '<span class="inline-flex items-center rounded-full bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">Yes</span>'
+                    : '<span class="inline-flex items-center rounded-full bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">No</span>'}
+                </td>
+                <td class="px-3 py-2 text-center">
+                  <button onclick="toggleUserField('${escapeHtml(u.id)}', 'is_admin', ${!u.isAdmin})"
+                    class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium transition ${u.isAdmin ? 'bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-400 hover:bg-primary-100' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'}">
+                    ${u.isAdmin ? 'Yes' : 'No'}
+                  </button>
+                </td>
+                <td class="px-3 py-2 text-center text-slate-600 dark:text-slate-300">
+                  ${u.pdfUnlimited ? '∞' : `${u.pdfUsageThisMonth} / 5`}
+                </td>
+                <td class="px-3 py-2 text-center">
+                  <button onclick="toggleUserField('${escapeHtml(u.id)}', 'pdf_exports_unlimited', ${!u.pdfUnlimited})"
+                    class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium transition ${u.pdfUnlimited ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'}">
+                    ${u.pdfUnlimited ? 'Unlimited' : 'Limited'}
+                  </button>
+                </td>
+                <td class="rounded-r-xl px-3 py-2 text-xs text-slate-400">${escapeHtml(u.createdAt?.slice(0, 10) || '—')}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="mt-2 text-xs text-slate-400 text-right">${users.length} user${users.length === 1 ? '' : 's'}</div>`;
+    if (window.lucide) lucide.createIcons();
+  } catch (err) {
+    el.innerHTML = `<div class="text-center py-4 text-red-400">${escapeHtml(err?.message || 'Failed to load.')}</div>`;
+  }
+}
+
+async function toggleUserField(userId, field, value) {
+  try {
+    await apiPost(API.SET_USER_UNLIMITED, { userId, field, value });
+    showToast(`Updated successfully.`, 'success');
+    loadUsers();
+  } catch (err) {
+    showToast(err?.message || 'Failed to update.', 'error');
+  }
+}
+</script>
+</body>
+</html>

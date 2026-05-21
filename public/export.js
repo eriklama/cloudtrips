@@ -131,6 +131,12 @@ function openExportDropdown(triggerBtn) {
   dropdown.id = 'export-dropdown';
   dropdown.className = 'absolute right-0 top-full mt-2 w-44 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl z-50 overflow-hidden';
 
+  // Build PDF label with quota info for non-unlimited users
+  const pdfQuota = state.user?.pdfQuota;
+  const pdfLabel = pdfQuota !== undefined
+    ? `Download PDF <span class="ml-1 text-xs text-slate-400">(${Math.max(0, 5 - pdfQuota)}/5 left)</span>`
+    : 'Download PDF';
+
   const items = [
     {
       icon: 'file-spreadsheet',
@@ -139,7 +145,7 @@ function openExportDropdown(triggerBtn) {
     },
     {
       icon: 'file-down',
-      label: 'Download PDF',
+      label: pdfLabel,
       onClick: () => { closeExportDropdown(); downloadPdf(); }
     },
     {
@@ -218,6 +224,9 @@ async function downloadPdf() {
 
     if (!response.ok) {
       const data = await response.json().catch(() => null);
+      if (response.status === 429) {
+        throw new Error(data?.error || 'Monthly PDF export limit reached.');
+      }
       throw new Error(data?.error || `PDF generation failed (${response.status})`);
     }
 

@@ -457,9 +457,10 @@ async function openSettingsModal() {
         </button>
       </div>
 
-      <div class="mt-6 border-t border-slate-200 dark:border-slate-800 pt-4 flex gap-4">
+      <div class="mt-6 border-t border-slate-200 dark:border-slate-800 pt-4 flex gap-4 flex-wrap">
         <a href="/privacy.html" target="_blank" class="text-xs text-slate-400 dark:text-slate-500 hover:text-indigo-400 transition">Privacy Policy</a>
         <a href="/terms.html" target="_blank" class="text-xs text-slate-400 dark:text-slate-500 hover:text-indigo-400 transition">Terms of Service</a>
+        ${state.user?.isAdmin ? '<a href="/admin.html" class="text-xs text-primary-400 hover:text-primary-300 font-medium transition">Admin panel</a>' : ''}
       </div>
 
       <div class="mt-4 border-t border-slate-200 dark:border-slate-800 pt-5">
@@ -1028,7 +1029,6 @@ async function loadStats() {
 
       populateCountrySelector();
       renderVisitedPills();
-      loadErrors();
       return;
     }
 
@@ -1048,8 +1048,7 @@ async function loadStats() {
       applyStatsCurrency(); // fire and forget — don't await
     }
 
-    // Load error log — will silently hide if user is not admin
-    loadErrors();
+
   } catch (err) {
     console.error(err);
     const table = document.getElementById('stats-table');

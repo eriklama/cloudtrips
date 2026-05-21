@@ -8,15 +8,16 @@ export async function onRequestGet(context: { request: Request; env: Env }) {
 
     // Check email verification status
     const row = await context.env.DB
-      .prepare(`SELECT email_verified_at FROM users WHERE id = ? LIMIT 1`)
+      .prepare(`SELECT email_verified_at, is_admin FROM users WHERE id = ? LIMIT 1`)
       .bind(user.id)
-      .first<{ email_verified_at: string | null }>();
+      .first<{ email_verified_at: string | null; is_admin: number }>();
 
     return json({
       ok: true,
       user: {
         ...user,
-        emailVerified: Boolean(row?.email_verified_at)
+        emailVerified: Boolean(row?.email_verified_at),
+        isAdmin: Boolean(row?.is_admin)
       }
     });
   } catch (err) {

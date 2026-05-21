@@ -298,6 +298,7 @@ export async function onRequestGet(context: { request: Request; env: Env & { BRO
 
   // Auth: owner or valid share token
   let publicMode = false;
+  let authedUser: { id: string; email: string } | null = null;
 
   const shareToken = getShareTokenFromRequest(request);
   if (shareToken) {
@@ -306,9 +307,29 @@ export async function onRequestGet(context: { request: Request; env: Env & { BRO
     publicMode = share.mode === 'public';
   } else {
     try {
-      await requireUser(context);
+      authedUser = await requireUser(context) as { id: string; email: string };
     } catch {
       return error('Unauthorized.', 401);
+    }
+  }
+
+  // Per-user PDF quota check (authenticated users only, not share links)
+  if (authedUser) {
+    const userRow = await env.DB
+      .prepare(`SELECT pdf_exports_unlimited FROM users WHERE id = ? LIMIT 1`)
+      .bind(authedUser.id)
+      .first<{ pdf_exports_unlimited: number }>();
+
+    if (!userRow?.pdf_exports_unlimited) {
+      const now = new Date();
+      const monthSuffix = `_${now.getUTCFullYear()}_${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+      const userMonthKey = `pdf_user_${authedUser.id}${monthSuffix}`;
+      const userUsage = await env.RATE_LIMIT_KV.get(userMonthKey);
+      const userCount = userUsage ? parseInt(userUsage, 10) : 0;
+
+      if (userCount >= 5) {
+        return error('You have used all 5 free PDF exports for this month. Upgrade to unlimited to continue.', 429);
+      }
     }
   }
 
@@ -335,13 +356,24 @@ export async function onRequestGet(context: { request: Request; env: Env & { BRO
   // Build HTML
   const html = buildHtml(trip, activities, publicMode);
 
-  // Track Browserless usage in KV
+  // Track usage in KV (global Browserless + per-user)
   try {
     const now = new Date();
-    const monthKey = `browserless_usage_${now.getUTCFullYear()}_${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
-    const existing = await env.RATE_LIMIT_KV.get(monthKey);
-    const count = existing ? parseInt(existing, 10) + 1 : 1;
-    await env.RATE_LIMIT_KV.put(monthKey, String(count), { expirationTtl: 60 * 60 * 24 * 40 }); // keep ~40 days
+    const monthSuffix = `_${now.getUTCFullYear()}_${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+
+    // Global Browserless counter
+    const globalKey = `browserless_usage${monthSuffix}`;
+    const globalExisting = await env.RATE_LIMIT_KV.get(globalKey);
+    const globalCount = globalExisting ? parseInt(globalExisting, 10) + 1 : 1;
+    await env.RATE_LIMIT_KV.put(globalKey, String(globalCount), { expirationTtl: 60 * 60 * 24 * 40 });
+
+    // Per-user counter
+    if (authedUser) {
+      const userKey = `pdf_user_${authedUser.id}${monthSuffix}`;
+      const userExisting = await env.RATE_LIMIT_KV.get(userKey);
+      const userCount = userExisting ? parseInt(userExisting, 10) + 1 : 1;
+      await env.RATE_LIMIT_KV.put(userKey, String(userCount), { expirationTtl: 60 * 60 * 24 * 40 });
+    }
   } catch (e) {
     console.warn('Usage tracking failed (non-fatal):', e);
   }

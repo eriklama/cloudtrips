@@ -27,10 +27,13 @@ const API = {
   DISABLE_SHARE: '/api/disableShare',
   DELETE_ACCOUNT: '/api/deleteAccount',
   RESEND_VERIFICATION: '/api/resendVerification',
-  VERIFY_EMAIL: '/api/verifyEmail'
+  VERIFY_EMAIL: '/api/verifyEmail',
+  GET_USERS: '/api/getUsers',
+  SET_USER_UNLIMITED: '/api/setUserUnlimited'
 };
 
 const state = {
+  user: null,
   trips: [],
   tripsLoaded: false,
   tripsPage: 1,

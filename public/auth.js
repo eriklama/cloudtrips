@@ -48,6 +48,7 @@ async function requireAuth() {
       window.location.href = '/verify-email.html';
       return null;
     }
+    state.user = data.user;
     updateAuthUi(data.user);
     return data.user;
   } catch {
