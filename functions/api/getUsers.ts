@@ -45,7 +45,7 @@ export async function onRequestGet(context: { request: Request; env: Env }) {
     const now = new Date();
     const monthSuffix = `_${now.getUTCFullYear()}_${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
 
-    const users = await Promise.all((result.results ?? []).map(async (u) => {
+    const users = await Promise.all((result.results ?? []).map(async (u: UserRow) => {
       const kvKey = `pdf_user_${u.id}${monthSuffix}`;
       const usage = await env.RATE_LIMIT_KV.get(kvKey);
       return {

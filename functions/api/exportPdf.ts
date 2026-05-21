@@ -286,7 +286,7 @@ function buildHtml(trip: TripRow, activities: ActivityRow[], publicMode: boolean
  * HANDLER
  * ========================= */
 
-export async function onRequestGet(context: { request: Request; env: Env & { BROWSERLESS_API_KEY: string; RATE_LIMIT_KV: KVNamespace } }) {
+export async function onRequestGet(context: { request: Request; env: Env & { BROWSERLESS_API_KEY: string } }) {
   const { request, env } = context;
 
   const params = new URL(request.url).searchParams;
@@ -421,7 +421,7 @@ export async function onRequestGet(context: { request: Request; env: Env & { BRO
   });
 }
 
-export function onRequest(context: { request: Request; env: Env & { BROWSERLESS_API_KEY: string; RATE_LIMIT_KV: KVNamespace } }) {
+export function onRequest(context: { request: Request; env: Env & { BROWSERLESS_API_KEY: string } }) {
   if (context.request.method !== 'GET') return methodNotAllowed(['GET']);
   return onRequestGet(context);
 }

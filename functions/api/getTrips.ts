@@ -84,7 +84,7 @@ export async function onRequestGet(context: { request: Request; env: Env }) {
 
     const rows = Array.isArray(result?.results) ? result.results : [];
 
-    const trips = rows.map((row) => ({
+    const trips = rows.map((row: TripSummaryRow) => ({
       id: row.id,
       name: row.name,
       notes: row.notes ?? '',
