@@ -457,7 +457,12 @@ async function openSettingsModal() {
         </button>
       </div>
 
-      <div class="mt-6 border-t border-slate-200 dark:border-slate-800 pt-5">
+      <div class="mt-6 border-t border-slate-200 dark:border-slate-800 pt-4 flex gap-4">
+        <a href="/privacy.html" target="_blank" class="text-xs text-slate-400 dark:text-slate-500 hover:text-indigo-400 transition">Privacy Policy</a>
+        <a href="/terms.html" target="_blank" class="text-xs text-slate-400 dark:text-slate-500 hover:text-indigo-400 transition">Terms of Service</a>
+      </div>
+
+      <div class="mt-4 border-t border-slate-200 dark:border-slate-800 pt-5">
         <h3 class="text-sm font-medium text-rose-600 dark:text-rose-400 mb-1">Danger zone</h3>
         <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">
           Permanently delete your account and all trip data. This cannot be undone.
