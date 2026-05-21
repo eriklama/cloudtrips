@@ -1224,13 +1224,15 @@ function sortStatsBy(key) {
   renderStats();
 }
 
-async function loadErrors() {
+async function loadErrors(limit = 200) {
   const container = document.getElementById('error-log');
   if (!container) return;
 
+  container.innerHTML = '<div class="text-center py-4 text-slate-400 text-xs">Loading…</div>';
+
   try {
     const [errData, usageData] = await Promise.all([
-      apiGet('/api/getErrors?limit=50'),
+      apiGet(`/api/getErrors?limit=${limit}`),
       apiGet('/api/getPdfUsage').catch(() => null)
     ]);
 
@@ -1295,7 +1297,10 @@ async function loadErrors() {
           </tbody>
         </table>
       </div>
-      <div class="mt-2 text-xs text-slate-400 text-right">${errors.length} most recent error${errors.length === 1 ? '' : 's'}</div>
+      <div class="mt-3 flex items-center justify-between text-xs text-slate-400">
+        <span>${errors.length} error${errors.length === 1 ? '' : 's'} shown (limit: ${limit})</span>
+        ${errors.length >= limit ? `<button onclick="loadErrors(${limit + 200})" class="text-indigo-400 hover:text-indigo-300 font-medium">Load more</button>` : ''}
+      </div>
     `;
     refreshIcons();
   } catch (err) {

@@ -19,8 +19,14 @@ export async function onRequest(context: any) {
 
   const response = await next();
 
-  // Log 5xx errors to D1
-  if (response.status >= 500) {
+  // Log errors to D1:
+  // - All 5xx (server errors)
+  // - 4xx from /api/ except 401 (401 = normal "not logged in", not worth logging)
+  const reqUrl = new URL(request.url);
+  const shouldLog =
+    response.status >= 500 ||
+    (response.status >= 400 && response.status !== 401 && reqUrl.pathname.startsWith('/api/'));
+  if (shouldLog) {
     try {
       const url = new URL(request.url);
       const cloned = response.clone();
