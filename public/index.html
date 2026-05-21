@@ -11,6 +11,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>My Trips</title>
+  <meta name="description" content="Plan and track your trips with CloudTrips.">
 
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#2563eb">
@@ -20,7 +21,7 @@
   <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg">
   <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
   <link href="/output.css" rel="stylesheet">
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://unpkg.com/lucide@latest" defer></script>
 </head>
 
 <body class="min-h-full bg-slate-300 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-x-hidden">
@@ -53,7 +54,7 @@
           <i data-lucide="settings" class="w-4 h-4"></i>
         </button>
 
-        <button id="logout-button" onclick="logout()"
+        <button id="logout-button" onclick="logout()" aria-label="Log out"
           class="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
           <i data-lucide="log-out" class="w-4 h-4"></i>
           Logout

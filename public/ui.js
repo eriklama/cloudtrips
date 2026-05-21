@@ -212,7 +212,7 @@ function renderActivityCard(activity) {
             <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
               <i data-lucide="${meta.icon}" class="h-5 w-5"></i>
             </span>
-            <h3 class="truncate text-lg font-semibold tracking-tight">${escapeHtml(activity.name || 'Untitled activity')}</h3>
+            <h2 class="truncate text-lg font-semibold tracking-tight">${escapeHtml(activity.name || 'Untitled activity')}</h2>
               ${activity.location ? `<p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">${escapeHtml(activity.location)}</p>` : ''}
             <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${meta.badge}">
               ${escapeHtml(activity.type)}
@@ -250,11 +250,11 @@ function renderActivityCard(activity) {
         ${!isGuestView() ? `
           <div class="flex gap-2">
             <div class="flex flex-col gap-1">
-              <button onclick="moveActivity('${escapeHtml(activity.id)}', 'up')"
+              <button onclick="moveActivity('${escapeHtml(activity.id)}', 'up')" aria-label="Move activity up"
                 class="inline-flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
                 <i data-lucide="chevron-up" class="h-3.5 w-3.5"></i>
               </button>
-              <button onclick="moveActivity('${escapeHtml(activity.id)}', 'down')"
+              <button onclick="moveActivity('${escapeHtml(activity.id)}', 'down')" aria-label="Move activity down"
                 class="inline-flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
                 <i data-lucide="chevron-down" class="h-3.5 w-3.5"></i>
               </button>
