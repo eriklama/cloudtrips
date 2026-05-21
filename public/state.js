@@ -24,7 +24,10 @@ const API = {
   SHARE_TRIP: '/api/shareTrip',
   GET_SHARES: '/api/getShares',
   REVOKE_SHARE: '/api/revokeShare',
-  DISABLE_SHARE: '/api/disableShare'
+  DISABLE_SHARE: '/api/disableShare',
+  DELETE_ACCOUNT: '/api/deleteAccount',
+  RESEND_VERIFICATION: '/api/resendVerification',
+  VERIFY_EMAIL: '/api/verifyEmail'
 };
 
 const state = {

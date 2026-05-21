@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <script>
+  (function() {
+    const theme = localStorage.getItem('cloudtrips_theme') || 'dark';
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+  })();
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy · CloudTrips</title>
+  <meta name="description" content="CloudTrips privacy policy — how we handle your data.">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg">
+  <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
+  <link href="/output.css" rel="stylesheet" />
+</head>
+<body class="min-h-full bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+  <div class="max-w-2xl mx-auto px-6 py-12">
+
+    <a href="/" class="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 mb-8 transition">
+      ← Back to CloudTrips
+    </a>
+
+    <h1 class="text-3xl font-bold tracking-tight mb-2">Privacy Policy</h1>
+    <p class="text-sm text-slate-500 dark:text-slate-400 mb-10">Last updated: May 2026</p>
+
+    <div class="space-y-8 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+
+      <section>
+        <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100 mb-2">1. Who we are</h2>
+        <p>CloudTrips is a personal trip planning app available at <a href="https://cloudtrips.uk" class="text-indigo-500 hover:text-indigo-400">cloudtrips.uk</a>. It is operated as a private project, not a commercial business. For questions, contact <a href="mailto:hello@cloudtrips.uk" class="text-indigo-500 hover:text-indigo-400">hello@cloudtrips.uk</a>.</p>
+      </section>
+
+      <section>
+        <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100 mb-2">2. What data we collect</h2>
+        <p class="mb-2">We collect only what is necessary to run the service:</p>
+        <ul class="list-disc pl-5 space-y-1">
+          <li><strong>Email address</strong> — used for login, password reset, and email verification.</li>
+          <li><strong>Password</strong> — stored as a salted hash (PBKDF2). We never store your plain-text password.</li>
+          <li><strong>Trip data</strong> — trip names, activities, costs, notes, locations, and distances you enter.</li>
+          <li><strong>Settings</strong> — your display preferences (e.g. default currency).</li>
+          <li><strong>IP address</strong> — used temporarily for rate limiting login and signup attempts. Not stored in our database.</li>
+        </ul>
+        <p class="mt-2">We do not collect analytics, track behaviour, serve ads, or use cookies beyond what is strictly necessary for authentication.</p>
+      </section>
+
+      <section>
+        <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100 mb-2">3. How we use your data</h2>
+        <ul class="list-disc pl-5 space-y-1">
+          <li>To provide and operate the CloudTrips service.</li>
+          <li>To send transactional emails (password reset, email verification). We do not send marketing emails.</li>
+          <li>To notify the site operator of new signups (admin notification only — your data is not shared with third parties).</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100 mb-2">4. Third-party services</h2>
+        <p class="mb-2">We use the following third-party services to operate the app:</p>
+        <ul class="list-disc pl-5 space-y-1">
+          <li><strong>Cloudflare</strong> (cloudflare.com) — hosting, database, DNS, DDoS protection. Your data is stored in Cloudflare's infrastructure. See <a href="https://www.cloudflare.com/privacypolicy/" class="text-indigo-500 hover:text-indigo-400" target="_blank" rel="noopener">Cloudflare's privacy policy</a>.</li>
+          <li><strong>Brevo</strong> (brevo.com) — transactional email delivery. Your email address is passed to Brevo solely to send you emails triggered by your actions. See <a href="https://www.brevo.com/legal/privacypolicy/" class="text-indigo-500 hover:text-indigo-400" target="_blank" rel="noopener">Brevo's privacy policy</a>.</li>
+          <li><strong>Browserless</strong> (browserless.io) — server-side PDF rendering. Trip content is passed to Browserless to generate PDFs on demand. See <a href="https://www.browserless.io/privacy" class="text-indigo-500 hover:text-indigo-400" target="_blank" rel="noopener">Browserless's privacy policy</a>.</li>
+        </ul>
+        <p class="mt-2">No data is sold to or shared with any other third parties.</p>
+      </section>
+
+      <section>
+        <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100 mb-2">5. Data retention</h2>
+        <p>Your data is retained for as long as your account exists. You can delete your account at any time from Settings — this permanently and immediately removes all your data, including trips, activities, and your email address.</p>
+      </section>
+
+      <section>
+        <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100 mb-2">6. Your rights</h2>
+        <p class="mb-2">You have the right to:</p>
+        <ul class="list-disc pl-5 space-y-1">
+          <li><strong>Access</strong> your data — all your trip data is visible within the app.</li>
+          <li><strong>Delete</strong> your data — via Settings → Delete account, or by emailing <a href="mailto:hello@cloudtrips.uk" class="text-indigo-500 hover:text-indigo-400">hello@cloudtrips.uk</a>.</li>
+          <li><strong>Correct</strong> your data — you can edit trip data directly in the app.</li>
+        </ul>
+        <p class="mt-2">For any privacy requests, email <a href="mailto:hello@cloudtrips.uk" class="text-indigo-500 hover:text-indigo-400">hello@cloudtrips.uk</a>.</p>
+      </section>
+
+      <section>
+        <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100 mb-2">7. Security</h2>
+        <p>All data is transmitted over HTTPS. Passwords are hashed before storage and never logged. JWTs used for authentication expire after 7 days.</p>
+      </section>
+
+      <section>
+        <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100 mb-2">8. Changes to this policy</h2>
+        <p>We may update this policy occasionally. The date at the top of this page reflects the most recent revision. Continued use of the service after changes constitutes acceptance.</p>
+      </section>
+
+    </div>
+
+    <p class="mt-12 text-xs text-slate-400 dark:text-slate-500">CloudTrips · <a href="mailto:hello@cloudtrips.uk" class="hover:text-slate-600">hello@cloudtrips.uk</a></p>
+  </div>
+</body>
+</html>

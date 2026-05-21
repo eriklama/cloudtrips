@@ -5,6 +5,7 @@ import {
   isValidEmail,
   normalizeUserEmail
 } from '../_lib/auth';
+import { sendVerificationEmail } from '../_lib/sendVerificationEmail';
 import type { Env } from '../_lib/auth';
 import { error, json, methodNotAllowed } from '../_lib/http';
 
@@ -95,6 +96,16 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
       .run();
 
     // =========================
+    // SEND VERIFICATION EMAIL
+    // =========================
+    try {
+      await sendVerificationEmail(env, userId, email);
+    } catch (err) {
+      // Non-fatal — user can resend from verify page
+      console.error('Failed to send verification email:', err);
+    }
+
+    // =========================
     // NOTIFY ADMIN
     // =========================
     const adminEmail = env.ADMIN_EMAIL;
@@ -141,23 +152,12 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
     }
 
     // =========================
-    // CREATE TOKEN
-    // =========================
-    const token = await createAuthToken(
-      { id: userId, email },
-      env
-    );
-
-    // =========================
-    // RESPONSE
+    // RESPONSE — no token yet, user must verify email first
     // =========================
     return json({
       ok: true,
-      token,
-      user: {
-        id: userId,
-        email
-      }
+      requiresVerification: true,
+      email
     });
   } catch (err: any) {
     console.error('SIGNUP ERROR:', err);

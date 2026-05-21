@@ -456,6 +456,18 @@ async function openSettingsModal() {
           Save
         </button>
       </div>
+
+      <div class="mt-6 border-t border-slate-200 dark:border-slate-800 pt-5">
+        <h3 class="text-sm font-medium text-rose-600 dark:text-rose-400 mb-1">Danger zone</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">
+          Permanently delete your account and all trip data. This cannot be undone.
+        </p>
+        <button id="settings-delete-account"
+          class="inline-flex items-center gap-2 rounded-2xl border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 px-4 py-2 text-sm font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 transition">
+          <i data-lucide="trash-2" class="h-4 w-4"></i>
+          Delete account
+        </button>
+      </div>
     </div>
   `;
 
@@ -486,6 +498,31 @@ async function openSettingsModal() {
       showToast(err?.message || 'Failed to save settings.', 'error');
       saveBtn.disabled = false;
       saveBtn.textContent = 'Save';
+    }
+  });
+
+  overlay.querySelector('#settings-delete-account').addEventListener('click', async () => {
+    close();
+    const password = await openTextModal({
+      title: 'Delete account',
+      placeholder: 'Enter your password to confirm',
+      value: '',
+      confirmText: 'Delete permanently',
+      cancelText: 'Cancel',
+      inputType: 'password',
+      danger: true
+    });
+    if (!password) return;
+
+    try {
+      await apiPost(API.DELETE_ACCOUNT, { password });
+      showToast('Account deleted.', 'success');
+      setTimeout(() => {
+        clearAuthSession();
+        window.location.href = '/login.html';
+      }, 1500);
+    } catch (err) {
+      showToast(err?.message || 'Failed to delete account.', 'error');
     }
   });
 }

@@ -6,9 +6,18 @@ export async function onRequestGet(context: { request: Request; env: Env }) {
   try {
     const user = await requireUser(context);
 
+    // Check email verification status
+    const row = await context.env.DB
+      .prepare(`SELECT email_verified_at FROM users WHERE id = ? LIMIT 1`)
+      .bind(user.id)
+      .first<{ email_verified_at: string | null }>();
+
     return json({
       ok: true,
-      user
+      user: {
+        ...user,
+        emailVerified: Boolean(row?.email_verified_at)
+      }
     });
   } catch (err) {
     console.warn('Auth failed (/me):', err);

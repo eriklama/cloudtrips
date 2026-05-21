@@ -18,7 +18,9 @@ function clearAuthSession() {
 
 function isAuthPage() {
   const path = location.pathname;
-  return path.endsWith('/login.html') || path.endsWith('/signup.html');
+  return path.endsWith('/login.html') ||
+         path.endsWith('/signup.html') ||
+         path.endsWith('/verify-email.html');
 }
 
 function redirectToLogin() {
@@ -41,6 +43,11 @@ async function requireAuth() {
 
   try {
     const data = await apiGet('/api/me');
+    // Hard gate — redirect to verify page if email not verified
+    if (!data.user.emailVerified) {
+      window.location.href = '/verify-email.html';
+      return null;
+    }
     updateAuthUi(data.user);
     return data.user;
   } catch {
@@ -122,6 +129,10 @@ async function handleSignupSubmit(event) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
     });
+    if (data.requiresVerification) {
+      window.location.href = '/verify-email.html?email=' + encodeURIComponent(data.email);
+      return;
+    }
     setAuthSession(data.token, data.user);
     const redirectUrl = new URLSearchParams(window.location.search).get('redirect');
     window.location.href = redirectUrl || '/';
