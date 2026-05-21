@@ -6,6 +6,7 @@ type UserRow = {
   id: string;
   email: string;
   password_hash: string;
+  email_verified_at: string | null;
 };
 
 const MAX_ATTEMPTS = 10;
@@ -51,7 +52,7 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
 
     const user = await env.DB
       .prepare(`
-        SELECT id, email, password_hash
+        SELECT id, email, password_hash, email_verified_at
         FROM users
         WHERE email = ?
         LIMIT 1
@@ -66,6 +67,15 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
     const ok = await verifyPassword(password, user.password_hash, env);
     if (!ok) {
       return error('Invalid email or password.', 401);
+    }
+
+    // Block login if email not verified — redirect to verify page instead
+    if (!user.email_verified_at) {
+      return json({
+        ok: true,
+        requiresVerification: true,
+        email: user.email
+      });
     }
 
     const token = await createAuthToken(

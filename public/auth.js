@@ -95,6 +95,10 @@ async function handleLoginSubmit(event) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
     });
+    if (data.requiresVerification) {
+      window.location.href = '/verify-email.html?email=' + encodeURIComponent(data.email);
+      return;
+    }
     setAuthSession(data.token, data.user);
     const redirectUrl = new URLSearchParams(window.location.search).get('redirect');
     window.location.href = redirectUrl || '/';
