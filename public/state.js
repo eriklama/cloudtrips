@@ -30,6 +30,8 @@ const API = {
 const state = {
   trips: [],
   tripsLoaded: false,
+  tripsPage: 1,
+  tripsHasMore: false,
   currentTrip: null,
   editingActivityId: null,
   collapsedActivityDays: new Set(),
