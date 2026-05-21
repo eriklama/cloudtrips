@@ -29,7 +29,8 @@ const API = {
   RESEND_VERIFICATION: '/api/resendVerification',
   VERIFY_EMAIL: '/api/verifyEmail',
   GET_USERS: '/api/getUsers',
-  SET_USER_UNLIMITED: '/api/setUserUnlimited'
+  SET_USER_UNLIMITED: '/api/setUserUnlimited',
+  ADMIN_DELETE_USER: '/api/adminDeleteUser'
 };
 
 const state = {

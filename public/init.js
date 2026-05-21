@@ -1297,8 +1297,8 @@ async function loadErrors(limit = 200) {
         </table>
       </div>
       <div class="mt-3 flex items-center justify-between text-xs text-slate-400">
-        <span>${errors.length} error${errors.length === 1 ? '' : 's'} shown (limit: ${limit})</span>
-        ${errors.length >= limit ? `<button onclick="loadErrors(${limit + 200})" class="text-indigo-400 hover:text-indigo-300 font-medium">Load more</button>` : ''}
+        <span>${errors.length} error${errors.length === 1 ? '' : 's'} shown</span>
+        ${errors.length >= limit ? `<button onclick="loadErrors(${limit + 200})" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1 hover:bg-slate-50 dark:hover:bg-slate-800 transition">Load ${200} more</button>` : ''}
       </div>
     `;
     refreshIcons();
