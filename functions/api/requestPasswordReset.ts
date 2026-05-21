@@ -72,7 +72,7 @@ export async function onRequestPost(context: {
     .bind(id, user.id, tokenHash, expiresAt.toISOString())
     .run();
 
-  const resetUrl = `https://cloudtrips.pages.dev/reset.html?token=${encodeURIComponent(token)}`;
+  const resetUrl = `https://cloudtrips.uk/reset.html?token=${encodeURIComponent(token)}`;
 
   // Send email via Brevo
   const emailRes = await fetch('https://api.brevo.com/v3/smtp/email', {
@@ -82,7 +82,7 @@ export async function onRequestPost(context: {
       'api-key': env.BREVO_API_KEY
     },
     body: JSON.stringify({
-      sender: { name: 'CloudTrips', email: 'meerschweine@gmail.com' },
+      sender: { name: 'CloudTrips', email: env.BREVO_SENDER_EMAIL },
       to: [{ email: user.email }],
       subject: 'Reset your CloudTrips password',
       htmlContent: `
@@ -101,7 +101,7 @@ export async function onRequestPost(context: {
             The link will expire automatically.
           </p>
           <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;" />
-          <p style="color:#cbd5e1;font-size:12px;">CloudTrips · cloudtrips.pages.dev</p>
+          <p style="color:#cbd5e1;font-size:12px;">CloudTrips · cloudtrips.uk</p>
         </div>
       `
     })
