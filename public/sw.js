@@ -1,21 +1,14 @@
 /* =========================
  * sw.js — CloudTrips Service Worker
  * Strategy:
- *   - Static assets (JS, CSS, HTML pages): cache-first, update in background
- *   - API calls (/api/*): network-only, never cache
- *   - print.html / accept-invite.html: network-first (dynamic content)
+ *   - JS / CSS static assets: cache-first, update in background
+ *   - HTML pages: network-only (never cache — they involve auth redirects)
+ *   - API calls (/api/*): network-only
  * ========================= */
 
-const CACHE = 'cloudtrips-v5';
+const CACHE = 'cloudtrips-v6';
 
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/trip.html',
-  '/timeline.html',
-  '/costs.html',
-  '/forgot.html',
-  '/reset.html',
   '/output.css',
   '/state.js',
   '/helpers.js',
@@ -28,19 +21,6 @@ const STATIC_ASSETS = [
   '/members.js',
   '/export.js',
   '/init.js'
-];
-
-// Pages that must always be fresh — skip caching these
-const NETWORK_FIRST = [
-  '/print.html',
-  '/accept-invite.html',
-  '/verify-email.html',
-  '/admin.html',
-  '/stats.html',
-  '/login.html',
-  '/signup.html',
-  '/forgot.html',
-  '/reset.html'
 ];
 
 /* ---------- INSTALL ---------- */
@@ -75,29 +55,21 @@ self.addEventListener('fetch', event => {
   // Only handle same-origin requests
   if (url.origin !== self.location.origin) return;
 
-  // API calls: network-only, never intercept
-  if (url.pathname.startsWith('/api/')) return;
+  // Never intercept HTML pages or API calls — let browser handle natively
+  if (url.pathname.startsWith('/api/') ||
+      url.pathname.endsWith('.html') ||
+      url.pathname === '/') return;
 
-  // Network-first pages (print renderer, invite tokens)
-  if (NETWORK_FIRST.some(p => url.pathname === p || url.pathname.startsWith(p))) {
-    event.respondWith(
-      fetch(request)
-        .catch(() => caches.match(request))
-    );
-    return;
-  }
-
-  // Everything else: cache-first, update cache in background
+  // Cache-first for JS and CSS assets only
   event.respondWith(
     caches.open(CACHE).then(cache =>
       cache.match(request).then(cached => {
         const networkFetch = fetch(request).then(response => {
-          // Only cache clean successful responses — never cache redirects
-          if (response.ok && !response.redirected && response.type !== 'opaqueredirect') {
+          if (response.ok && !response.redirected) {
             cache.put(request, response.clone());
           }
           return response;
-        }).catch(() => cached); // offline fallback
+        }).catch(() => cached);
 
         return cached || networkFetch;
       })
