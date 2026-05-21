@@ -1,4 +1,4 @@
-import { requireUser, tryGetUser } from '../_lib/auth';
+import { requireUser } from '../_lib/auth';
 import type { Env, AuthUser } from '../_lib/auth';
 import { error, methodNotAllowed } from '../_lib/http';
 import { findValidShareByToken, getShareTokenFromRequest } from '../_lib/share';

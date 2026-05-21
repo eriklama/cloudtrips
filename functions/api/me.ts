@@ -2,7 +2,7 @@ import { requireUser } from '../_lib/auth';
 import type { Env } from '../_lib/auth';
 import { error, json, methodNotAllowed } from '../_lib/http';
 
-export async function onRequestGet(context: { request: Request; env: Env & { RATE_LIMIT_KV: KVNamespace } }) {
+export async function onRequestGet(context: { request: Request; env: Env }) {
   try {
     const user = await requireUser(context);
 

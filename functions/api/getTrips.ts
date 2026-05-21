@@ -1,5 +1,5 @@
 import { requireUser } from '../_lib/auth';
-import type { Env } from '../_lib/auth';
+import type { Env, AuthUser } from '../_lib/auth';
 import { error, json, methodNotAllowed } from '../_lib/http';
 
 const PAGE_SIZE = 20;
@@ -20,7 +20,7 @@ type TripSummaryRow = {
 export async function onRequestGet(context: { request: Request; env: Env }) {
   const { env, request } = context;
 
-  let user: { id: string; email?: string } | undefined;
+  let user: AuthUser | undefined;
   try {
     user = await requireUser(context);
   } catch (err) {

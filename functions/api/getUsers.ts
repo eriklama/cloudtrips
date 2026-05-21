@@ -1,5 +1,5 @@
 import { requireUser } from '../_lib/auth';
-import type { Env } from '../_lib/auth';
+import type { Env, AuthUser } from '../_lib/auth';
 import { error, json, methodNotAllowed } from '../_lib/http';
 
 /**
@@ -16,15 +16,16 @@ type UserRow = {
   created_at: string | null;
 };
 
-export async function onRequestGet(context: { request: Request; env: Env & { RATE_LIMIT_KV: KVNamespace } }) {
+export async function onRequestGet(context: { request: Request; env: Env }) {
   const { env } = context;
 
-  let user: { id: string; email: string };
+  let user: AuthUser | undefined;
   try {
-    user = await requireUser(context) as { id: string; email: string };
+    user = await requireUser(context);
   } catch {
     return error('Unauthorized.', 401);
   }
+  if (!user) return error('Unauthorized.', 401);
 
   const adminRow = await env.DB
     .prepare(`SELECT is_admin FROM users WHERE id = ? LIMIT 1`)
@@ -66,7 +67,7 @@ export async function onRequestGet(context: { request: Request; env: Env & { RAT
   }
 }
 
-export function onRequest(context: { request: Request; env: Env & { RATE_LIMIT_KV: KVNamespace } }) {
+export function onRequest(context: { request: Request; env: Env }) {
   if (context.request.method !== 'GET') return methodNotAllowed(['GET']);
   return onRequestGet(context);
 }
