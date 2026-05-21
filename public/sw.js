@@ -2,11 +2,11 @@
  * sw.js — CloudTrips Service Worker
  * Strategy:
  *   - Static assets (JS, CSS, HTML pages): cache-first, update in background
- *   - API calls (/api/*): network-only, never cache
+ *   - API calls (/api/*): network-only, never cached
  *   - print.html / accept-invite.html: network-first (dynamic content)
  * ========================= */
 
-const CACHE = 'cloudtrips-v2';
+const CACHE = 'cloudtrips-v3';
 
 const STATIC_ASSETS = [
   '/',
@@ -37,7 +37,8 @@ const STATIC_ASSETS = [
 const NETWORK_FIRST = [
   '/print.html',
   '/accept-invite.html',
-  '/verify-email.html'
+  '/verify-email.html',
+  '/admin.html'
 ];
 
 /* ---------- INSTALL ---------- */
