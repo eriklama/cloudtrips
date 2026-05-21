@@ -131,11 +131,13 @@ function openExportDropdown(triggerBtn) {
   dropdown.id = 'export-dropdown';
   dropdown.className = 'absolute right-0 top-full mt-2 w-44 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl z-50 overflow-hidden';
 
-  // Build PDF label with quota info for non-unlimited users
-  const pdfQuota = state.user?.pdfQuota;
-  const pdfLabel = pdfQuota !== undefined
-    ? `Download PDF <span class="ml-1 text-xs text-slate-400">(${Math.max(0, 5 - pdfQuota)}/5 left)</span>`
-    : 'Download PDF';
+  // Build PDF label with quota info
+  const u = state.user;
+  const pdfLabel = u?.pdfUnlimited
+    ? 'Download PDF <span class="ml-1 text-xs text-slate-400">(unlimited)</span>'
+    : u?.pdfUsageThisMonth !== undefined
+      ? `Download PDF <span class="ml-1 text-xs ${u.pdfUsageThisMonth >= 5 ? 'text-rose-400' : 'text-slate-400'}">(${Math.max(0, 5 - u.pdfUsageThisMonth)}/5 left)</span>`
+      : 'Download PDF';
 
   const items = [
     {
@@ -233,6 +235,10 @@ async function downloadPdf() {
     const blob = await response.blob();
     const filename = `${(state.currentTrip.name || 'trip').replace(/[^a-z0-9]/gi, '_').toLowerCase()}_itinerary.pdf`;
     downloadBlob(blob, filename);
+    // Update local quota counter immediately
+    if (state.user && !state.user.pdfUnlimited) {
+      state.user.pdfUsageThisMonth = (state.user.pdfUsageThisMonth || 0) + 1;
+    }
     showToast('PDF downloaded.', 'success');
   } catch (err) {
     console.error(err);

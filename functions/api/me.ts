@@ -2,22 +2,31 @@ import { requireUser } from '../_lib/auth';
 import type { Env } from '../_lib/auth';
 import { error, json, methodNotAllowed } from '../_lib/http';
 
-export async function onRequestGet(context: { request: Request; env: Env }) {
+export async function onRequestGet(context: { request: Request; env: Env & { RATE_LIMIT_KV: KVNamespace } }) {
   try {
     const user = await requireUser(context);
 
-    // Check email verification status
     const row = await context.env.DB
-      .prepare(`SELECT email_verified_at, is_admin FROM users WHERE id = ? LIMIT 1`)
+      .prepare(`SELECT email_verified_at, is_admin, pdf_exports_unlimited FROM users WHERE id = ? LIMIT 1`)
       .bind(user.id)
-      .first<{ email_verified_at: string | null; is_admin: number }>();
+      .first<{ email_verified_at: string | null; is_admin: number; pdf_exports_unlimited: number }>();
+
+    // Read per-user PDF usage for current month from KV
+    const now = new Date();
+    const monthSuffix = `_${now.getUTCFullYear()}_${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+    const kvKey = `pdf_user_${user.id}${monthSuffix}`;
+    const usage = await context.env.RATE_LIMIT_KV.get(kvKey);
+    const pdfUsageThisMonth = usage ? parseInt(usage, 10) : 0;
 
     return json({
       ok: true,
       user: {
         ...user,
         emailVerified: Boolean(row?.email_verified_at),
-        isAdmin: Boolean(row?.is_admin)
+        isAdmin: Boolean(row?.is_admin),
+        pdfUnlimited: Boolean(row?.pdf_exports_unlimited),
+        pdfUsageThisMonth,
+        pdfQuota: 5
       }
     });
   } catch (err) {
