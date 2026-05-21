@@ -6,7 +6,7 @@
  *   - print.html / accept-invite.html: network-first (dynamic content)
  * ========================= */
 
-const CACHE = 'cloudtrips-v4';
+const CACHE = 'cloudtrips-v5';
 
 const STATIC_ASSETS = [
   '/',
@@ -14,7 +14,6 @@ const STATIC_ASSETS = [
   '/trip.html',
   '/timeline.html',
   '/costs.html',
-  '/signup.html',
   '/forgot.html',
   '/reset.html',
   '/output.css',
@@ -38,7 +37,10 @@ const NETWORK_FIRST = [
   '/verify-email.html',
   '/admin.html',
   '/stats.html',
-  '/login.html'
+  '/login.html',
+  '/signup.html',
+  '/forgot.html',
+  '/reset.html'
 ];
 
 /* ---------- INSTALL ---------- */
