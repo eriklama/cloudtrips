@@ -20,12 +20,13 @@ function isAuthPage() {
   const path = location.pathname;
   return path.endsWith('/login.html') ||
          path.endsWith('/signup.html') ||
-         path.endsWith('/verify-email.html');
+         path.endsWith('/verify-email.html') ||
+         path.endsWith('/landing.html');
 }
 
 function redirectToLogin() {
   if (!isAuthPage()) {
-    window.location.href = '/login.html';
+    window.location.href = '/landing.html';
   }
 }
 
