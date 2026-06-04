@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <script>
+  (function() {
+    const theme = localStorage.getItem('cloudtrips_theme') || 'dark';
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+  })();
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Help · CloudTrips</title>
+  <meta name="description" content="CloudTrips user guide — learn how to plan trips, track costs, and share itineraries.">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg">
+  <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
+  <link href="/output.css" rel="stylesheet" />
+</head>
+<body class="min-h-full bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+
+  <!-- HEADER -->
+  <header class="sticky top-0 z-10 border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur">
+    <div class="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
+      <a href="/" class="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition">
+        ← Back to CloudTrips
+      </a>
+      <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">User Guide</span>
+    </div>
+  </header>
+
+  <div class="max-w-3xl mx-auto px-6 py-10">
+
+    <h1 class="text-3xl font-bold tracking-tight mb-2">CloudTrips User Guide</h1>
+    <p class="text-slate-500 dark:text-slate-400 mb-10 text-sm">Everything you need to plan, track, and share your trips.</p>
+
+    <!-- TOC -->
+    <nav class="mb-10 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-5">
+      <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">Contents</p>
+      <ol class="space-y-1 text-sm">
+        <li><a href="#getting-started" class="text-indigo-500 hover:text-indigo-400">1. Getting started</a></li>
+        <li><a href="#trips" class="text-indigo-500 hover:text-indigo-400">2. Managing trips</a></li>
+        <li><a href="#activities" class="text-indigo-500 hover:text-indigo-400">3. Activities</a></li>
+        <li><a href="#timeline" class="text-indigo-500 hover:text-indigo-400">4. Timeline view</a></li>
+        <li><a href="#costs" class="text-indigo-500 hover:text-indigo-400">5. Costs & currencies</a></li>
+        <li><a href="#sharing" class="text-indigo-500 hover:text-indigo-400">6. Sharing trips</a></li>
+        <li><a href="#collaboration" class="text-indigo-500 hover:text-indigo-400">7. Collaboration</a></li>
+        <li><a href="#export" class="text-indigo-500 hover:text-indigo-400">8. Export & print</a></li>
+        <li><a href="#stats" class="text-indigo-500 hover:text-indigo-400">9. Stats</a></li>
+        <li><a href="#settings" class="text-indigo-500 hover:text-indigo-400">10. Settings & account</a></li>
+        <li><a href="#pwa" class="text-indigo-500 hover:text-indigo-400">11. Installing as an app</a></li>
+      </ol>
+    </nav>
+
+    <div class="space-y-12 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+
+      <!-- 1. GETTING STARTED -->
+      <section id="getting-started">
+        <h2 class="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4 pb-2 border-b border-slate-200 dark:border-slate-800">1. Getting started</h2>
+
+        <h3 class="font-semibold text-slate-800 dark:text-slate-200 mt-4 mb-2">Creating an account</h3>
+        <p>Go to <a href="/signup.html" class="text-indigo-500 hover:text-indigo-400">cloudtrips.uk/signup</a> and enter your email and a password. After signing up, check your inbox for a verification email and click the link to activate your account. You won't be able to log in until your email is verified.</p>
+        <p class="mt-2">If the verification email doesn't arrive within a few minutes, check your spam folder. You can also request a new one from the verification page.</p>
+
+        <h3 class="font-semibold text-slate-800 dark:text-slate-200 mt-5 mb-2">Logging in</h3>
+        <p>Go to <a href="/login.html" class="text-indigo-500 hover:text-indigo-400">cloudtrips.uk/login</a> and enter your email and password. If you've forgotten your password, click <strong>Forgot password?</strong> and follow the reset instructions sent to your email.</p>
+
+        <h3 class="font-semibold text-slate-800 dark:text-slate-200 mt-5 mb-2">Dark and light mode</h3>
+        <p>Click the sun/moon icon in the top-right header to switch between dark and light mode. Your preference is saved automatically.</p>
+      </section>
+
+      <!-- 2. TRIPS -->
+      <section id="trips">
+        <h2 class="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4 pb-2 border-b border-slate-200 dark:border-slate-800">2. Managing trips</h2>
+
+        <h3 class="font-semibold text-slate-800 dark:text-slate-200 mt-4 mb-2">Creating a trip</h3>
+        <p>From the home screen, type a name in the <strong>Trip name</strong> field and click <strong>Add</strong>. Your new trip appears in the grid immediately.</p>
+
+        <h3 class="font-semibold text-slate-800 dark:text-slate-200 mt-5 mb-2">Renaming a trip</h3>
+        <p>Click the pencil icon on any trip card to rename it inline. Press Enter or click away to save.</p>
+
+        <h3 class="font-semibold text-slate-800 dark:text-slate-200 mt-5 mb-2">Duplicating a trip</h3>
+        <p>Click the copy icon on a trip card to create an exact duplicate including all activities. Useful as a template for similar trips.</p>
+
+        <h3 class="font-semibold text-slate-800 dark:text-slate-200 mt-5 mb-2">Deleting a trip</h3>
+        <p>Click the bin icon on a trip card. You'll be asked to confirm. Deletion is permanent and removes all activities within the trip.</p>
+
+        <h3 class="font-semibold text-slate-800 dark:text-slate-200 mt-5 mb-2">Searching and filtering</h3>
+        <p>Use the search bar to filter trips by name. Use the year dropdown to show only trips from a specific year based on their activity dates. Trips load 20 at a time — click <strong>Load more</strong> at the bottom if you have many trips.</p>
+
+        <h3 class="font-semibold text-slate-800 dark:text-slate-200 mt-5 mb-2">Trip notes</h3>
+        <p>Open a trip and click the notes area at the top to add free-text notes — packing lists, reminders, booking references, anything. Notes are saved automatically as you type.</p>
+      </section>
+
+      <!-- 3. ACTIVITIES -->
+      <section id="activities">
+        <h2 class="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4 pb-2 border-b border-slate-200 dark:border-slate-800">3. Activities</h2>
+
+        <p>Activities are the building blocks of a trip — flights, drives, hikes, accommodation, city visits, and anything else. Each activity can have a type, name, location, dates, cost, distance, and notes.</p>
+
+        <h3 class="font-semibold text-slate-800 dark:text-slate-200 mt-5 mb-2">Activity types</h3>
+        <div class="overflow-x-auto mt-2 mb-3">
+          <table class="min-w-full border-separate border-spacing-y-1 text-sm">
+            <thead>
+              <tr class="text-left text-xs text-slate-400 dark:text-slate-500">
+                <th class="px-3 py-1 font-medium">Type</th>
+                <th class="px-3 py-1 font-medium">Use for</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="bg-slate-50 dark:bg-slate-900">
+                <td class="rounded-l-xl px-3 py-2 font-medium">✈️ Plane</td>
+                <td class="rounded-r-xl px-3 py-2">Flights, transfers by air</td>
+              </tr>
+              <tr class="bg-slate-50 dark:bg-slate-900">
+                <td class="rounded-l-xl px-3 py-2 font-medium">🚗 Car</td>
+                <td class="rounded-r-xl px-3 py-2">Road trips, drives, car rental</td>
+              </tr>
+              <tr class="bg-slate-50 dark:bg-slate-900">
+                <td class="rounded-l-xl px-3 py-2 font-medium">🥾 Hike</td>
+                <td class="rounded-r-xl px-3 py-2">Walking, hiking, trekking</td>
+              </tr>
+              <tr class="bg-slate-50 dark:bg-slate-900">
+                <td class="rounded-l-xl px-3 py-2 font-medium">🏙️ City</td>
+                <td class="rounded-r-xl px-3 py-2">Sightseeing, city days, tours</td>
+              </tr>
+              <tr class="bg-slate-50 dark:bg-slate-900">
+                <td class="rounded-l-xl px-3 py-2 font-medium">🏨 Stay</td>
+                <td class="rounded-r-xl px-3 py-2">Hotels, Airbnb, camping</td>
+              </tr>
+              <tr class="bg-slate-50 dark:bg-slate-900">
+                <td class="rounded-l-xl px-3 py-2 font-medium">📍 Other</td>
+                <td class="rounded-r-xl px-3 py-2">Anything else</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="font-semibold text-slate-800 dark:text-slate-200 mt-5 mb-2">Adding an activity</h3>
+        <p>Inside a trip, click <strong>Add activity</strong>. Fill in the fields you need — only the name is required. Click <strong>Save</strong>.</p>
+
+        <h3 class="font-semibold text-slate-800 dark:text-slate-200 mt-5 mb-2">Editing an activity</h3>
+        <p>Click any activity card to expand it for editing. Changes are saved when you click <strong>Save</strong>.</p>
+
+        <h3 class="font-semibold text-slate-800 dark:text-slate-200 mt-5 mb-2">Reordering activities</h3>
+        <p>Use the up and down arrow buttons on each activity card to change the order within the list.</p>
+
+        <h3 class="font-semibold text-slate-800 dark:text-slate-200 mt-5 mb-2">Filtering and searching activities</h3>
+        <p>Use the search box above the activity list to filter by name or location. Click the type filter buttons (plane, car, hike, etc.) to show only specific types. Activities load 50 at a time — click <strong>Load more</strong> if you have a long trip.</p>
+
+        <h3 class="font-semibold text-slate-800 dark:text-slate-200 mt-5 mb-2">Dates and times</h3>
+        <p>Each activity has an optional start date/time and end date/time. Dates are used to organise the Timeline view and calculate trip duration in Stats. If no dates are set, the activity appears under "No date" in the timeline.</p>
+
+        <h3 class="font-semibold text-slate-800 dark:text-slate-200 mt-5 mb-2">Distance</h3>
+        <p>You can record a distance in kilometres for any activity. This is totalled in the Stats view and shown in the PDF export.</p>
+      </section>
+
+      <!-- 4. TIMELINE -->
+      <section id="timeline">
+        <h2 class="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4 pb-2 border-b border-slate-200 dark:border-slate-800">4. Timeline view</h2>
+        <p>Click <strong>Timeline</strong> in the trip navigation to see all activities grouped by day in chronological order. The timeline shows start and end times, activity type icons, costs, and locations.</p>
+        <p class="mt-2">You can expand or collapse individual days by clicking the day header, or use <strong>Expand all / Collapse all</strong> to toggle everything at once. The timeline is also what gets printed when you export to PDF.</p>
+      </section>
+
+      <!-- 5. COSTS -->
+      <section id="costs">
+        <h2 class="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4 pb-2 border-b border-slate-200 dark:border-slate-800">5. Costs & currencies</h2>
+        <p>Each activity can have a cost and a currency. CloudTrips supports any currency — just type the amount and select the currency code (EUR, USD, GBP, CZK, etc.) from the dropdown.</p>
+
+        <h3 class="font-semibold text-slate-800 dark:text-slate-200 mt-5 mb-2">Costs page</h3>
+        <p>Click <strong>Costs</strong> in the trip navigation for a full breakdown. You'll see total costs per currency, a breakdown by activity type, and a day-by-day cost chart. If your trip uses multiple currencies, each is totalled separately and you can choose a display currency to convert everything using live exchange rates.</p>
+
+        <h3 class="font-semibold text-slate-800 dark:text-slate-200 mt-5 mb-2">Default currency</h3>
+        <p>You can set a default currency in Settings so new activities always pre-fill with your preferred currency.</p>
+      </section>
+
+      <!-- 6. SHARING -->
+      <section id="sharing">
+        <h2 class="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4 pb-2 border-b border-slate-200 dark:border-slate-800">6. Sharing trips</h2>
+        <p>You can share a read-only view of any trip with anyone — no account required to view. Click the <strong>Share</strong> button inside a trip to create a share link.</p>
+
+        <h3 class="font-semibold text-slate-800 dark:text-slate-200 mt-5 mb-2">Share modes</h3>
+        <div class="overflow-x-auto mt-2 mb-3">
+          <table class="min-w-full border-separate border-spacing-y-1 text-sm">
+            <thead>
+              <tr class="text-left text-xs text-slate-400 dark:text-slate-500">
+                <th class="px-3 py-1 font-medium">Mode</th>
+                <th class="px-3 py-1 font-medium">What the viewer sees</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="bg-slate-50 dark:bg-slate-900">
+                <td class="rounded-l-xl px-3 py-2 font-medium">Full</td>
+                <td class="rounded-r-xl px-3 py-2">Everything — activities, costs, distances, notes</td>
+              </tr>
+              <tr class="bg-slate-50 dark:bg-slate-900">
+                <td class="rounded-l-xl px-3 py-2 font-medium">Public</td>
+                <td class="rounded-r-xl px-3 py-2">Activities only — costs and distances are hidden</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Share links can be revoked at any time from <strong>Manage shares</strong>. You can also disable all active share links for a trip at once.</p>
+      </section>
+
+      <!-- 7. COLLABORATION -->
+      <section id="collaboration">
+        <h2 class="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4 pb-2 border-b border-slate-200 dark:border-slate-800">7. Collaboration</h2>
+        <p>You can invite other CloudTrips users to collaborate on a trip. Collaborators can add, edit, and delete activities but cannot delete the trip or manage share links — only the trip owner can do those.</p>
+
+        <h3 class="font-semibold text-slate-800 dark:text-slate-200 mt-5 mb-2">Inviting someone</h3>
+        <p>Click the <strong>Members</strong> button inside a trip, enter the email address of the person you want to invite, and click <strong>Send invite</strong>. They'll receive an email with an invitation link. The link expires after 48 hours — you can resend if needed.</p>
+        <p class="mt-2">The person must have a CloudTrips account to accept the invitation.</p>
+
+        <h3 class="font-semibold text-slate-800 dark:text-slate-200 mt-5 mb-2">Removing a collaborator</h3>
+        <p>Open the <strong>Members</strong> panel and click <strong>Remove</strong> next to the person's name.</p>
+
+        <h3 class="font-semibold text-slate-800 dark:text-slate-200 mt-5 mb-2">Leaving a trip</h3>
+        <p>If you're a collaborator (not the owner), you can leave a trip from the <strong>Members</strong> panel.</p>
+      </section>
+
+      <!-- 8. EXPORT -->
+      <section id="export">
+        <h2 class="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4 pb-2 border-b border-slate-200 dark:border-slate-800">8. Export & print</h2>
+        <p>Click the <strong>Export</strong> button inside a trip to access export options.</p>
+
+        <h3 class="font-semibold text-slate-800 dark:text-slate-200 mt-5 mb-2">Download PDF</h3>
+        <p>Generates a clean A4 PDF of your trip itinerary — day-by-day activities, times, costs breakdown, and summary. The PDF is rendered on the server and downloaded directly to your device.</p>
+        <p class="mt-2">Free accounts include <strong>5 PDF exports per month</strong>. The counter resets on the 1st of each month. Your remaining exports are shown next to the Download PDF option.</p>
+
+        <h3 class="font-semibold text-slate-800 dark:text-slate-200 mt-5 mb-2">Export CSV</h3>
+        <p>Downloads all activities as a CSV file. You can open it in Excel, Google Sheets, or any spreadsheet app. Useful for further analysis or keeping a local backup.</p>
+
+        <h3 class="font-semibold text-slate-800 dark:text-slate-200 mt-5 mb-2">Print</h3>
+        <p>Opens a print-friendly version of the itinerary in your browser. Use your browser's print dialog to print or save as PDF locally.</p>
+      </section>
+
+      <!-- 9. STATS -->
+      <section id="stats">
+        <h2 class="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4 pb-2 border-b border-slate-200 dark:border-slate-800">9. Stats</h2>
+        <p>Click <strong>Stats</strong> from the home screen to see an overview of all your travel across every trip.</p>
+        <ul class="list-disc pl-5 mt-2 space-y-1">
+          <li>Total trips, activities, days, distance, and costs at a glance</li>
+          <li>World map showing countries you've visited</li>
+          <li>Filter stats by year or country</li>
+          <li>Per-trip breakdown table sortable by days, activities, distance, and cost</li>
+          <li>Multi-currency support — choose a display currency to convert all costs</li>
+        </ul>
+
+        <h3 class="font-semibold text-slate-800 dark:text-slate-200 mt-5 mb-2">Visited countries</h3>
+        <p>The world map tracks countries you've visited. You can add or remove countries manually using the country selector on the Stats page. This is separate from trip data — adding a country to the map doesn't create a trip, and deleting a trip doesn't remove the country from the map.</p>
+      </section>
+
+      <!-- 10. SETTINGS -->
+      <section id="settings">
+        <h2 class="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4 pb-2 border-b border-slate-200 dark:border-slate-800">10. Settings & account</h2>
+        <p>Click the gear icon in the top-right header to open Settings.</p>
+
+        <h3 class="font-semibold text-slate-800 dark:text-slate-200 mt-5 mb-2">Default currency</h3>
+        <p>Set a default currency for new activities. All new cost fields will pre-fill with this currency.</p>
+
+        <h3 class="font-semibold text-slate-800 dark:text-slate-200 mt-5 mb-2">Deleting your account</h3>
+        <p>Settings → <strong>Delete account</strong>. You'll need to enter your password to confirm. Deletion is immediate and permanent — all your trips, activities, and personal data are removed. A confirmation email is sent to your address.</p>
+        <p class="mt-2">If you change your mind, there is no undo. Export any important data before deleting.</p>
+      </section>
+
+      <!-- 11. PWA -->
+      <section id="pwa">
+        <h2 class="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4 pb-2 border-b border-slate-200 dark:border-slate-800">11. Installing as an app</h2>
+        <p>CloudTrips can be installed on your device like a native app — no app store required.</p>
+
+        <h3 class="font-semibold text-slate-800 dark:text-slate-200 mt-5 mb-2">On desktop (Chrome / Edge)</h3>
+        <p>Look for the install icon (⊕) in the right side of the address bar, or go to the browser menu and click <strong>Install CloudTrips</strong>. The app opens in its own window without browser chrome.</p>
+
+        <h3 class="font-semibold text-slate-800 dark:text-slate-200 mt-5 mb-2">On iPhone / iPad</h3>
+        <p>Open cloudtrips.uk in Safari, tap the Share button, then tap <strong>Add to Home Screen</strong>. The app icon appears on your home screen and opens in full-screen mode.</p>
+
+        <h3 class="font-semibold text-slate-800 dark:text-slate-200 mt-5 mb-2">On Android</h3>
+        <p>Open cloudtrips.uk in Chrome. You'll see an <strong>Add to Home Screen</strong> banner, or you can tap the menu and select <strong>Install app</strong>.</p>
+      </section>
+
+    </div>
+
+    <div class="mt-12 pt-6 border-t border-slate-200 dark:border-slate-800 flex flex-wrap gap-4 text-xs text-slate-400 dark:text-slate-500">
+      <a href="/privacy.html" class="hover:text-indigo-400 transition">Privacy Policy</a>
+      <a href="/terms.html" class="hover:text-indigo-400 transition">Terms of Service</a>
+      <a href="mailto:hello@cloudtrips.uk" class="hover:text-indigo-400 transition">hello@cloudtrips.uk</a>
+    </div>
+
+  </div>
+</body>
+</html>
