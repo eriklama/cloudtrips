@@ -543,56 +543,93 @@ function renderHeaderNav(current) {
 
   nav.innerHTML = '';
 
-  const items = [];
-  items.push({ label: 'Home', icon: 'home', onClick: () => { window.location.href = '/'; } });
+  const isTripPage = ['trip', 'timeline', 'costs'].includes(current);
 
-  if (current === 'stats') {
-    // Stats page — no trip-specific links
-  } else {
-    if (current !== 'trip') items.push({ label: 'Trip', icon: 'notebook-pen', onClick: goToTrip });
-    if (current !== 'timeline') items.push({ label: 'Timeline', icon: 'list-tree', onClick: goToTimeline });
-    if (current !== 'costs') items.push({ label: 'Costs', icon: 'badge-euro', onClick: goToCosts });
-    // Export dropdown only on trip page
-  }
-
-  const btnClass = 'inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 transition';
+  // ── Shared button styles ──
+  const btnBase = 'inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition';
+  const btnDefault = btnBase + ' border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800';
+  const btnActive  = btnBase + ' border-primary-500 bg-primary-500/10 text-primary-600 dark:text-primary-400';
+  const btnIcon    = 'inline-flex items-center justify-center rounded-xl border p-2 transition border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800';
 
   // ── DESKTOP ──
   const desktopRow = document.createElement('div');
-  desktopRow.className = 'hidden sm:flex gap-2';
+  desktopRow.className = 'hidden sm:flex items-center gap-2';
 
-  items.forEach(({ label, icon, onClick }) => {
+  // Section 1: Page navigation
+  const navSection = document.createElement('div');
+  navSection.className = 'flex items-center gap-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-1';
+
+  function navBtn(label, icon, page, onClick) {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = btnClass;
+    btn.className = current === page
+      ? 'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium bg-white dark:bg-slate-800 text-primary-600 dark:text-primary-400 shadow-sm border border-slate-200 dark:border-slate-700 transition'
+      : 'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition';
     btn.onclick = onClick;
-    btn.innerHTML = `<i data-lucide="${icon}" class="h-4 w-4"></i>${label}`;
-    desktopRow.appendChild(btn);
-  });
+    btn.innerHTML = `<i data-lucide="${icon}" class="h-3.5 w-3.5"></i>${label}`;
+    return btn;
+  }
 
-  // Export dropdown button — trip page only, desktop
-  if (current === 'trip') {
+  navSection.appendChild(navBtn('My Trips', 'home', 'home', () => { window.location.href = '/'; }));
+
+  if (isTripPage) {
+    navSection.appendChild(navBtn('Trip', 'notebook-pen', 'trip', goToTrip));
+    navSection.appendChild(navBtn('Timeline', 'list-tree', 'timeline', goToTimeline));
+    navSection.appendChild(navBtn('Costs', 'badge-euro', 'costs', goToCosts));
+  }
+
+  desktopRow.appendChild(navSection);
+
+  // Section 2: Actions (trip pages only)
+  if (isTripPage) {
+    const divider = document.createElement('div');
+    divider.className = 'w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1';
+    desktopRow.appendChild(divider);
+
+    // Export dropdown
     const exportWrapper = document.createElement('div');
     exportWrapper.className = 'export-btn-wrapper relative';
     const exportBtn = document.createElement('button');
     exportBtn.type = 'button';
-    exportBtn.className = btnClass;
+    exportBtn.className = btnDefault;
     exportBtn.innerHTML = '<i data-lucide="download" class="h-4 w-4"></i>Export<i data-lucide="chevron-down" class="h-3 w-3 ml-0.5"></i>';
     exportBtn.onclick = (e) => { e.stopPropagation(); window.openExportDropdown(exportBtn); };
     exportWrapper.appendChild(exportBtn);
     desktopRow.appendChild(exportWrapper);
+
+    // Share
+    const shareBtn = document.createElement('button');
+    shareBtn.type = 'button';
+    shareBtn.className = btnDefault;
+    shareBtn.innerHTML = '<i data-lucide="share-2" class="h-4 w-4"></i>Share';
+    shareBtn.onclick = () => window.openShareModal();
+    desktopRow.appendChild(shareBtn);
+
+    // Members
+    const membersBtn = document.createElement('button');
+    membersBtn.type = 'button';
+    membersBtn.className = btnIcon;
+    membersBtn.setAttribute('aria-label', 'Members');
+    membersBtn.innerHTML = '<i data-lucide="users" class="h-4 w-4"></i>';
+    membersBtn.onclick = () => window.openMembersModal();
+    desktopRow.appendChild(membersBtn);
+
+    // Links
+    const linksBtn = document.createElement('button');
+    linksBtn.type = 'button';
+    linksBtn.className = btnIcon;
+    linksBtn.setAttribute('aria-label', 'Share links');
+    linksBtn.innerHTML = '<i data-lucide="link" class="h-4 w-4"></i>';
+    linksBtn.onclick = () => window.openManageSharesModal();
+    desktopRow.appendChild(linksBtn);
+
+    const divider2 = document.createElement('div');
+    divider2.className = 'w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1';
+    desktopRow.appendChild(divider2);
   }
 
-  const themeBtn = document.createElement('button');
-  themeBtn.type = 'button';
-  themeBtn.className = btnClass + ' px-2.5';
-  themeBtn.setAttribute('data-theme-toggle', '');
-  themeBtn.setAttribute('aria-label', 'Toggle theme');
-  themeBtn.innerHTML = getTheme() === 'dark'
-    ? '<i data-lucide="sun" class="h-4 w-4"></i>'
-    : '<i data-lucide="moon" class="h-4 w-4"></i>';
-  themeBtn.onclick = toggleTheme;
-  desktopRow.appendChild(themeBtn);
+  // Section 3: Settings + logout (already in HTML, just keep theme out of here)
+  // Theme toggle moved to Settings modal — desktop nav stays clean
 
   // ── MOBILE ──
   const mobileWrapper = document.createElement('div');
@@ -600,7 +637,7 @@ function renderHeaderNav(current) {
 
   const hamburger = document.createElement('button');
   hamburger.type = 'button';
-  hamburger.className = btnClass + ' px-2.5';
+  hamburger.className = btnDefault + ' px-2.5';
   hamburger.innerHTML = '<i data-lucide="menu" class="h-5 w-5"></i>';
   hamburger.setAttribute('aria-label', 'Navigation menu');
 
@@ -608,39 +645,48 @@ function renderHeaderNav(current) {
   dropdown.className = 'hidden fixed top-auto mt-2 w-56 rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 shadow-xl overflow-hidden';
   dropdown.style.zIndex = '200';
 
-  items.forEach(({ label, icon, onClick }) => {
+  function mobileItem(label, icon, onClick, isActive) {
     const item = document.createElement('button');
     item.type = 'button';
-    item.className = 'flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition';
-    item.innerHTML = `<i data-lucide="${icon}" class="h-4 w-4 text-slate-500 dark:text-slate-400"></i>${label}`;
+    item.className = isActive
+      ? 'flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-primary-600 dark:text-primary-400 bg-primary-500/5 hover:bg-primary-500/10 transition'
+      : 'flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition';
+    item.innerHTML = `<i data-lucide="${icon}" class="h-4 w-4 ${isActive ? 'text-primary-500' : 'text-slate-500 dark:text-slate-400'}"></i>${label}`;
     item.onclick = () => { closeDropdown(); onClick(); };
-    dropdown.appendChild(item);
-  });
-
-  // Export items in mobile menu — trip page only
-  if (current === 'trip') {
-    const csvItem = document.createElement('button');
-    csvItem.type = 'button';
-    csvItem.className = 'flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition';
-    csvItem.innerHTML = '<i data-lucide="file-spreadsheet" class="h-4 w-4 text-slate-500 dark:text-slate-400"></i>Export CSV';
-    csvItem.onclick = () => { closeDropdown(); window.exportCsv(); };
-    dropdown.appendChild(csvItem);
-
-    const pdfItem = document.createElement('button');
-    pdfItem.type = 'button';
-    pdfItem.className = 'flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition';
-    pdfItem.innerHTML = '<i data-lucide="file-down" class="h-4 w-4 text-slate-500 dark:text-slate-400"></i>Download PDF';
-    pdfItem.onclick = () => { closeDropdown(); window.downloadPdf(); };
-    dropdown.appendChild(pdfItem);
-
-    const printItem = document.createElement('button');
-    printItem.type = 'button';
-    printItem.className = 'flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition';
-    printItem.innerHTML = '<i data-lucide="printer" class="h-4 w-4 text-slate-500 dark:text-slate-400"></i>Print';
-    printItem.onclick = () => { closeDropdown(); window.openPrintView(); };
-    dropdown.appendChild(printItem);
+    return item;
   }
 
+  function mobileSeparator(label) {
+    const sep = document.createElement('div');
+    sep.className = 'px-4 pt-3 pb-1 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500';
+    sep.textContent = label;
+    return sep;
+  }
+
+  // Navigation section
+  dropdown.appendChild(mobileSeparator('Navigate'));
+  dropdown.appendChild(mobileItem('My Trips', 'home', () => { window.location.href = '/'; }, current === 'home'));
+
+  if (isTripPage) {
+    dropdown.appendChild(mobileItem('Trip', 'notebook-pen', goToTrip, current === 'trip'));
+    dropdown.appendChild(mobileItem('Timeline', 'list-tree', goToTimeline, current === 'timeline'));
+    dropdown.appendChild(mobileItem('Costs', 'badge-euro', goToCosts, current === 'costs'));
+  }
+
+  // Actions section (trip pages only)
+  if (isTripPage) {
+    dropdown.appendChild(mobileSeparator('Actions'));
+
+    dropdown.appendChild(mobileItem('Export CSV', 'file-spreadsheet', () => window.exportCsv(), false));
+    dropdown.appendChild(mobileItem('Download PDF', 'file-down', () => window.downloadPdf(), false));
+    dropdown.appendChild(mobileItem('Print', 'printer', () => window.openPrintView(), false));
+    dropdown.appendChild(mobileItem('Share', 'share-2', () => window.openShareModal(), false));
+    dropdown.appendChild(mobileItem('Members', 'users', () => window.openMembersModal(), false));
+    dropdown.appendChild(mobileItem('Links', 'link', () => window.openManageSharesModal(), false));
+  }
+
+  // Settings section
+  dropdown.appendChild(mobileSeparator('Settings'));
   const themeItem = document.createElement('button');
   themeItem.type = 'button';
   themeItem.className = 'flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition';
