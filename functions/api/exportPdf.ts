@@ -3,6 +3,24 @@ import type { Env, AuthUser } from '../_lib/auth';
 import { error, methodNotAllowed } from '../_lib/http';
 import { findValidShareByToken, getShareTokenFromRequest } from '../_lib/share';
 
+
+const PDF_RATE_LIMIT = 3;       // max requests
+const PDF_RATE_WINDOW = 60;     // per 60 seconds
+
+async function checkPdfRateLimit(env: Env, userId: string): Promise<boolean> {
+  const key = `pdf_rate:${userId}`;
+  const current = await env.RATE_LIMIT_KV.get(key);
+  const count = current ? parseInt(current) : 0;
+
+  if (count >= PDF_RATE_LIMIT) return false;
+
+  await env.RATE_LIMIT_KV.put(key, String(count + 1), {
+    expirationTtl: PDF_RATE_WINDOW
+  });
+
+  return true;
+}
+
 /* =========================
  * TYPES
  * ========================= */
@@ -333,6 +351,14 @@ export async function onRequestGet(context: { request: Request; env: Env & { BRO
       if (userCount >= limit) {
         return error(`You have used all ${limit} PDF exports for this month. Contact support to upgrade.`, 429);
       }
+    }
+  }
+
+  // Rate limit: max 3 PDF exports per minute per user
+  if (authedUser) {
+    const allowed = await checkPdfRateLimit(env, authedUser.id);
+    if (!allowed) {
+      return error('Too many PDF requests. Please wait a moment before trying again.', 429);
     }
   }
 
