@@ -6,21 +6,12 @@
  *   - API calls (/api/*): network-only
  * ========================= */
 
-const CACHE = 'cloudtrips-v6';
+const CACHE = 'cloudtrips-v7';
 
+// Only precache CSS — JS files are cache-busted with ?v= timestamps by build.cjs
+// so bare paths like /state.js would never match the actual requests (/state.js?v=123)
 const STATIC_ASSETS = [
-  '/output.css',
-  '/state.js',
-  '/helpers.js',
-  '/ui.js',
-  '/auth.js',
-  '/api.js',
-  '/trips.js',
-  '/activities.js',
-  '/share.js',
-  '/members.js',
-  '/export.js',
-  '/init.js'
+  '/output.css'
 ];
 
 /* ---------- INSTALL ---------- */
