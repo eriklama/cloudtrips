@@ -432,7 +432,20 @@ async function openSettingsModal() {
       </div>
 
       <div class="space-y-4">
-        <div>
+
+        <div class="flex items-center justify-between py-1">
+          <div>
+            <p class="text-sm font-medium text-slate-700 dark:text-slate-300">Appearance</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Switch between dark and light mode</p>
+          </div>
+          <button id="settings-theme-toggle" type="button"
+            class="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition" data-theme-toggle>
+            <i data-lucide="sun" class="w-4 h-4"></i>
+            <span id="settings-theme-label">${getTheme() === 'dark' ? 'Light mode' : 'Dark mode'}</span>
+          </button>
+        </div>
+
+        <div class="border-t border-slate-100 dark:border-slate-800 pt-4">
           <label for="settings-currency" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
             Default display currency
           </label>
@@ -444,6 +457,7 @@ async function openSettingsModal() {
             ${options}
           </select>
         </div>
+
       </div>
 
       <div class="mt-5 flex justify-end gap-2">
@@ -481,6 +495,19 @@ async function openSettingsModal() {
   refreshIcons();
 
   function close() { overlay.remove(); }
+
+  // Theme toggle inside settings
+  const themeToggleBtn = overlay.querySelector('#settings-theme-toggle');
+  const themeLabel = overlay.querySelector('#settings-theme-label');
+  if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', () => {
+      toggleTheme();
+      const isDark = getTheme() === 'dark';
+      themeLabel.textContent = isDark ? 'Light mode' : 'Dark mode';
+      const icon = themeToggleBtn.querySelector('i');
+      if (icon) { icon.setAttribute('data-lucide', isDark ? 'sun' : 'moon'); refreshIcons(); }
+    });
+  }
 
   overlay.querySelector('#settings-close').addEventListener('click', close);
   overlay.querySelector('#settings-cancel').addEventListener('click', close);

@@ -1,3 +1,30 @@
+function openActivityModal() {
+  const modal = document.getElementById('activity-modal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    // Close button
+    const closeBtn = document.getElementById('activity-modal-close');
+    if (closeBtn) {
+      closeBtn.onclick = () => { resetActivityForm(); closeActivityModal(); };
+    }
+    // Close on backdrop click
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) { resetActivityForm(); closeActivityModal(); }
+    }, { once: true });
+    // Focus name field
+    setTimeout(() => {
+      const nameEl = document.getElementById('activityName');
+      if (nameEl) nameEl.focus();
+    }, 50);
+    refreshIcons();
+  }
+}
+
+function closeActivityModal() {
+  const modal = document.getElementById('activity-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
 /* =========================
  * activities.js
  * Trip page activity logic — load, add, edit, delete.
@@ -102,6 +129,7 @@ function setActivityFormData(activity) {
     return iso.includes('T') ? iso.split('T')[1].slice(0, 5) : '';
   }
 
+  openActivityModal();
   if ($('activityName')) $('activityName').value = data.name || '';
   if ($('activityLocation')) $('activityLocation').value = data.location || '';
   if ($('activityType')) $('activityType').value = data.type || 'other';
@@ -118,6 +146,8 @@ function setActivityFormData(activity) {
 function resetActivityForm() {
   setActivityFormData(null);
   state.editingActivityId = null;
+
+  closeActivityModal();
 
   const title = document.getElementById('activity-form-title');
   const cancelButton = document.getElementById('cancel-edit-btn');
@@ -496,6 +526,8 @@ async function loadMoreActivitiesUI() {
 
 window.loadMoreActivitiesUI = loadMoreActivitiesUI;
 window.clearActivitySearch = clearActivitySearch;
+window.openActivityModal = openActivityModal;
+window.closeActivityModal = closeActivityModal;
 window.toggleTypeFilter = toggleTypeFilter;
 
 function toggleActivityDay(key) {

@@ -179,11 +179,16 @@
     </div>
   </div>
 
-  <!-- MAIN -->
-  <main class="max-w-6xl mx-auto px-4 py-5 pb-24">
-
-    <!-- Add Activity Form -->
-    <div id="activity-form" class="mb-6 space-y-3">
+  <!-- Add Activity Modal -->
+  <div id="activity-modal" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/40 dark:bg-slate-950/70 p-4">
+    <div class="w-full max-w-lg rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between mb-4">
+        <h2 id="activity-form-title" class="text-base font-semibold text-slate-900 dark:text-slate-100">Add activity</h2>
+        <button id="activity-modal-close" type="button" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div id="activity-form" class="space-y-3">
 
       <!-- Row 1: Type -->
       <div>
@@ -269,14 +274,32 @@
           class="w-full min-w-0 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"></textarea>
       </div>
 
-      <!-- Row 8: Submit -->
-      <button id="activity-submit-btn" onclick="addActivity()"
-        class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-500 active:scale-[0.98] transition">
-        <i data-lucide="plus" class="w-4 h-4"></i>
-        Add Activity
-      </button>
+      <!-- Row 8: Submit + Cancel -->
+      <div class="flex gap-2">
+        <button id="cancel-edit-btn" onclick="cancelEditActivity()"
+          class="hidden inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+          Cancel
+        </button>
+        <button id="activity-submit-btn" onclick="addActivity()"
+          class="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-500 active:scale-[0.98] transition">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          Add Activity
+        </button>
+      </div>
 
+      </div>
     </div>
+  </div>
+
+  <!-- MAIN -->
+  <main class="max-w-6xl mx-auto px-4 py-5 pb-24">
+
+    <!-- Add Activity Button -->
+    <button onclick="openActivityModal()"
+      class="mb-6 inline-flex items-center gap-2 rounded-xl bg-primary-600 hover:bg-primary-500 active:scale-[0.98] transition px-4 py-2 text-sm font-medium text-white">
+      <i data-lucide="plus" class="w-4 h-4"></i>
+      Add activity
+    </button>
 
     <!-- Activities Header + Search -->
     <div id="activities-header" class="hidden mb-3 space-y-2">
