@@ -570,7 +570,7 @@ function renderHeaderNav(current) {
     return btn;
   }
 
-  navSection.appendChild(navBtn('My Trips', 'home', 'home', () => { window.location.href = '/'; }));
+  navSection.appendChild(navBtn('My trips', 'home', 'home', () => { window.location.href = '/'; }));
 
   if (isTripPage) {
     navSection.appendChild(navBtn('Trip', 'notebook-pen', 'trip', goToTrip));
@@ -580,56 +580,75 @@ function renderHeaderNav(current) {
 
   desktopRow.appendChild(navSection);
 
-  // Section 2: Actions (trip pages only)
+  // Section 2: Actions dropdown (all trip pages)
   if (isTripPage) {
     const divider = document.createElement('div');
     divider.className = 'w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1';
     desktopRow.appendChild(divider);
 
-    // Export dropdown
-    const exportWrapper = document.createElement('div');
-    exportWrapper.className = 'export-btn-wrapper relative';
-    const exportBtn = document.createElement('button');
-    exportBtn.type = 'button';
-    exportBtn.className = btnDefault;
-    exportBtn.innerHTML = '<i data-lucide="download" class="h-4 w-4"></i>Export<i data-lucide="chevron-down" class="h-3 w-3 ml-0.5"></i>';
-    exportBtn.onclick = (e) => { e.stopPropagation(); window.openExportDropdown(exportBtn); };
-    exportWrapper.appendChild(exportBtn);
-    desktopRow.appendChild(exportWrapper);
+    // Actions dropdown button
+    const actionsWrapper = document.createElement('div');
+    actionsWrapper.className = 'relative';
 
-    // Share
-    const shareBtn = document.createElement('button');
-    shareBtn.type = 'button';
-    shareBtn.className = btnDefault;
-    shareBtn.innerHTML = '<i data-lucide="share-2" class="h-4 w-4"></i>Share';
-    shareBtn.onclick = () => window.openShareModal();
-    desktopRow.appendChild(shareBtn);
+    const actionsBtn = document.createElement('button');
+    actionsBtn.type = 'button';
+    actionsBtn.className = btnDefault;
+    actionsBtn.innerHTML = '<i data-lucide="zap" class="h-4 w-4"></i>Actions<i data-lucide="chevron-down" class="h-3 w-3 ml-0.5"></i>';
 
-    // Members
-    const membersBtn = document.createElement('button');
-    membersBtn.type = 'button';
-    membersBtn.className = btnIcon;
-    membersBtn.setAttribute('aria-label', 'Members');
-    membersBtn.innerHTML = '<i data-lucide="users" class="h-4 w-4"></i>';
-    membersBtn.onclick = () => window.openMembersModal();
-    desktopRow.appendChild(membersBtn);
+    const actionsMenu = document.createElement('div');
+    actionsMenu.className = 'hidden absolute right-0 mt-2 w-52 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl overflow-hidden z-50';
 
-    // Links
-    const linksBtn = document.createElement('button');
-    linksBtn.type = 'button';
-    linksBtn.className = btnIcon;
-    linksBtn.setAttribute('aria-label', 'Share links');
-    linksBtn.innerHTML = '<i data-lucide="link" class="h-4 w-4"></i>';
-    linksBtn.onclick = () => window.openManageSharesModal();
-    desktopRow.appendChild(linksBtn);
+    function actionsItem(label, icon, onClick) {
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.className = 'flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition';
+      item.innerHTML = `<i data-lucide="${icon}" class="h-4 w-4 text-slate-400"></i>${label}`;
+      item.onclick = () => { actionsMenu.classList.add('hidden'); onClick(); };
+      return item;
+    }
+
+    function actionsSeparator(label) {
+      const sep = document.createElement('div');
+      sep.className = 'px-4 pt-3 pb-1 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500';
+      sep.textContent = label;
+      return sep;
+    }
+
+    actionsMenu.appendChild(actionsSeparator('Export'));
+    actionsMenu.appendChild(actionsItem('Download PDF', 'file-down', () => window.downloadPdf()));
+    actionsMenu.appendChild(actionsItem('Export CSV', 'file-spreadsheet', () => window.exportCsv()));
+    actionsMenu.appendChild(actionsItem('Print view', 'printer', () => window.openPrintView()));
+
+    actionsMenu.appendChild(actionsSeparator('Share'));
+    actionsMenu.appendChild(actionsItem('Share trip', 'share-2', () => window.openShareModal()));
+    actionsMenu.appendChild(actionsItem('Members', 'users', () => window.openMembersModal()));
+    actionsMenu.appendChild(actionsItem('Manage links', 'link', () => window.openManageSharesModal()));
+
+    actionsBtn.onclick = (e) => {
+      e.stopPropagation();
+      const isHidden = actionsMenu.classList.contains('hidden');
+      actionsMenu.classList.toggle('hidden', !isHidden);
+      if (isHidden) {
+        refreshIcons();
+        setTimeout(() => {
+          document.addEventListener('click', function closeActions() {
+            actionsMenu.classList.add('hidden');
+            document.removeEventListener('click', closeActions);
+          });
+        }, 0);
+      }
+    };
+
+    actionsWrapper.appendChild(actionsBtn);
+    actionsWrapper.appendChild(actionsMenu);
+    desktopRow.appendChild(actionsWrapper);
 
     const divider2 = document.createElement('div');
     divider2.className = 'w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1';
     desktopRow.appendChild(divider2);
   }
 
-  // Section 3: Settings + logout (already in HTML, just keep theme out of here)
-  // Theme toggle moved to Settings modal — desktop nav stays clean
+  // Section 3: Settings + logout already in HTML
 
   // ── MOBILE ──
   const mobileWrapper = document.createElement('div');
@@ -665,7 +684,7 @@ function renderHeaderNav(current) {
 
   // Navigation section
   dropdown.appendChild(mobileSeparator('Navigate'));
-  dropdown.appendChild(mobileItem('My Trips', 'home', () => { window.location.href = '/'; }, current === 'home'));
+  dropdown.appendChild(mobileItem('My trips', 'home', () => { window.location.href = '/'; }, current === 'home'));
 
   if (isTripPage) {
     dropdown.appendChild(mobileItem('Trip', 'notebook-pen', goToTrip, current === 'trip'));
