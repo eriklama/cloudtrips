@@ -63,7 +63,6 @@
 
 <script src="/state.js"></script>
 <script src="/helpers.js"></script>
-<script src="/api.js"></script>
 <script src="https://unpkg.com/lucide@latest" defer></script>
 
 <script>
@@ -90,11 +89,15 @@ async function verifyToken() {
   document.getElementById('verify-message').classList.add('hidden');
 
   try {
-    await apiFetch('/api/verifyEmail', {
+    const res = await fetch('/api/verifyEmail', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token })
     });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || 'Invalid or expired verification link.');
+    }
 
     document.getElementById('verify-icon').innerHTML = '<i data-lucide="circle-check" class="h-7 w-7"></i>';
     document.getElementById('verify-icon').className = 'mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400';
@@ -121,10 +124,18 @@ async function resendVerification() {
   document.getElementById('verify-success').classList.add('hidden');
 
   try {
-    await apiFetch('/api/resendVerification', {
+    const token = localStorage.getItem('cloudtrips_auth_token') || '';
+    const res = await fetch('/api/resendVerification', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      }
     });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || 'Failed to resend. Please try again.');
+    }
     showSuccess('Verification email sent — check your inbox.');
   } catch (err) {
     showError(err.message || 'Failed to resend. Please try again.');
